@@ -1,5 +1,6 @@
---<!-- vim: set syntax=lua ts=.  3 sw=3 et : -->
--- count &rightarrow; [counts](counts.html)
+-- <img src="refactor.png" width=400><br>
+-- [home](index.html) :: [lib](lib.html)
+-- :: count &rightarrow; [counts](counts.html) 
 
 
 local l   = {}

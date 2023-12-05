@@ -1,10 +1,14 @@
 -- <img src="refactor.png" width=400><br>
 -- [home](index.html) :: [lib](lib.html)
--- :: [count](count.html) &rightarrow; counts  &rightarrow; [bayes](bayes.html) 
+-- :: [count](counts.html) &rightarrow;  [bayes](bayes.html) &rightarrow; 
 
 local l   = {}
 local lib = require"lib"
-local the = {file="",report="mid"}
+local the = {file   = "",
+             k      = 2,
+             m      = 1,
+             report = "mid",
+             wait   = 20}
 
 -- ##  One Column
 
@@ -56,6 +60,18 @@ function l.mid(col1)
 function l.div(col1) 
   return (col1.isSym and lib.entropy or lib.stdev)(l.has(col1)) end
 
+-- How much does a column like one value `x`?       
+-- NEW
+function l.like(col1,x,prior,    nom,denom)
+  if   col1.isSym
+  then return ((col1.has[x] or 0) + the.m*prior)/(col1.n+the.m)
+  else local mid,sd = l.mid(col1),l.div(col1)
+       if x > mid + 4*sd then return 0 end
+       if x < mid - 4*sd then return 0 end
+       nom   = math.exp(-.5*((x - mid)/sd)^2)
+       denom = (sd*((2*math.pi)^0.5))
+       return nom/(denom  + 1E-30) end end
+
 -- ## COLS= multiple colums
 
 -- Create one column
@@ -77,7 +93,6 @@ function l.cols(cols1, t)
 -- ##  DATA = rows + COLS
 
 -- Create a DATA from a string (assumed to be a file name) or a list of rows.   
--- MODIFIED
 function l.DATA(src,    data1)
   data1 = {rows={}, cols=nil}
   if   type(src)=="string"
@@ -86,7 +101,6 @@ function l.DATA(src,    data1)
   return data1 end
 
 -- Create a new DATA, using the same structure as an older one.  
--- NEW
 function l.clone(data1,  rows,      data2)
   data2 = l.DATA({data1.cols.names})
   for _,t in pairs(rows or {}) do l.data(data2,t) end
@@ -108,16 +122,42 @@ function l.stats(data1, my,     t,fun)
     t[col1.txt] = lib.rnd( fun(col1), my.ndecs) end
   return t end
 
+-- Likes of one row `t` in one `data`.      
+-- NEW
+function l.likes(t,data,n,h,       prior,out,col1,inc)
+  prior = (#data.rows + the.k) / (n + the.k * h)
+  out   = math.log(prior)
+  for at,v in pairs(t) do
+    col1 = data.cols.x[at]
+    if col1 and v ~= "?" then
+      inc = l.like(col1,v,prior)
+      out = out + math.log(inc) end end
+  return out end
+
+-- Likes of one row `t` across many  `datas`.      
+-- NEW
+function l.likesMost(t,datas,n,h,     most,tmp,out)
+  most = -1E30
+  for k,data in pairs(datas) do
+    tmp = l.likes(t,data,n,h)
+    if tmp > most then out,most = k,tmp end end
+  return out,most end
+
 -- ## Main
 
--- Main
-function l.main(     datas,all,k,divs,mids)
-  datas,mids,divs,all = {},{},{},nil
+-- Main.   
+-- MODIFIED
+function l.main(     datas,all,k,divs,mids,abcds,n,h)
+  abcds, datas,mids,divs,n,h,all = l.ABCDS(),{},{},{},0,0,nil
   for row in lib.csv(lib.cli(the).file) do
     if   all
-    then k = row[all.cols.klass.at]
-         datas[k] = datas[k] or l.clone(all)
-         l.data(datas[k], row)
+    then want = row[all.cols.klass.at]
+         if not datas[want] then h=h+1; datas[want]=l.clone(all) end
+         n = n + 1
+         if   n > the.wait
+         then got = l.likesMost(t,datas,n,h)
+              l.abcds(want,got) end
+         l.data(datas[want], row)
     else all = l.DATA({row}) end
   end
   for k, data1 in pairs(datas) do
