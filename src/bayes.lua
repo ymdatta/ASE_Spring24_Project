@@ -1,14 +1,23 @@
 -- <img src="refactor.png" width=400><br>
 -- [home](index.html) :: [lib](lib.html)
--- :: [count](counts.html) &rightarrow;  [bayes](bayes.html) &rightarrow; 
-
+-- :: [counts](counts.html) &rightarrow;  bayes
 local l   = {}
 local lib = require"lib"
-local the = {file   = "",
-             k      = 2,
-             m      = 1,
-             report = "mid",
-             wait   = 20}
+local the,help = {},[[
+
+bayes: report stats for each class in a csv file
+(c) 2023, Tim Menzies, BSD-2
+
+USAGE:
+  cat x.csv | lua bayes.lua [OPTIONS]
+  lua bayes.lua -f x.csv [OPTIONS]
+ 
+OPTIONS:
+  -f --file    csv data file name               = ""
+  -h --help    show help                        = false 
+  -k --k       handle low class frequencies     = 2
+  -m --m       handle low attribute frequencies = 1
+  -w --wait    wait before classifications      = 20]]
 
 -- ##  One Column
 
@@ -75,7 +84,7 @@ function l.like(col1,x,prior,    nom,denom)
 -- ## COLS= multiple colums
 
 -- Create one column
-function l.COLS(t, -- e.g. "Age,job,Salary+"    
+function l.COLS(t, -- e.g. {"Age","job","Salary+"}  
                 x,y,all,klass,col1)  
   x, y, all = {}, {}, {}
   for at, txt in pairs(t) do

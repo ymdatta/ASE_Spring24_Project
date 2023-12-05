@@ -1,11 +1,35 @@
 -- <img src="refactor.png" width=400><br>
 -- [home](index.html) :: [lib](lib.html)
--- :: count &rightarrow; [counts](counts.html) 
+-- :: count &rightarrow; [counts](counts.html)     
+-- -------------------------------------------
+--  Load data from disk, report central tendancies and diversity
+--  around that centraility.
+--   
+--     $  cat ../data/diabetes.csv | lua count.lua -r mid | fmt -55
+--   
+--       {:.N 768, :Age 29, :Insu 29, :Mass 32, :Pedi 0.37,
+--       :Plas 117, :Preg 3, :Pres 72, :Skin 23}
+--   
+--     $ cat ../data/diabetes.csv | lua count.lua -r div | fmt -60
+--     
+--       {:.N 768, :Age 11.31, :Insu 81.9, :Mass 7.02, :Pedi 0.28,
+--       :Plas 31.98, :Preg 3.51, :Pres 13.26, :Skin 15.6}
+local lib      = require "lib"
+local l        = {}
+local the,help = {},[[
 
+count: report stats across all rows in a csv file
+(c) 2023, Tim Menzies, BSD-2
 
-local l   = {}
-local lib = require"lib"
-local the = {file="",report="mid"}
+USAGE:
+  cat x.csv | lua count.lua [OPTIONS]
+  lua count.lua -f x.csv [OPTIONS]
+ 
+OPTIONS:
+  -f --file    csv data file name           = ""
+  -h --help    show help                    = false
+  -r --report  what to report? (mid or div) = mid]]
+
 
 -- ## Create one column
 
@@ -60,7 +84,7 @@ function l.div(col1)
 -- ## COLS = multiple colums
 
 -- Creation
-function l.COLS(t, -- e.g. "Age,job,Salary+"    
+function l.COLS(t, -- e.g. {"Age","job","Salary+"} 
                 x,y,all,klass,col1)  
   x, y, all = {}, {}, {}
   for at, txt in pairs(t) do
@@ -100,7 +124,8 @@ function l.stats(data1, my,     t,fun)
   return t end
 
 -- ## Main
+the = lib.cli(lib.settings(help))
 lib.oo(
   l.stats(
     l.DATA(
-      lib.cli(the).file)))
+      the.file)))

@@ -19,12 +19,37 @@
       </div>
       <p><img src="refactor.png" width=400><br>
 <a href="index.html">home</a> :: <a href="lib.html">lib</a>
-:: count &rightarrow; <a href="counts.html">counts</a> </p>
+:: count &rightarrow; <a href="counts.html">counts</a>     </p>
+<hr />
+<p>Load data from disk, report central tendancies and diversity
+ around that centraility.</p>
+<pre><code>$  cat ../data/diabetes.csv | lua count.lua -r mid | fmt -55
+
+  {:.N 768, :Age 29, :Insu 29, :Mass 32, :Pedi 0.37,
+  :Plas 117, :Preg 3, :Pres 72, :Skin 23}
+
+$ cat ../data/diabetes.csv | lua count.lua -r div | fmt -60
+
+  {:.N 768, :Age 11.31, :Insu 81.9, :Mass 7.02, :Pedi 0.28,
+  :Plas 31.98, :Preg 3.51, :Pres 13.26, :Skin 15.6}
+</code></pre>
     </div>
     <div class='code'>
-      <div class="highlight"><pre><span></span><span class="kd">local</span> <span class="n">l</span>   <span class="o">=</span> <span class="p">{}</span>
-<span class="kd">local</span> <span class="n">lib</span> <span class="o">=</span> <span class="nb">require</span><span class="s2">&quot;lib&quot;</span>
-<span class="kd">local</span> <span class="n">the</span> <span class="o">=</span> <span class="p">{</span><span class="n">file</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="n">report</span><span class="o">=</span><span class="s2">&quot;mid&quot;</span><span class="p">}</span></pre></div>
+      <div class="highlight"><pre><span></span><span class="kd">local</span> <span class="n">lib</span>      <span class="o">=</span> <span class="nb">require</span> <span class="s2">&quot;lib&quot;</span>
+<span class="kd">local</span> <span class="n">l</span>        <span class="o">=</span> <span class="p">{}</span>
+<span class="kd">local</span> <span class="n">the</span><span class="p">,</span><span class="n">help</span> <span class="o">=</span> <span class="p">{},</span><span class="s">[[</span>
+
+<span class="s">count: report stats across all rows in a csv file</span>
+<span class="s">(c) 2023, Tim Menzies, BSD-2</span>
+
+<span class="s">USAGE:</span>
+<span class="s">  cat x.csv | lua count.lua [OPTIONS]</span>
+<span class="s">  lua count.lua -f x.csv [OPTIONS]</span>
+<span class="s"> </span>
+<span class="s">OPTIONS:</span>
+<span class="s">  -f --file    csv data file name           = &quot;&quot;</span>
+<span class="s">  -h --help    show help                    = false</span>
+<span class="s">  -r --report  what to report? (mid or div) = mid]]</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
@@ -189,7 +214,7 @@
       <p>Creation</p>
     </div>
     <div class='code'>
-      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">COLS</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="c1">-- e.g. &quot;Age,job,Salary+&quot;    </span>
+      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">COLS</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="c1">-- e.g. {&quot;Age&quot;,&quot;job&quot;,&quot;Salary+&quot;} </span>
                 <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">all</span><span class="p">,</span><span class="n">klass</span><span class="p">,</span><span class="n">col1</span><span class="p">)</span>  
   <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">all</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{},</span> <span class="p">{}</span>
   <span class="kr">for</span> <span class="n">at</span><span class="p">,</span> <span class="n">txt</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="kr">do</span>
@@ -284,10 +309,11 @@
       <h2>Main</h2>
     </div>
     <div class='code'>
-      <div class="highlight"><pre><span class="n">lib</span><span class="p">.</span><span class="n">oo</span><span class="p">(</span>
+      <div class="highlight"><pre><span class="n">the</span> <span class="o">=</span> <span class="n">lib</span><span class="p">.</span><span class="n">cli</span><span class="p">(</span><span class="n">lib</span><span class="p">.</span><span class="n">settings</span><span class="p">(</span><span class="n">help</span><span class="p">))</span>
+<span class="n">lib</span><span class="p">.</span><span class="n">oo</span><span class="p">(</span>
   <span class="n">l</span><span class="p">.</span><span class="n">stats</span><span class="p">(</span>
     <span class="n">l</span><span class="p">.</span><span class="n">DATA</span><span class="p">(</span>
-      <span class="n">lib</span><span class="p">.</span><span class="n">cli</span><span class="p">(</span><span class="n">the</span><span class="p">).</span><span class="n">file</span><span class="p">)))</span>
+      <span class="n">the</span><span class="p">.</span><span class="n">file</span><span class="p">)))</span>
 
 </pre></div>
     </div>

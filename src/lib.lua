@@ -128,7 +128,16 @@ function l.cli(t)
       if x=="-"..(k:sub(1,1)) or x=="--"..k then
         v= ((v=="false" and "true") or (v=="true" and "false") or arg[n+1])
         t[k] = l.coerce(v) end end end
+  if t.help then os.exit(print(t._help)) end
   return t end
+
+-- Turn help string into a options array.
+function l.settings(s,    t,pat)
+  t={}
+  pat = "\n[%s]+[-][%S][%s]+[-][-]([%S]+)[^\n]+= ([%S]+)"
+  for k, s1 in s:gmatch(pat) do t[k] = l.coerce(s1) end
+  t._help = s
+  return t,s end
 
 -- ##  Discrete Performance Stats
 -- NEW

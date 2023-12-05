@@ -5,6 +5,7 @@ MAKEFLAGS += --warn-undefined-variables
 define css
 p,h2,h3 { text-align: right;} 
 h2      { padding-top: 2px; border-top: 1px dotted #888; }
+.docs pre {font-size: 8pt; }
 endef
 export css
 

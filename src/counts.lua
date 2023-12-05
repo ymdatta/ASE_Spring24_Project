@@ -1,10 +1,33 @@
 -- <img src="refactor.png" width=400><br>
 -- [home](index.html) :: [lib](lib.html)
--- :: [count](count.html) &rightarrow; counts  &rightarrow; [bayes](bayes.html) 
+-- :: [counts](counts.html) &rightarrow;  bayes
+--       
+--     $ lua counts.lua -f ../data/diabetes.csv 
+--   
+--      mids
+--                    .N     Age    Insu    Mass    Pedi    Plas   ...
+--          neg     500      27      38      30    0.34     107   ...
+--          pos     268      36       0    34.2    0.45     140   ...
+--    
+--      divs
+--                    .N     Age    Insu    Mass    Pedi    Plas   ...
+--          neg     500   10.53   71.37    6.63    0.25   23.79   ...
+--          pos     268   10.92  105.69    6.24    0.33    31.2   ...
 
-local l   = {}
-local lib = require"lib"
-local the = {file="",report="mid"}
+local lib      = require "lib"
+local l        = {}
+local the,help = {},[[
+
+counts: report stats for each class in a csv file
+(c) 2023, Tim Menzies, BSD-2
+
+USAGE:
+  cat x.csv | lua counts.lua [OPTIONS]
+  lua counts.lua -f x.csv [OPTIONS]
+ 
+OPTIONS:
+  -f --file    csv data file name           = ""
+  -h --help    show help                    = false ]]
 
 -- ##  One Column
 
@@ -42,9 +65,9 @@ function l.num(num1,x)
     lib.push(num1.has,x)
     num1.isSorted=false end end 
 
--- Query one column
+-- Query one column.
 function l.has(col1)
-  if not (col1.isSym or col1.isSorted) then 
+  if not (col1.isSym or col1.isSorted) then
     table.sort(col1.has); col1.isSorted=true end
   return col1.has end
 
@@ -52,14 +75,14 @@ function l.has(col1)
 function l.mid(col1) 
   return  col1.isSym and col1.mode or lib.median(l.has(col1)) end
 
--- Diversity of values in a column distribution
+-- Diversity of values in a column distribution.
 function l.div(col1) 
   return (col1.isSym and lib.entropy or lib.stdev)(l.has(col1)) end
 
 -- ## COLS= multiple colums
 
--- Create one column
-function l.COLS(t, -- e.g. "Age,job,Salary+"    
+-- Create one column.
+function l.COLS(t, -- e.g. {"Age","job","Salary+"} 
                 x,y,all,klass,col1)  
   x, y, all = {}, {}, {}
   for at, txt in pairs(t) do
@@ -110,10 +133,11 @@ function l.stats(data1, my,     t,fun)
 
 -- ## Main
 
--- Main
+-- Main         
+-- NEW
 function l.main(     datas,all,k,divs,mids)
   datas,mids,divs,all = {},{},{},nil
-  for row in lib.csv(lib.cli(the).file) do
+  for row in lib.csv(the.file) do
     if   all
     then k = row[all.cols.klass.at]
          datas[k] = datas[k] or l.clone(all)
@@ -127,4 +151,5 @@ function l.main(     datas,all,k,divs,mids)
   lib.report(mids,"\nmids",8)
   lib.report(divs,"\ndivs",8) end
 
+the = lib.cli(lib.settings(help))
 l.main()

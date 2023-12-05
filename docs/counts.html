@@ -19,12 +19,35 @@
       </div>
       <p><img src="refactor.png" width=400><br>
 <a href="index.html">home</a> :: <a href="lib.html">lib</a>
-:: <a href="count.html">count</a> &rightarrow; counts  &rightarrow; <a href="bayes.html">bayes</a> </p>
+:: <a href="count.html">count</a> &rightarrow; counts  &rightarrow; bayes</p>
+<pre><code>$ lua counts.lua -f ../data/diabetes.csv
+
+ mids
+               .N     Age    Insu    Mass    Pedi    Plas   ...
+     neg     500      27      38      30    0.34     107   ...
+     pos     268      36       0    34.2    0.45     140   ...
+
+ divs
+               .N     Age    Insu    Mass    Pedi    Plas   ...
+     neg     500   10.53   71.37    6.63    0.25   23.79   ...
+     pos     268   10.92  105.69    6.24    0.33    31.2   ...
+</code></pre>
     </div>
     <div class='code'>
-      <div class="highlight"><pre><span></span><span class="kd">local</span> <span class="n">l</span>   <span class="o">=</span> <span class="p">{}</span>
-<span class="kd">local</span> <span class="n">lib</span> <span class="o">=</span> <span class="nb">require</span><span class="s2">&quot;lib&quot;</span>
-<span class="kd">local</span> <span class="n">the</span> <span class="o">=</span> <span class="p">{</span><span class="n">file</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="n">report</span><span class="o">=</span><span class="s2">&quot;mid&quot;</span><span class="p">}</span></pre></div>
+      <div class="highlight"><pre><span></span><span class="kd">local</span> <span class="n">lib</span>      <span class="o">=</span> <span class="nb">require</span> <span class="s2">&quot;lib&quot;</span>
+<span class="kd">local</span> <span class="n">l</span>        <span class="o">=</span> <span class="p">{}</span>
+<span class="kd">local</span> <span class="n">the</span><span class="p">,</span><span class="n">help</span> <span class="o">=</span> <span class="p">{},</span><span class="s">[[</span>
+
+<span class="s">counts: report stats for each class in a csv file</span>
+<span class="s">(c) 2023, Tim Menzies, BSD-2</span>
+
+<span class="s">USAGE:</span>
+<span class="s">  cat x.csv | lua counts.lua [OPTIONS]</span>
+<span class="s">  lua counts.lua -f x.csv [OPTIONS]</span>
+<span class="s"> </span>
+<span class="s">OPTIONS:</span>
+<span class="s">  -f --file    csv data file name           = &quot;&quot;</span>
+<span class="s">  -h --help    show help                    = false ]]</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
@@ -133,11 +156,11 @@
       <div class='octowrap'>
         <a class='octothorpe' href='#section-8'>#</a>
       </div>
-      <p>Query one column</p>
+      <p>Query one column.</p>
     </div>
     <div class='code'>
       <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">has</span><span class="p">(</span><span class="n">col1</span><span class="p">)</span>
-  <span class="kr">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">col1</span><span class="p">.</span><span class="n">isSym</span> <span class="ow">or</span> <span class="n">col1</span><span class="p">.</span><span class="n">isSorted</span><span class="p">)</span> <span class="kr">then</span> 
+  <span class="kr">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">col1</span><span class="p">.</span><span class="n">isSym</span> <span class="ow">or</span> <span class="n">col1</span><span class="p">.</span><span class="n">isSorted</span><span class="p">)</span> <span class="kr">then</span>
     <span class="nb">table.sort</span><span class="p">(</span><span class="n">col1</span><span class="p">.</span><span class="n">has</span><span class="p">);</span> <span class="n">col1</span><span class="p">.</span><span class="n">isSorted</span><span class="o">=</span><span class="kc">true</span> <span class="kr">end</span>
   <span class="kr">return</span> <span class="n">col1</span><span class="p">.</span><span class="n">has</span> <span class="kr">end</span></pre></div>
     </div>
@@ -161,7 +184,7 @@
       <div class='octowrap'>
         <a class='octothorpe' href='#section-10'>#</a>
       </div>
-      <p>Diversity of values in a column distribution</p>
+      <p>Diversity of values in a column distribution.</p>
     </div>
     <div class='code'>
       <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">div</span><span class="p">(</span><span class="n">col1</span><span class="p">)</span> 
@@ -186,10 +209,10 @@
       <div class='octowrap'>
         <a class='octothorpe' href='#section-12'>#</a>
       </div>
-      <p>Create one column</p>
+      <p>Create one column.</p>
     </div>
     <div class='code'>
-      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">COLS</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="c1">-- e.g. &quot;Age,job,Salary+&quot;    </span>
+      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">COLS</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="c1">-- e.g. {&quot;Age&quot;,&quot;job&quot;,&quot;Salary+&quot;} </span>
                 <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">all</span><span class="p">,</span><span class="n">klass</span><span class="p">,</span><span class="n">col1</span><span class="p">)</span>  
   <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">all</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{},</span> <span class="p">{}</span>
   <span class="kr">for</span> <span class="n">at</span><span class="p">,</span> <span class="n">txt</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="kr">do</span>
@@ -312,12 +335,13 @@ NEW</p>
       <div class='octowrap'>
         <a class='octothorpe' href='#section-20'>#</a>
       </div>
-      <p>Main</p>
+      <p>Main       <br />
+NEW</p>
     </div>
     <div class='code'>
       <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">main</span><span class="p">(</span>     <span class="n">datas</span><span class="p">,</span><span class="n">all</span><span class="p">,</span><span class="n">k</span><span class="p">,</span><span class="n">divs</span><span class="p">,</span><span class="n">mids</span><span class="p">)</span>
   <span class="n">datas</span><span class="p">,</span><span class="n">mids</span><span class="p">,</span><span class="n">divs</span><span class="p">,</span><span class="n">all</span> <span class="o">=</span> <span class="p">{},{},{},</span><span class="kc">nil</span>
-  <span class="kr">for</span> <span class="n">row</span> <span class="kr">in</span> <span class="n">lib</span><span class="p">.</span><span class="n">csv</span><span class="p">(</span><span class="n">lib</span><span class="p">.</span><span class="n">cli</span><span class="p">(</span><span class="n">the</span><span class="p">).</span><span class="n">file</span><span class="p">)</span> <span class="kr">do</span>
+  <span class="kr">for</span> <span class="n">row</span> <span class="kr">in</span> <span class="n">lib</span><span class="p">.</span><span class="n">csv</span><span class="p">(</span><span class="n">the</span><span class="p">.</span><span class="n">file</span><span class="p">)</span> <span class="kr">do</span>
     <span class="kr">if</span>   <span class="n">all</span>
     <span class="kr">then</span> <span class="n">k</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">all</span><span class="p">.</span><span class="n">cols</span><span class="p">.</span><span class="n">klass</span><span class="p">.</span><span class="n">at</span><span class="p">]</span>
          <span class="n">datas</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">datas</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="ow">or</span> <span class="n">l</span><span class="p">.</span><span class="n">clone</span><span class="p">(</span><span class="n">all</span><span class="p">)</span>
@@ -331,6 +355,7 @@ NEW</p>
   <span class="n">lib</span><span class="p">.</span><span class="n">report</span><span class="p">(</span><span class="n">mids</span><span class="p">,</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">mids&quot;</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span>
   <span class="n">lib</span><span class="p">.</span><span class="n">report</span><span class="p">(</span><span class="n">divs</span><span class="p">,</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">divs&quot;</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span> <span class="kr">end</span>
 
+<span class="n">the</span> <span class="o">=</span> <span class="n">lib</span><span class="p">.</span><span class="n">cli</span><span class="p">(</span><span class="n">lib</span><span class="p">.</span><span class="n">settings</span><span class="p">(</span><span class="n">help</span><span class="p">))</span>
 <span class="n">l</span><span class="p">.</span><span class="n">main</span><span class="p">()</span>
 
 </pre></div>

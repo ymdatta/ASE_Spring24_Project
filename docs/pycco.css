@@ -190,3 +190,4 @@ body .vi { color: #19469D }                     /* Name.Variable.Instance */
 body .il { color: #666666 }                     /* Literal.Number.Integer.Long */
 p,h2,h3 { text-align: right;} 
 h2      { padding-top: 2px; border-top: 1px dotted #888; }
+.docs pre {font-size: 8pt; }
