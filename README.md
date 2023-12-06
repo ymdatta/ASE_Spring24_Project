@@ -129,7 +129,7 @@ e.g. (extremely optimistic case) suppose we can _sort_ all the examples along on
   - Cohen's $d$ tells us that any change smaller than $\sigma/.33$
     is a trivially small change.
     - $\sigma$ ranges over six values: $-3 \le \sigma \le 3$
-    - So the     probability of randomly finding  solutions  insignificanyly different to the best solution is:   
+    - So the     probability of randomly finding  solutions  insignificantly  different to the best solution is:   
     $n(C=.95, p=.33/6)\approx 60$
   - Better yet, since the data is sorted,  we can do a binary chop to find this best solution after 
        
