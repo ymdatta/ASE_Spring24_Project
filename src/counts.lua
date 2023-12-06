@@ -1,6 +1,6 @@
 -- <img src="refactor.png" width=400><br>
 -- [home](index.html) :: [lib](lib.html)
--- :: [counts](counts.html) &rightarrow;  bayes
+-- ::  [count](count.html) &rightarrow;  counts &rightarrow; [bayes](bayes.html)
 --       
 --     $ lua counts.lua -f ../data/diabetes.csv 
 --   
@@ -136,6 +136,7 @@ function l.stats(data1, my,     t,fun)
 -- Main         
 -- NEW
 function l.main(     datas,all,k,divs,mids)
+  the=lib.cli(the)
   datas,mids,divs,all = {},{},{},nil
   for row in lib.csv(the.file) do
     if   all
@@ -151,5 +152,8 @@ function l.main(     datas,all,k,divs,mids)
   lib.report(mids,"\nmids",8)
   lib.report(divs,"\ndivs",8) end
 
-the = lib.cli(lib.settings(help))
-l.main()
+the = lib.settings(help)
+l.the = the
+if  pcall(debug.getlocal,4,1) then  main() end
+
+return l

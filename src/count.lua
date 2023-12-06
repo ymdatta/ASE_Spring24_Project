@@ -124,8 +124,12 @@ function l.stats(data1, my,     t,fun)
   return t end
 
 -- ## Main
-the = lib.cli(lib.settings(help))
-lib.oo(
-  l.stats(
-    l.DATA(
-      the.file)))
+the = lib.settings(help)
+
+if   not pcall(debug.getlocal,4,1)
+then lib.cli(the)
+     lib.oo(
+       l.stats(
+         l.DATA(
+          the.file)))
+else l.the=the;  return l end

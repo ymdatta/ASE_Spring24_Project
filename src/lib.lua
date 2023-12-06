@@ -139,6 +139,33 @@ function l.settings(s,    t,pat)
   t._help = s
   return t,s end
 
+-- ## Run demos -----------------------------------------
+
+-- Run one.
+function l.try(s, settings, fun)
+  math.randomseed(settings.seed or 1234567891)
+  io.write("🔷 ".. s.." ")
+  if fun()==false 
+  then print(" ❌ FAIL"); return true
+  else print("✅ PASS"); return false end  end
+
+-- Run all the requests on the command line.
+function l.run(settings, funs)
+  l.cli(settings)
+  for _,com in pairs(arg) do
+     if com=="all" then  l.runall(settings,funs) end
+     if funs[com] then l.try(com, settings, funs[com]) end end 
+  l.rogues() end
+  
+-- Run all.
+function l.runall(settings,funs,     oops)
+  oops = -1 -- we have one test that deliberately fails
+  for k,fun in l.order(funs) do
+    if k~="all" then 
+      if l.try(k,settings, fun) then oops = oops + 1 end end end
+  l.rogues()
+  os.exit(oops) end
+
 -- ##  Discrete Performance Stats
 -- NEW
 
@@ -160,8 +187,8 @@ function l.pf(abcd1)        return abcd1.c           / (abcd1.a+abcd1.c+1E-30) e
 function l.recall(abcd1)    return abcd1.d           / (abcd1.b+abcd1.d+1E-30) end
 function l.accuracy(abcd1)  return (abcd1.a+abcd1.d) / (abcd1.a+abcd1.b+abcd1.c+abcd1.d+1E-30) end
 function l.precision(abcd1) return abcd1.d           / (abcd1.c+abcd1.d+1E-30) end
-function l.f(abcd1,   pr)   p,r  = l.precision(abcd1),l.recall(abcd1); return (2*p*r)  / (p+r) end
-function l.g(abcd1,   nf)   nf,r = 1-l.pf(abcd1),l.recall(abcd1);      return (2*nf*r) / (nf+r) end
+function l.f(abcd1,   p,r)  p,r  = l.precision(abcd1),l.recall(abcd1); return (2*p*r)  / (p+r) end
+function l.g(abcd1,   n,f)  nf,r = 1-l.pf(abcd1),l.recall(abcd1);      return (2*nf*r) / (nf+r) end
 
 -- ### ABCDS
 -- For many classes,  calcuate statistics for symbolic classification.
