@@ -1,5 +1,8 @@
 # SE for  Simpler AI: A Minimalist Approach
 
+**CHALLENGE**: AI software is still software. Hence, if we understand it, it can be refactored
+and simplified.  Do you understand the software basis for AI?
+
 <img align=right width=300 src="docs/revolution.png">
 
 This is a semester-long experiment in  refactoring complex  AI and SE concepts into simpler forms. Here, we 
