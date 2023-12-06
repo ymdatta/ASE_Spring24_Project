@@ -113,7 +113,7 @@ Why reduce dimensions?
 
 - lower dimensions = less search = easier explanation
 - higher dimensionality = more complexity = harder to find releveant examples = less reproduability = less validation = less trust
--  To see this, consider the volume of an $n$-dimensional sphere. <img src="docs/sphere.png" align=right width=300>
+-  To see this, consider the volume of an $n$-dimensional sphere. <img src="https://github.com/timm/min/blob/main/docs/sphere.png" align=right width=300>
    -  $V_2( r )={\pi}r^2$ 
    -  $V_3( r )=\frac{4}{3}{\pi}r^3$ 
    - $V_{n>3}( r )= \frac{{2\pi}r^2}{n} V_{n-2}( r )$. 
