@@ -25,11 +25,14 @@ Here are our themes;
 - **Efficiency and Minimalism:** Advocating for more efficient solutions using fewer resources and simpler methods.
   <img align=right width=300 src="docs/block.jpg">
 - **Importance of 'Pruning' Data:** Highlighting the need to focus on important data and discard the irrelevant, drawing inspiration from Michelangelo’s sculpting philosophy.
-  - The best thing to do with most data is throw it away
   - "Every block of stone has a statue inside it and it is the task of the sculptor to discover it." -- Michelangelo
+  - The best thing to do with most data is throw it away[^btw].
 - **Dimensionality Reduction:** Discussing how high-dimensional data can be simplified and understood in lower dimensions.
   - See case study, below
 - **Practical Problem-Solving Strategy:** Presenting a methodical approach to problem-solving by prioritizing clustering and minimizing assumptions
+
+[^btw]: I definitely believe this for classification, regression,
+and optimization. Generation, on the other hand, is another matter.
 
 TL;DR: 
 - "Cluster (first), then think (less)" to promote efficient and effective problem-solving.
