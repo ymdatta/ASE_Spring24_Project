@@ -9,7 +9,9 @@ Here are our themes;
 
 - **Simplification of AI and SE:** Emphasizing the transformation of complex AI concepts into simpler, more understandable forms.
 - **Learning and Skill Development:** Focus on enhancing coding skills and theoretical knowledge in AI and software engineering through practical examples.
-- **Empowerment through Knowledge:**  Motivating readers to become proficient in coding and analysis, enabling them to tackle complex problems with simplified solutions.
+- **Empowerment through Knowledge:**  Motivating readers to become proficient in enhanced coding and analysis, enabling them to tackle complex problems with simplified solutions.
+  - Graduates of this class will become the CEO and CTOs of whatever
+    follows Google or OpenAI.
 - **Critical View of Current AI Systems:** Analyzing the limitations of current large language models, such as their inefficiency and lack of transparency.
 - **Data-Centric Approach:** Prioritizing a focus on data analysis over algorithmic or code-centric methods.
   - Data is the ultimate API
@@ -29,6 +31,7 @@ TL;DR:
   - Focus on what's important
 
 ## Case Study: Privacy
+
 
 > [Peters, Fayola, Tim Menzies, and Lucas Layman.](https://www.ezzoterik.com/papers/15lace2.pdf)
     2015 IEEE/ACM 37th IEEE International Conference on Software Engineering. Vol. 1. IEEE, 2015.
