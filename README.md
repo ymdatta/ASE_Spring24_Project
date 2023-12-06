@@ -1,6 +1,5 @@
 # SE for  Simpler AI: A Minimalist Approach
 
-
 This is a semester-long experiment in 
 refactoring complex  AI and SE concepts into simpler forms. I
 advocate for understanding and applying _semi-supervised explainable
@@ -15,8 +14,8 @@ Here are our themes;
 - **Data-Centric Approach:** Prioritizing a focus on data analysis over algorithmic or code-centric methods.
   - Data is the ultimate API
 - **Efficiency and Minimalism:** Advocating for more efficient solutions using fewer resources and simpler methods.
-- <img align=right width=300 src="docs/block.jpg">
- **Importance of 'Pruning' Data:** Highlighting the need to focus on important data and discard the irrelevant, drawing inspiration from Michelangelo’s sculpting philosophy.
+  <img align=right width=300 src="docs/block.jpg">
+- **Importance of 'Pruning' Data:** Highlighting the need to focus on important data and discard the irrelevant, drawing inspiration from Michelangelo’s sculpting philosophy.
   - The best thing to do with most data is throw it away
   - "Every block of stone has a statue inside it and it is the task of the sculptor to discover it." -- Michelangelo
 - **Dimensionality Reduction:** Discussing how high-dimensional data can be simplified and understood in lower dimensions.
