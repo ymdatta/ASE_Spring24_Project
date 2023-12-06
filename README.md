@@ -142,6 +142,8 @@ So via  incredibly optimistic analysis,   when studying
 In practice, this is too small. But as we shall see, 10-20 samples
 takes you a very long way. We will come back to this.
 
+Take that, big data!
+
 ## References
 
 [^leit]: Veerappa, Varsha, and Emmanuel Letier. 
