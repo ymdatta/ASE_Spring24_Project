@@ -41,9 +41,12 @@ Here are our themes;
 [^btw]: I definitely believe this for classification, regression,
 and optimization. Generation, on the other hand, is another matter.
 
-[^steatlh]: L. Alvarez and T. Menzies, ["Don’t Lie to Me: Avoiding Malicious Explanations With STEALTH,"](https://arxiv.org/pdf/2301.10407.pdf) in IEEE Software, vol. 40, no. 3, pp. 43-53, May-June 2023, doi: 10.1109/MS.2023.3244713.
+[^stealth]: L. Alvarez and T. Menzies,
+["Don’t Lie to Me: Avoiding Malicious Explanations With STEALTH,"](https://arxiv.org/pdf/2301.10407.pdf) in IEEE Software, 
+vol. 40, no. 3, pp. 43-53, May-June 2023, doi: 10.1109/MS.2023.3244713.
 
-[^early]: N.C. Shrikanth, Suvodeep Majumder, Tim Menzies  [Early Life Cycle Software Defect Prediction. Why? How?](https://arxiv.org/pdf/2011.13071.pdf), ICSE'21.
+[^early]: N.C. Shrikanth, Suvodeep Majumder, Tim Menzies  
+[Early Life Cycle Software Defect Prediction. Why? How?](https://arxiv.org/pdf/2011.13071.pdf), ICSE'21.
 
 
 TL;DR: 
