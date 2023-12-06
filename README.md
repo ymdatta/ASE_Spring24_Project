@@ -17,11 +17,11 @@ Here are our themes;
 - **Simplification of AI and SE:** Emphasizing the transformation of complex AI concepts into simpler, more understandable forms.
 - **Learning and Skill Development:** Focus on enhancing coding skills and theoretical knowledge in AI and software engineering through practical examples.
 - **Empowerment through Knowledge:**  
-- Motivating readers to become proficient in enhanced coding and analysis, enabling them to tackle complex problems with simplified solutions.
-  - Yes, you can understand it.
-- Enabling people, who are not the developers, to understand and critique
+  - Motivating readers to become proficient in enhanced coding and analysis, enabling them to tackle complex problems with simplified solutions.
+   -  Yes, you (the developer) can understand it.
+  - Enabling people, who are not the developers, to understand and critique
   a system and (in an effective manner) demand changes to that system.
-  - Yes, you can critique it and propose improvements to  it.
+    - Yes, you (the community) can critique it and propose improvements to  it.
 - **Critical View of Current AI Systems:** Analyzing the limitations of current large language models, such as their inefficiency and lack of transparency or validation [^wechat23]
 - **Data-Centric Approach:** Prioritizing a focus on data analysis over algorithmic or code-centric methods.
   - Data is the ultimate API
@@ -36,7 +36,7 @@ Here are our themes;
 - **Practical Problem-Solving Strategy:** Presenting a methodical approach to problem-solving by prioritizing clustering and minimizing assumptions
 
 [^wechat23]: For more on this, see T. Menzies. keynote ASE'23, 
- [Beware, some of the rhetoric on LLMs is misleading](http://tiny.cc/wechat23).
+ [Beware, some of the rhetoric on LLMs is misleading](http://tiny.cc/we-chat23).
 
 [^btw]: I definitely believe this for classification, regression,
 and optimization. Generation, on the other hand, is another matter.
@@ -58,8 +58,7 @@ TL;DR:
 ## Case Study: Privacy
 
 
-> [Peters, Fayola, Tim Menzies, and Lucas Layman.](https://www.ezzoterik.com/papers/15lace2.pdf)
-    2015 IEEE/ACM 37th IEEE International Conference on Software Engineering. Vol. 1. IEEE, 2015.
+
 
 Why share all the data? why not just cluster and just share a few cluster centroids?[^peters]
   - [Fayola Peters](https://www.ezzoterik.com/papers/15lace2.pdf) used cluster + contrast to prune data, as she passed data around a community. 
@@ -75,7 +74,8 @@ Why share all the data? why not just cluster and just share a few cluster centro
 <img width=700 src="https://github.com/timm/tested/blob/main//etc/img/peters2.png">
 
 
-
+[^peters]: [Peters, Fayola, Tim Menzies, and Lucas Layman.](https://www.ezzoterik.com/papers/15lace2.pdf)
+    2015 IEEE/ACM 37th IEEE International Conference on Software Engineering. Vol. 1. IEEE, 2015.
 
 
 
@@ -103,4 +103,40 @@ Why reduce dimensions?
 - So hard to find nearby (relevant) examples
   - Trick: find a transform to map higher to lower.
 
+e.g. (extremely optimistic case) suppose we can _sort_ all the examples along one dimension, 
+  - To be $C$ confidence that after $n$ picks, we can find one example,
+    is $C(n,p)= 1-(1-p)^n$  
+    - Which re-arranges to $n(C,p)=log(1-C)/log(1-p)$
+  - Cohen's $d$ tells us that any change smaller than $\sigma/.33$
+    is a trivially small change.
+    - $\sigma$ ranges over six values: $-3 \le \sigma \le 3$
+    - So the    the probability of randomly finding  a solution that is insignificanyly different to the best solution is:    
+    $n(C=.95, p=.33/6)\approx 60)$
+  - Better yet, since the data is sorted,  we can do a binary chop to find this best solution after $\log_2($n(C=.95, p=.33/6))\approx 6$ samples.
+
+So via  incredibly optimistic analysis,   when studying
+    any number of examples, 6 binary chops should be enough to find 
+    solutions statistically indistinguishable from the best solution.
+ 
+In practice, this is too small. But as we shall see, 10-20 samples
+takes you a very long way. We will come back to this.
+
+## In Practice
+
+Assume the incredibly optimistic analysis of the last section is true, what does that mean for SE?
+
+- Any piece of software can the studied, to find ways to most improve it,
+  after trying just a few dozen samples.
+  - easier auditing (less to look at)
+  - easier explanation (less to look at)
+  - easier classification for, e.g., predicting Github issue close time;
+  - easier testing; e.g. [^ling];
+  - easier optimization; e.g. [^lutosa];
+- Privacy: we don't have to look/share all the data. Just a tiny sample
+  should suffice [^peters].
+
+[^ling]: [https://arxiv.org/pdf/2305.03714.pdf](https://arxiv.org/pdf/2305.03714.pdf)
+
+[^lutosa]: Andre Lustosa and Tim Menzies. 2023. 
+[Learning from Very Little Data: On the Value of Landscape Analysis for Predicting Software Project Health](https://arxiv.org/pdf/2301.06577.pdf). ACM Trans. Softw. Eng. Methodol. Just Accepted (November 2023).
 
