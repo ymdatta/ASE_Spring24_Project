@@ -1,47 +1,43 @@
-# AI, Refactored
+# AI, Refactored, Simplified
 
-Here, we explore a large case study in refactoring seemingly complex code into something very, very simple indeed
-- semi-supervised explainable AI for  multi-objective optimization
-- a.k.a. "peek at a few  things (or less) to learn rules that tame many things".
+This is a semester-long experiment in 
+refactoring complex  AI and SE concepts into simpler forms. I
+advocate for understanding and applying _semi-supervised explainable
+AI for multi-objective optimization_ in a more straightforward manner.
 
-Along the way, we'll do lots of coding in Python and learn lots of SE and AI theory.
+-  doing more with less,
+- stop  assembling large libraries and complex systems.
+- start focusing on  efficiency and minimalism in AI and
+SE.
 
-## Why do this subject?
+> Here  we say  "know the problem" before proposing solutions
+We offer data-centric view here over a
+code-centric or algorithm-centric approach, advocating for a exploring the _shape_ of    data and its landscape before diving into algorithmic trivia .
+
+There's a strong focus on learning
+through coding, and understanding AI and SE theories.
+This subject is  targeted at individuals aiming to enhance their coding
+skills and theoretical knowledge in these areas.
 
 <img src="docs/despair.png" align=right width=400>
+Students taking this course will
+be able to simplify complex
+problems,
+becoming highly skilled (and respected) for their
+ coding and
+analysis skills. 
+Graduates of this subject will become the CEO and CTOs of whatever follows Google and OpenAI  (\*)
 
-- you will learn the **GREAT SECRET** (see below)
-  - you will code in a team to solve fun (and complex problems)
-- this  will become a coding and analysis GOD
-  - mere mortals will with respect you and fear your wrath
-  - for any new problem, 
-    - you will gave at it a while 
-    - then say "here's  20 lines of code where you test if something else is better, simpler, faster"
-  - for any new plan that explores many options
-    - you will  boil that plan down into the minimum number of steps to succeed
-- you will become a revolutionary 
-  - taking down the system from within
-  - the CEO and CTOs of whatever follows Google and OpenAI
-  - you will unseat  LLMs  (which energy-expensive, incomprehensible, untestable, unreproducible...)
-    -  and you will offer something... better (\*)
-
-(\*) that's perhaps a little overstated. 
+(\*) That's perhaps a little overstated. 
 - 1 professor + 4 Ph.D. students probably aren't going to unseat Google. 
-- Maybe we learn when to call LLMs and when to do something else that is simpler and faster
+- Maybe we need to learn when to call LLMs and when to do something else that is simpler and faster
 - Anyway, at the very least, you will know so many AI buzzwords to impress people (at parties, at your next job).
 
 
-## What is new here?
+This subject is offers a healthy dose of realism about   the current  mono-focus on large
+language models (LLMs) like those developed by Google and OpenAI (which energy-expensive and
+incomprehensible).  We  emphasizing practical learning and application of _all kinds_ of AI knowledge.
 
-- A data  centric view
-  - _Data_ as the ultimate API
-    - algorithms do this and that, but they all do it to data
-    - so study the landscape of the data BEFORE anything
-- Not a _code_ centric view
-- Not respectful to  _algorithms_  (our goal: refactor  many algorithms  into a much smaller number reusable parts )
-- Not library-itis
-  - We don't deliver large ensembles that bolt together large libraries
-  - We try to do _more_ with _less_
 
 
 ## The GREAT SECRET
@@ -56,7 +52,7 @@ The best thing you can do with most data is throw it away.
 
 Counter example? generative AI
 
-- Well, yes, but so very many other counter, counter examples (see this subject or 
+- Well, yes, but so very many other counter, counter examples in classification, regression, optimization (see this subject or 
   [1](https://arxiv.org/pdf/2011.13071.pdf),
   [2](https://arxiv.org/abs/2108.09847) 
   [3](https://www.researchgate.net/publication/3248296_Finding_the_Right_Data_for_Software_Cost_Modeling))
@@ -89,33 +85,38 @@ Why reduce dimensions?
 
 ### Before Thinking, CLuster
 
-Thinking:
+We offer  a practical approach
+to problem-solving that involves clustering and thinking, suggesting
+a method to efficiently reach solutions by minimizing assumptions
+and focusing on relevant subsets of data.
+
+Lets think about thinking:
 
 - Rule1. Do something: $T \wedge A \vdash G$
 - Rule2. Don't do something bad: $T\wedge A \not\vdash \bot$
 - Rule3. Don't waste my time: minimize  $|A|$
-
-- Pragmatics: you;ll be able to reach some of the goals using some of the theory, so you will only need a few assumptions
-  - So, one more time:
-    - $T' \subseteq T$
-    - $A' \subseteq A$
-    - $G' \subseteq G$
-    - $T' \wedge A' \vdash G'$
-    - $T' \wedge A' \not\vdash \bot$
-    
-If there are more than one solution $A'_1, A'_2, A'_3,...$
-  - Pick the _best_ where _best_ is some domains specific predicate
+- Rule4, Often, there areIf there are more than one solution $A'_1, A'_2, A'_3,...$
+ - Pick the _best_  solution where _best_ is some domains specific predicate
     - e.g. planning / optimization: maximize goal coverage,   minimize, maximize certain numeric goal
     - e.g. monitoring: (what can go wrong), reverse of planning
     - e.g. explanation, tutoring: maximize overlap $A'$ with knowledge of the audience
     - e.g. classification / regression: report the expected values in  the $G'$ generated as above
     - e.g. testing: seek the fewest assumptions that reach the most goals
 
-If you give this to a naive theorem prover, exponential   runtimes (so many subsets)
+Let thing faster about thinking:
+
 - Trick: cluster before  inference
   - First find groupings of  $A'$  into  $A'_1,A'_2...$ 
   - Then run  $T' \wedge A' \vdash G'$ inside just one or 2 of these reduced spaces (vastly faster)
 
+
 ## TL;DR
 
-Cluster (first), then think (less).
+For efficiency, simplicity, and pragmatism
+in problem-solving.
+
+- Cluster (first), then think (less).
+
+- Clustering should include dimensionality reduction
+  - Ignore the spurious
+  - Forus on what's important
