@@ -36,7 +36,7 @@ Here are our themes;
 - **Practical Problem-Solving Strategy:** Presenting a methodical approach to problem-solving by prioritizing clustering and minimizing assumptions
 
 [^wechat23]: For more on this, see T. Menzies. keynote ASE'23, 
- [Beware, some of the rhetoric on LLMs is misleading](tiny.cc/wechat23).
+ [Beware, some of the rhetoric on LLMs is misleading](http://tiny.cc/wechat23).
 
 [^btw]: I definitely believe this for classification, regression,
 and optimization. Generation, on the other hand, is another matter.
