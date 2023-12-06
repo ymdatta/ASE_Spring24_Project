@@ -55,9 +55,9 @@ TL;DR:
   - Ignore the spurious
   - Focus on what's important
 
-## Case Study: Privacy
+## Case Studies
 
-
+### \#1: Privacy
 
 
 Why share all the data? why not just cluster and just share a few cluster centroids?[^peters]
@@ -77,6 +77,26 @@ Why share all the data? why not just cluster and just share a few cluster centro
 [^peters]: [Peters, Fayola, Tim Menzies, and Lucas Layman.](https://www.ezzoterik.com/papers/15lace2.pdf)
     2015 IEEE/ACM 37th IEEE International Conference on Software Engineering. Vol. 1. IEEE, 2015.
 
+
+### Other case studies
+
+Assume the analysis of the last section generalizes. What does that mean for SE:
+
+- Any piece of software can the studied, to find ways to most improve it,
+  after trying just a few dozen samples.
+  - easier auditing (less to look at)
+  - easier explanation (less to look at)
+  - easier requirements engineering tool (to encourage a fast discussion across the whole space) [^leit]
+  - easier classification for, e.g., predicting Github issue close time;
+  - easier testing; e.g. [^ling] [^stall];
+  - easier optimization of some goal variables; e.g. [^lutosa];
+  - easier  optimization or any task (don't explore the whole space; instead cluster and run your analysis on many small clusters)[^maj18][^riot]
+  - easier privacy: we don't have to look/share all the data. Just a tiny sample
+    should suffice [^peters].
+  - as a runtime checker (cluster the data, then report any new inputs that fall outside the range of the clusters of the test data used to test the system)[^liu]
+  - easier project management. Such managers have  many tricks for running a project.
+  Any one project uses just a few of those tricks, but which one to apply?
+  This method lets you learn what works in your projects.
 
 
 ## Some Theory
@@ -122,26 +142,6 @@ So via  incredibly optimistic analysis,   when studying
  
 In practice, this is too small. But as we shall see, 10-20 samples
 takes you a very long way. We will come back to this.
-
-## In Practice
-
-Assume the incredibly optimistic analysis of the last section is true, what does that mean for SE?
-
-- Any piece of software can the studied, to find ways to most improve it,
-  after trying just a few dozen samples.
-  - easier auditing (less to look at)
-  - easier explanation (less to look at)
-  - easier requirements engineering tool (to encourage a fast discussion across the whole space) [^leit]
-  - easier classification for, e.g., predicting Github issue close time;
-  - easier testing; e.g. [^ling] [^stall];
-  - easier optimization of some goal variables; e.g. [^lutosa];
-  - easier  optimization or any task (don't explore the whole space; instead cluster and run your analysis on many small clusters)[^maj18][^riot]
-  - easier privacy: we don't have to look/share all the data. Just a tiny sample
-    should suffice [^peters].
-  - as a runtime checker (cluster the data, then report any new inputs that fall outside the range of the clusters of the test data used to test the system)[^liu]
-  - easier project management. Such managers have  many tricks for running a project.
-  Any one project uses just a few of those tricks, but which one to apply?
-  This method lets you learn what works in your projects.
 
 ## References
 
