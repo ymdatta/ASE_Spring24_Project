@@ -1,7 +1,7 @@
 -- <img src="refactor.png" width=400><br>
 -- [home](index.html) :: [github](https://github.com/timm/refactor) ::
 -- [issues](https://github.com/timm/refactor/issues) :: [lib](lib.html)
--- :: count &rightarrow; [counts](counts.html)     
+-- :: [zero](zero,html) &rightarrow; count &rightarrow; [counts](counts.html)     
 -- -------------------------------------------
 --  Load data from disk, report central tendancies and diversity
 --  around that centraility.
