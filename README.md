@@ -1,15 +1,14 @@
 # SE for  Simpler AI: A Minimalist Approach
 
-<img align=right width=300 src="docs/revolition.jpg">
+<img align=right width=300 src="docs/revolution.png">
 
 This is a semester-long experiment in  
 refactoring complex  AI and SE concepts into simpler forms. I
 advocate for  understanding and applying _semi-supervised explainable
 AI for multi-objective optimization_ in a more straightforward manner.
 
->  Graduates of this class will become software revolutionaries,,
-the  CEO and CTOs of whatever
-    follows Google or OpenAI.
+>  Graduates of this class will become software revolutionaries,
+the  CEO and CTOs of whatever follows Google or OpenAI.
 
 Here are our themes;
 
