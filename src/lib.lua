@@ -1,6 +1,17 @@
 -- <img src="refactor.png" width=400><br>
--- [home](index.html) :: [lib](lib.html)  
+-- [home](index.html) :: [github](https://github.com/timm/refactor) ::
+-- [issues](https://github.com/timm/refactor/issues) :: [lib](lib.html)
 local l={}
+
+-- ## Lint
+
+-- Cache things known before.
+local b4={}; for k,_ in pairs(_ENV) do b4[k]=k end
+
+-- Complain if we have messed with what was before.
+function l.rogues()
+  for k,v in pairs(_ENV) do 
+    if not b4[k] then print("-- W: rogue",k,type(v)) end end end
 
 -- ## Numbers
 
@@ -113,7 +124,7 @@ function l.cells(s1,    t)
 
 -- Iterate over a csv file, one row as a time.
 function l.csv(src)
-  src =  src=="" and io.input() or io.input(src)
+  src = src=="-" and io.stdin or io.input(src)
   return function(   line)
     line = io.read()
     if line then return l.cells(line) else io.close(src) end end end
@@ -139,13 +150,19 @@ function l.settings(s,    t,pat)
   t._help = s
   return t,s end
 
--- ## Run demos -----------------------------------------
+-- ## Run demos
+
+function l.toplevel ()
+  return not pcall(debug.getlocal,5,1) end 
 
 -- Run one.
-function l.try(s, settings, fun)
+function l.try(s, settings, fun,     b4,status)
   math.randomseed(settings.seed or 1234567891)
+  b4={}; for k,v in pairs(settings) do b4[k]=v end
   io.write("🔷 ".. s.." ")
-  if fun()==false 
+  status = fun()==false 
+  for k,v in pairs(b4) do settings[k]=v end
+  if   status
   then print(" ❌ FAIL"); return true
   else print("✅ PASS"); return false end  end
 
@@ -160,7 +177,7 @@ function l.run(settings, funs)
 -- Run all.
 function l.runall(settings,funs,     oops)
   oops = -1 -- we have one test that deliberately fails
-  for k,fun in l.order(funs) do
+  for k,fun in l.items(funs) do
     if k~="all" then 
       if l.try(k,settings, fun) then oops = oops + 1 end end end
   l.rogues()

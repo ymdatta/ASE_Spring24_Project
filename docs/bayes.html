@@ -18,7 +18,8 @@
         <a class='octothorpe' href='#section-0'>#</a>
       </div>
       <p><img src="refactor.png" width=400><br>
-<a href="index.html">home</a> :: <a href="lib.html">lib</a>
+<a href="index.html">home</a> :: <a href="https://github.com/timm/refactor">github</a> ::
+<a href="https://github.com/timm/refactor/issues">issues</a> :: <a href="lib.html">lib</a>
 :: <a href="counts.html">counts</a> &rightarrow;  bayes</p>
     </div>
     <div class='code'>
@@ -34,7 +35,7 @@
 <span class="s">  lua bayes.lua -f x.csv [OPTIONS]</span>
 <span class="s"> </span>
 <span class="s">OPTIONS:</span>
-<span class="s">  -f --file    csv data file name               = &quot;&quot;</span>
+<span class="s">  -f --file    csv data file name               = -</span>
 <span class="s">  -h --help    show help                        = false </span>
 <span class="s">  -k --k       handle low class frequencies     = 2</span>
 <span class="s">  -m --m       handle low attribute frequencies = 1</span>
@@ -62,7 +63,7 @@
       <p>Create one NUM</p>
     </div>
     <div class='code'>
-      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">NUM</span><span class="p">(</span><span class="n">at</span><span class="p">,</span><span class="n">txt</span><span class="p">)</span> 
+      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">NUM</span><span class="p">(</span><span class="n">txt</span><span class="p">,</span><span class="n">at</span><span class="p">)</span> 
   <span class="kr">return</span> <span class="p">{</span><span class="n">at</span><span class="o">=</span><span class="n">at</span><span class="p">,</span> <span class="n">txt</span><span class="o">=</span><span class="n">txt</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">has</span><span class="o">=</span><span class="p">{},</span>
           <span class="n">isSorted</span><span class="o">=</span><span class="kc">true</span><span class="p">,</span>
           <span class="n">heaven</span><span class="o">=</span> <span class="p">(</span><span class="n">txt</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">):</span><span class="n">find</span><span class="s2">&quot;-$&quot;</span> <span class="ow">and</span> <span class="mi">0</span> <span class="ow">or</span> <span class="mi">1</span><span class="p">}</span> <span class="kr">end</span></pre></div>
@@ -77,7 +78,7 @@
       <p>Create one SYM</p>
     </div>
     <div class='code'>
-      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">SYM</span><span class="p">(</span><span class="n">at</span><span class="p">,</span><span class="n">txt</span><span class="p">)</span> 
+      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">SYM</span><span class="p">(</span><span class="n">txt</span><span class="p">,</span><span class="n">at</span><span class="p">)</span> 
   <span class="kr">return</span> <span class="p">{</span><span class="n">at</span><span class="o">=</span><span class="n">at</span><span class="p">,</span> <span class="n">txt</span><span class="o">=</span><span class="n">txt</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">has</span><span class="o">=</span><span class="p">{},</span>
           <span class="n">mode</span><span class="o">=</span><span class="kc">nil</span><span class="p">,</span> <span class="n">most</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">isSym</span><span class="o">=</span><span class="kc">true</span><span class="p">}</span> <span class="kr">end</span></pre></div>
     </div>
@@ -91,8 +92,8 @@
       <p>Create one COL</p>
     </div>
     <div class='code'>
-      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">COL</span><span class="p">(</span><span class="n">at</span><span class="p">,</span><span class="n">txt</span><span class="p">)</span>
-  <span class="kr">return</span> <span class="p">((</span><span class="n">txt</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">):</span><span class="n">find</span><span class="s2">&quot;^[A-Z]&quot;</span> <span class="ow">and</span> <span class="n">l</span><span class="p">.</span><span class="n">NUM</span> <span class="ow">or</span> <span class="n">l</span><span class="p">.</span><span class="n">SYM</span><span class="p">)(</span><span class="n">at</span><span class="p">,</span><span class="n">txt</span><span class="p">)</span> <span class="kr">end</span></pre></div>
+      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">COL</span><span class="p">(</span><span class="n">txt</span><span class="p">,</span><span class="n">at</span><span class="p">)</span>
+  <span class="kr">return</span> <span class="p">((</span><span class="n">txt</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">):</span><span class="n">find</span><span class="s2">&quot;^[A-Z]&quot;</span> <span class="ow">and</span> <span class="n">l</span><span class="p">.</span><span class="n">NUM</span> <span class="ow">or</span> <span class="n">l</span><span class="p">.</span><span class="n">SYM</span><span class="p">)(</span><span class="n">txt</span><span class="p">,</span><span class="n">at</span><span class="p">)</span> <span class="kr">end</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>

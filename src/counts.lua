@@ -1,5 +1,6 @@
 -- <img src="refactor.png" width=400><br>
--- [home](index.html) :: [lib](lib.html)
+-- [home](index.html) :: [github](https://github.com/timm/refactor) ::
+-- [issues](https://github.com/timm/refactor/issues) :: [lib](lib.html)
 -- ::  [count](count.html) &rightarrow;  counts &rightarrow; [bayes](bayes.html)
 --       
 --     $ lua counts.lua -f ../data/diabetes.csv 
@@ -32,19 +33,19 @@ OPTIONS:
 -- ##  One Column
 
 -- Create one NUM
-function l.NUM(at,txt) 
+function l.NUM(txt,at) 
   return {at=at, txt=txt, n=0, has={},
           isSorted=true,
           heaven= (txt or ""):find"-$" and 0 or 1} end
 
 -- Create one SYM
-function l.SYM(at,txt) 
+function l.SYM(txt,at) 
   return {at=at, txt=txt, n=0, has={},
           mode=nil, most=0, isSym=true} end
 
 -- Create one COL
-function l.COL(at,txt)
-  return ((txt or ""):find"^[A-Z]" and l.NUM or l.SYM)(at,txt) end
+function l.COL(txt,at)
+  return ((txt or ""):find"^[A-Z]" and l.NUM or l.SYM)(txt,at) end
 
 --  Update one column
 function l.col(col1,x)
@@ -83,10 +84,10 @@ function l.div(col1)
 
 -- Create one column.
 function l.COLS(t, -- e.g. {"Age","job","Salary+"} 
-                x,y,all,klass,col1)  
+                x,y,all,klass,col1)
   x, y, all = {}, {}, {}
   for at, txt in pairs(t) do
-    col1 =  l.COL(at,txt)
+    col1 = l.COL(txt,at)
     lib.push(all, col1)
     if not txt:find"X$" then
       if txt:find"!$" then klass=col1 end

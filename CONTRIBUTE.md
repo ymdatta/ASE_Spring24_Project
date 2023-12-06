@@ -1,3 +1,31 @@
+## Why no objects?
+
+- Cause it is not true [OO sync with the way with think](https://www.cs.kent.edu/~jmaletic/cs69995-PC/papers/Hatton98.pdf).
+- Also, OO (done wrong) can lead to 
+[massive code bloat](https://www.youtube.com/watch?v=o9pEzgHorH0)
+- Lastly, in my experience, polymorphism is used only for a
+small percent of all the method calls. And if replace
+that with just a little case-ing-on-top, are things really much worse?
+
+## Lots of small apps
+
+Common tricks are stored in some file `lib.lua`, that everyone loads.
+
+Each `src/app.lua` file:
+
+- Has doco in ``../docs/app.html`;
+- Can read from a `-f` file or from standard input;
+- Has help text at the top, from which `the` globals are extracted;
+- Has tests/examples in the file `appeg.lua`:
+  - From the command line, we can run one specific test or all;
+  - Before running a test, we reset the random number seed;
+  - After running a test, we reset all the settings to their defaults;
+  - Each test returns `true``, `false``, or `nil``.
+    -  If `false`, then
+    we say a test fails.
+  - If we run `all``, the code returns the number of failed tests;
+    - so `$?==0` means "no errors"
+
 ## Data Files
 This code reads data files which names columns on line1:
 

@@ -1,5 +1,6 @@
 -- <img src="refactor.png" width=400><br>
--- [home](index.html) :: [lib](lib.html)
+-- [home](index.html) :: [github](https://github.com/timm/refactor) ::
+-- [issues](https://github.com/timm/refactor/issues) :: [lib](lib.html)
 -- :: [counts](counts.html) &rightarrow;  bayes
 local l   = {}
 local lib = require"lib"
@@ -13,7 +14,7 @@ USAGE:
   lua bayes.lua -f x.csv [OPTIONS]
  
 OPTIONS:
-  -f --file    csv data file name               = ""
+  -f --file    csv data file name               = -
   -h --help    show help                        = false 
   -k --k       handle low class frequencies     = 2
   -m --m       handle low attribute frequencies = 1
@@ -22,19 +23,19 @@ OPTIONS:
 -- ##  One Column
 
 -- Create one NUM
-function l.NUM(at,txt) 
+function l.NUM(txt,at) 
   return {at=at, txt=txt, n=0, has={},
           isSorted=true,
           heaven= (txt or ""):find"-$" and 0 or 1} end
 
 -- Create one SYM
-function l.SYM(at,txt) 
+function l.SYM(txt,at) 
   return {at=at, txt=txt, n=0, has={},
           mode=nil, most=0, isSym=true} end
 
 -- Create one COL
-function l.COL(at,txt)
-  return ((txt or ""):find"^[A-Z]" and l.NUM or l.SYM)(at,txt) end
+function l.COL(txt,at)
+  return ((txt or ""):find"^[A-Z]" and l.NUM or l.SYM)(txt,at) end
 
 --  Update one column
 function l.col(col1,x)

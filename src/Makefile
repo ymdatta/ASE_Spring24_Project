@@ -15,7 +15,7 @@ help:  ## show help
 			' $(MAKEFILE_LIST)
 
 docs: ../docs/count.html ../docs/counts.html ../docs/index.html \
-      ../docs/lib.html   ../docs/bayes.html
+      ../docs/lib.html   ../docs/bayes.html ../docs/zero.html
 
 ../docs/%.html : %.lua ## make doc
 	echo "# making $@"
