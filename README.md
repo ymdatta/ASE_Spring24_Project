@@ -2,9 +2,8 @@
 
 <img align=right width=300 src="docs/revolution.png">
 
-This is a semester-long experiment in  
-refactoring complex  AI and SE concepts into simpler forms. I
-advocate for  understanding and applying _semi-supervised explainable
+This is a semester-long experiment in  refactoring complex  AI and SE concepts into simpler forms. Here, we 
+advocate   understanding and applying _semi-supervised explainable
 AI for multi-objective optimization_ in a more straightforward manner.
 
 >  Graduates of this class will become software revolutionaries,
@@ -14,7 +13,12 @@ Here are our themes;
 
 - **Simplification of AI and SE:** Emphasizing the transformation of complex AI concepts into simpler, more understandable forms.
 - **Learning and Skill Development:** Focus on enhancing coding skills and theoretical knowledge in AI and software engineering through practical examples.
-- **Empowerment through Knowledge:**  Motivating readers to become proficient in enhanced coding and analysis, enabling them to tackle complex problems with simplified solutions.
+- **Empowerment through Knowledge:**  
+- Motivating readers to become proficient in enhanced coding and analysis, enabling them to tackle complex problems with simplified solutions.
+  - Yes, you can understand it.
+- Enabling people, who are not the developers, to understand and critique
+  a system and (in an effective manner) demand changes to that system.
+  - Yes, you can critique it and propose improvements to  it.
 - **Critical View of Current AI Systems:** Analyzing the limitations of current large language models, such as their inefficiency and lack of transparency.
 - **Data-Centric Approach:** Prioritizing a focus on data analysis over algorithmic or code-centric methods.
   - Data is the ultimate API
