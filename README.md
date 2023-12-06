@@ -113,13 +113,12 @@ Why reduce dimensions?
 
 - lower dimensions = less search = easier explanation
 - higher dimensionality = more complexity = harder to find releveant examples = less reproduability = less validation = less trust
--  To see this, consider the volume of an $n$-dimensional sphere.
+-  To see this, consider the volume of an $n$-dimensional sphere. <img src="docs/sphere.png" align=right width=300>
    -  $V_2( r )={\pi}r^2$ 
    -  $V_3( r )=\frac{4}{3}{\pi}r^3$ 
    - $V_{n>3}( r )= \frac{{2\pi}r^2}{n} V_{n-2}( r )$. 
    -  Now consider the unit sphere i.e. $r=1$   for $n>2\pi$. 
-       - Observe how after $n=6$, the volume starts shrinking. 
-<a href="https://ontopo.files.wordpress.com/2009/03/unit-hypersphere.png">(and hits zero at $n=20$)</a>. 
+       - Observe how after $n=6$, the volume starts shrinking and hits zero at $n=20$
 - So hard to find nearby (relevant) examples
   - Trick: find a transform to map higher to lower.
 
