@@ -1,64 +1,58 @@
-# AI, Refactored, Simplified
+# SE for  Simpler AI: A Minimalist Approach
+
 
 This is a semester-long experiment in 
 refactoring complex  AI and SE concepts into simpler forms. I
 advocate for understanding and applying _semi-supervised explainable
 AI for multi-objective optimization_ in a more straightforward manner.
 
--  doing more with less,
-- stop  assembling large libraries and complex systems.
-- start focusing on  efficiency and minimalism in AI and
-SE.
+Here are our themes;
 
-> Here  we say  "know the problem" before proposing solutions
-We offer data-centric view here over a
-code-centric or algorithm-centric approach, advocating for a exploring the _shape_ of    data and its landscape before diving into algorithmic trivia .
+- **Simplification of AI and SE:** Emphasizing the transformation of complex AI concepts into simpler, more understandable forms.
+- **Learning and Skill Development:** Focus on enhancing coding skills and theoretical knowledge in AI and software engineering through practical examples.
+- **Empowerment through Knowledge:**  Motivating readers to become proficient in coding and analysis, enabling them to tackle complex problems with simplified solutions.
+- **Critical View of Current AI Systems:** Analyzing the limitations of current large language models, such as their inefficiency and lack of transparency.
+- **Data-Centric Approach:** Prioritizing a focus on data analysis over algorithmic or code-centric methods.
+  - Data is the ultimate API
+- **Efficiency and Minimalism:** Advocating for more efficient solutions using fewer resources and simpler methods.
+- <img align=right width=300 src="docs/block.jpg">
+ **Importance of 'Pruning' Data:** Highlighting the need to focus on important data and discard the irrelevant, drawing inspiration from Michelangelo’s sculpting philosophy.
+  - The best thing to do with most data is throw it away
+  - "Every block of stone has a statue inside it and it is the task of the sculptor to discover it." -- Michelangelo
+- **Dimensionality Reduction:** Discussing how high-dimensional data can be simplified and understood in lower dimensions.
+  - See case study, below
+- **Practical Problem-Solving Strategy:** Presenting a methodical approach to problem-solving by prioritizing clustering and minimizing assumptions
 
-There's a strong focus on learning
-through coding, and understanding AI and SE theories.
-This subject is  targeted at individuals aiming to enhance their coding
-skills and theoretical knowledge in these areas.
+TL;DR: 
+- "Cluster (first), then think (less)" to promote efficient and effective problem-solving.
+- Clustering should include dimensionality reduction
+  - Ignore the spurious
+  - Focus on what's important
 
-<img src="docs/despair.png" align=right width=400>
-Students taking this course will
-be able to simplify complex
-problems,
-becoming highly skilled (and respected) for their
- coding and
-analysis skills. 
-Graduates of this subject will become the CEO and CTOs of whatever follows Google and OpenAI  (\*)
+## Case Study: Privacy
 
-(\*) That's perhaps a little overstated. 
-- 1 professor + 4 Ph.D. students probably aren't going to unseat Google. 
-- Maybe we need to learn when to call LLMs and when to do something else that is simpler and faster
-- Anyway, at the very least, you will know so many AI buzzwords to impress people (at parties, at your next job).
+> [Peters, Fayola, Tim Menzies, and Lucas Layman.](https://www.ezzoterik.com/papers/15lace2.pdf)
+    2015 IEEE/ACM 37th IEEE International Conference on Software Engineering. Vol. 1. IEEE, 2015.
 
+Why share all the data? why not just cluster and just share a few cluster centroids?[^peters]
+  - [Fayola Peters](https://www.ezzoterik.com/papers/15lace2.pdf) used cluster + contrast to prune data, as she passed data around a community. 
+   - For example, in the following, green rows are those nearest the cluster centroids and blue rows are the ones most associated with the last column (bugs/10Kloc).
+   - Discard things are aren't blue of green. 
+   - She ended up sharing 20% of the rows and around a third of the columns. 1 - 1/5\*1/3 thus offered 93%   privacy
+   - As for the remaining 7% of the data, we ran a mutator that pushed up items up the boundary point between classes (and no further). Bu certain common measures of privacy, that made the 7% space 80% private. 
+   - Net effect 93% + .8*7 = 98.4% private,
+   - And, FYI, inference on the tiny green+blue region was as effective as inference over all
 
-This subject is offers a healthy dose of realism about   the current  mono-focus on large
-language models (LLMs) like those developed by Google and OpenAI (which energy-expensive and
-incomprehensible).  We  emphasizing practical learning and application of _all kinds_ of AI knowledge.
+<img width=700 src="https://github.com/timm/tested/blob/main//etc/img/peters1.png">
 
+<img width=700 src="https://github.com/timm/tested/blob/main//etc/img/peters2.png">
 
 
-## The GREAT SECRET
 
-<img align=right width=300 src="docs/block.jpg">
 
-The best thing you can do with most data is throw it away.
-- prune away the silly stuff
-- focus on the important stuff 
-- Every block of stone has a statue inside it and it is the task of the sculptor to discover it.   
-  -- Michelangelo
 
-Counter example? generative AI
 
-- Well, yes, but so very many other counter, counter examples in classification, regression, optimization (see this subject or 
-  [1](https://arxiv.org/pdf/2011.13071.pdf),
-  [2](https://arxiv.org/abs/2108.09847) 
-  [3](https://www.researchgate.net/publication/3248296_Finding_the_Right_Data_for_Software_Cost_Modeling))
-- Challenge: how to combine the benefits of LLMs with this "pruning approach"
-
-### Manifolds
+## Some Theory
 
 High-dimensional data can be approximated in lower dimension
 - **Continuity Assumption:**  Points which are closer to each other are more likely to have the same output label.
@@ -83,40 +77,3 @@ Why reduce dimensions?
   - Trick: find a transform to map higher to lower.
 
 
-### Before Thinking, CLuster
-
-We offer  a practical approach
-to problem-solving that involves clustering and thinking, suggesting
-a method to efficiently reach solutions by minimizing assumptions
-and focusing on relevant subsets of data.
-
-Lets think about thinking:
-
-- Rule1. Do something: $T \wedge A \vdash G$
-- Rule2. Don't do something bad: $T\wedge A \not\vdash \bot$
-- Rule3. Don't waste my time: minimize  $|A|$
-- Rule4, Often, there areIf there are more than one solution $A'_1, A'_2, A'_3,...$
- - Pick the _best_  solution where _best_ is some domains specific predicate
-    - e.g. planning / optimization: maximize goal coverage,   minimize, maximize certain numeric goal
-    - e.g. monitoring: (what can go wrong), reverse of planning
-    - e.g. explanation, tutoring: maximize overlap $A'$ with knowledge of the audience
-    - e.g. classification / regression: report the expected values in  the $G'$ generated as above
-    - e.g. testing: seek the fewest assumptions that reach the most goals
-
-Let thing faster about thinking:
-
-- Trick: cluster before  inference
-  - First find groupings of  $A'$  into  $A'_1,A'_2...$ 
-  - Then run  $T' \wedge A' \vdash G'$ inside just one or 2 of these reduced spaces (vastly faster)
-
-
-## TL;DR
-
-For efficiency, simplicity, and pragmatism
-in problem-solving.
-
-- Cluster (first), then think (less).
-
-- Clustering should include dimensionality reduction
-  - Ignore the spurious
-  - Forus on what's important
