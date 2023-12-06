@@ -22,20 +22,29 @@ Here are our themes;
 - Enabling people, who are not the developers, to understand and critique
   a system and (in an effective manner) demand changes to that system.
   - Yes, you can critique it and propose improvements to  it.
-- **Critical View of Current AI Systems:** Analyzing the limitations of current large language models, such as their inefficiency and lack of transparency.
+- **Critical View of Current AI Systems:** Analyzing the limitations of current large language models, such as their inefficiency and lack of transparency or validation [^wechat23]
 - **Data-Centric Approach:** Prioritizing a focus on data analysis over algorithmic or code-centric methods.
   - Data is the ultimate API
 - **Efficiency and Minimalism:** Advocating for more efficient solutions using fewer resources and simpler methods.
   <img align=right width=300 src="docs/block.jpg">
 - **Importance of 'Pruning' Data:** Highlighting the need to focus on important data and discard the irrelevant, drawing inspiration from Michelangelo’s sculpting philosophy.
   - "Every block of stone has a statue inside it and it is the task of the sculptor to discover it." -- Michelangelo
-  - The best thing to do with most data is throw it away[^btw].
+  - The best thing to do with most data is throw it away 
+    (and there are many examples of this [^btw] [^stealth] [^early]).
 - **Dimensionality Reduction:** Discussing how high-dimensional data can be simplified and understood in lower dimensions.
   - See case study, below
 - **Practical Problem-Solving Strategy:** Presenting a methodical approach to problem-solving by prioritizing clustering and minimizing assumptions
 
+[^wechat23]: For more on this, see T. Menzies. keynote ASE'23, 
+ [Beware, some of the rhetoric on LLMs is misleading](tiny.cc/wechat23).
+
 [^btw]: I definitely believe this for classification, regression,
 and optimization. Generation, on the other hand, is another matter.
+
+[^steatlh]: L. Alvarez and T. Menzies, ["Don’t Lie to Me: Avoiding Malicious Explanations With STEALTH,"](https://arxiv.org/pdf/2301.10407.pdf) in IEEE Software, vol. 40, no. 3, pp. 43-53, May-June 2023, doi: 10.1109/MS.2023.3244713.
+
+[^early]: N.C. Shrikanth, Suvodeep Majumder, Tim Menzies  [Early Life Cycle Software Defect Prediction. Why? How?](https://arxiv.org/pdf/2011.13071.pdf), ICSE'21.
+
 
 TL;DR: 
 - "Cluster (first), then think (less)" to promote efficient and effective problem-solving.
