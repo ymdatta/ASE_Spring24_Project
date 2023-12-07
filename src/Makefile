@@ -10,12 +10,14 @@ endef
 export css
 
 define header
+</h1>
 <p>
 <a href="https://timm.github.io/min/index.html">home</a>
 :: <a href="https://github.com/timm/min">github</a> 
 :: <a href="https://github.com/timm/min/issues">issues</a> 
 :: <a href="lib.html">lib</a>
 <br><img src="refactor.png" width=400>
+</div>
 endef
 export header
 	 
@@ -31,9 +33,8 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  ## update docs/*.html
 ../docs/%.html : %.lua ## make doc
 	pycco -d ../docs $^ 
 	gawk -v head="$$header" \
-		   'sub(/<\/h1><\/div>/,"</h1>") { \
-		        print $$0 head "</div>";next} 1 \
-				' $@ > _tmp; mv _tmp $@
+		'sub(/<\/h1><\/div>/,"") {print $$0 head;next} 1 \
+		' $@ > _tmp; mv _tmp $@
 	echo "$$css" >> ../docs/pycco.css
 	git  add  $@
 
