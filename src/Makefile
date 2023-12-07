@@ -34,7 +34,7 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  ## update docs/*.html
 ../docs/%.html : %.lua ## make doc
 	pycco -d ../docs $^ 
 	gawk -v head="$$header" \
-		'sub(/<\/h1><\/div>/,"") {print $$0 head;next} 1 \
+		'n==0 && sub(/<.h1><.div>/,"") {n++; print $$0 head;next} 1 \
 		' $@ > _tmp; mv _tmp $@
 	echo "$$css" >> ../docs/pycco.css
 	git  add  $@
