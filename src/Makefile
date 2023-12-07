@@ -13,6 +13,7 @@ define header
 </h1>
 <p>
 <a href="https://timm.github.io/min/index.html">home</a>
+:: <a href="https://github.com/timm/min/CONTRIBUTE.md">notes</a> 
 :: <a href="https://github.com/timm/min">github</a> 
 :: <a href="https://github.com/timm/min/issues">issues</a> 
 :: <a href="lib.html">lib</a>
