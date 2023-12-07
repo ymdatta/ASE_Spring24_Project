@@ -1,5 +1,5 @@
 -- [zero](zero,html) &rightarrow; count &rightarrow; [counts](counts.html)     
--- -------------------------------------------
+--   
 --  Load data from disk, report central tendancies and diversity
 --  around that centraility.
 --   
