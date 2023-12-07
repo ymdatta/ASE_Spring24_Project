@@ -66,7 +66,7 @@ function l.kap(t,fun,...)
                   u[1+#u] = fun(k,v,...) end; return u end
 
 -- Return keys and values inside `t` in alphabetical order of the keys.
-function l.items(t,fun,    u,i)  
+function l.items(t,fun,    u,i)
   u={}; for k,_ in pairs(t) do u[1+#u]=k end
   table.sort(u,fun)
   i=0
