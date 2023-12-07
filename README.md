@@ -3,7 +3,7 @@
 **CHALLENGE**: AI software is still software. Hence, if we understand it, it can be refactored
 and simplified.  Do you understand the software basis for AI?
 
-<img align=right width=300 src="docs/revolution.png">
+<img align=right width=200 src="docs/revolution.png">
 
 This is a semester-long experiment in  refactoring complex  AI and SE concepts into simpler forms. Here, we 
 advocate   understanding and applying _semi-supervised explainable
@@ -26,7 +26,7 @@ Here are our themes;
 - **Data-Centric Approach:** Prioritizing a focus on data analysis over algorithmic or code-centric methods.
   - Data is the ultimate API
 - **Efficiency and Minimalism:** Advocating for more efficient solutions using fewer resources and simpler methods.
-  <img align=right width=300 src="docs/block.jpg">
+  <img align=right width=200 src="docs/block.jpg">
 - **Importance of 'Pruning' Data:** Highlighting the need to focus on important data and discard the irrelevant, drawing inspiration from Michelangelo’s sculpting philosophy.
   - "Every block of stone has a statue inside it and it is the task of the sculptor to discover it." -- Michelangelo
   - The best thing to do with most data is throw it away 
@@ -59,6 +59,8 @@ TL;DR:
 
 ### \#1: Privacy
 
+What can companies learn from each other (about e.g. defect prediction in code). What can they share
+without giving away secrets?
 
 Why share all the data? why not just cluster and just share a few cluster centroids?[^peters]
   - [Fayola Peters](https://www.ezzoterik.com/papers/15lace2.pdf) used cluster + contrast to prune data, as she passed data around a community. 
@@ -142,7 +144,9 @@ So via  incredibly optimistic analysis,   when studying
 In practice, this is too small. But as we shall see, 10-20 samples
 takes you a very long way. We will come back to this.
 
-Take that, big data!
+In any case, take that big data!
+
+![](https://forum.obsidian.md/uploads/default/original/2X/a/a84feb13a6f78c238c6872fcc400a69559596869.jpeg)
 
 ## References
 
