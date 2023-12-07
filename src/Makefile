@@ -9,8 +9,15 @@ h2        { padding-top: 2px; border-top: 1px dotted #888; }
 endef
 export css
 
-FILES=$(wildcard *.lua)
-docs: $(addprefix ../docs/, $(FILES:.lua=.html)) 
+define header
+<p>
+<a href="https://timm.github.io/min/index.html">home</a>
+:: <a href="https://github.com/timm/min">github</a> 
+:: <a href="https://github.com/timm/min/issues">issues</a> 
+:: <a href="lib.html">lib</a>
+<br><img src="refactor.png" width=400>
+endef
+export header
 	 
 help:  ## show help
 	awk 'BEGIN {FS = ":.*?## "; print "\nmake [WHAT]" } \
@@ -18,8 +25,15 @@ help:  ## show help
 			' $(MAKEFILE_LIST)
 
 
+FILES=$(wildcard *.lua)
+docs: $(addprefix ../docs/, $(FILES:.lua=.html))  ## update docs/*.html
+
 ../docs/%.html : %.lua ## make doc
 	pycco -d ../docs $^ 
+	gawk -v head="$$header" \
+		   'sub(/<\/h1><\/div>/,"</h1>") { \
+		        print $$0 head "</div>";next} 1 \
+				' $@ > _tmp; mv _tmp $@
 	echo "$$css" >> ../docs/pycco.css
 	git  add  $@
 
