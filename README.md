@@ -1,23 +1,23 @@
 # SE for  Simpler AI: A Minimalist Approach
 
+<img align=right width=200 src="docs/revolution.png">
 **CHALLENGE**: AI software is still software. Hence, if we understand it, it can be refactored
 and simplified.  Do you understand the software basis for AI?
-
-<img align=right width=200 src="docs/revolution.png">
-
-This is a semester-long experiment in  refactoring complex  AI and SE concepts into simpler forms. Here, we 
-advocate   understanding and applying _semi-supervised explainable
-AI for multi-objective optimization_ in a more straightforward manner.
 
 >  Graduates of this class will become software revolutionaries,
 the  CEO and CTOs of whatever follows Google or OpenAI.
 
 Here are our themes;
 
+- **Simplification of AI and SE:** Emphasizing the transformation of complex AI concepts into simpler, more understandable forms.
+  - Lots of small scripts doing lots of large AI tasks. 
+  - Our case study: _semi-supervised explainable AI for multi-objective optimization_ 
+  - Our results: tiny scripts with astonishing generality:
+    - Not by reusing some large libary
+    - But by focusing on core processes.
 - **Beyond mere programmong:**. In devops, we automated everything. Here, we automate automation.
   - In the post chatgpt-world, you don't want to be "just" a programmer
   - You want to be the person trading off requirements, telling the programmers what to code (and what not to code).
-- **Simplification of AI and SE:** Emphasizing the transformation of complex AI concepts into simpler, more understandable forms.
 - **Learning and Skill Development:** Focus on enhancing coding skills and theoretical knowledge in AI and software engineering through practical examples.
 - **Empowerment through Knowledge:**  
   - Motivating readers to become proficient in enhanced coding and analysis, enabling them to tackle complex problems with simplified solutions.

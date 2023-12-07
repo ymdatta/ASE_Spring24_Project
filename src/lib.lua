@@ -10,13 +10,13 @@ local b4={}; for k,_ in pairs(_ENV) do b4[k]=k end
 
 -- Complain if we have messed with what was before.
 function l.rogues()
-  for k,v in pairs(_ENV) do 
+  for k,v in pairs(_ENV) do
     if not b4[k] then print("-- W: rogue",k,type(v)) end end end
 
 -- ## Numbers
 
 -- Round to `ndecs` decimals.
-function l.rnd(n, ndecs)  
+function l.rnd(n, ndecs)
   if type(n) ~= "number" then return n end
   if math.floor(n) == n  then return n end
   local mult = 10^(ndecs or 3)
@@ -53,12 +53,12 @@ function l.entropy(t, e, n)
 function l.defaults(t, defaults)
   t = t or {}
   for k,v in pairs(defaults) do
-    if t[k] == nil then t[k] = v end end 
+    if t[k] == nil then t[k] = v end end
   return t end
 
 -- Apply `fun` to all items in `t`.
 function l.map(t,fun,...) --> t
-  local u={};  for k,v in pairs(t) do u[1+#u] = fun(v,...) end; return u end
+  local u={};  for _,v in pairs(t) do u[1+#u] = fun(v,...) end; return u end
 
 -- Apply `fun` to all keys and values in `t`.
 function l.kap(t,fun,...)  
@@ -106,20 +106,20 @@ function l.o(x,  ndecs,     fun, u)
   if type(x) == "number" then return tostring(l.rnd(x,ndecs)) end
   if type(x) ~= "table" then return tostring(x) end
   u = #x == 0 and l.sort(l.kap(x, fun)) or l.map(x, l.o, ndecs)
-  return "{"..table.concat(u,", ").."}" end 
+  return "{"..table.concat(u,", ").."}" end
 
 -- ## String to thing
 
 -- String to int or float or nil or bool.
-function l.coerce(s,    fun)
-  function fun(s)
-    if s=="nil" then return nil
-    else return s=="true" or (s~="false" and s) end end
-  return math.tointeger(s) or tonumber(s) or fun(s:match'^%s*(.*%S)') end
+function l.coerce(s1,    fun)
+  function fun(s2)
+    if s2=="nil" then return nil
+    else return s2=="true" or (s2~="false" and s2) end end
+  return math.tointeger(s1) or tonumber(s1) or fun(s1:match'^%s*(.*%S)') end
 
 -- String to list of items.
 function l.cells(s1,    t)
-  t={}; for s2 in s1:gmatch("([^,]+)") do t[1+#t]=l.coerce(s2) end; 
+  t={}; for s2 in s1:gmatch("([^,]+)") do t[1+#t]=l.coerce(s2) end;
   return t end
 
 -- Iterate over a csv file, one row as a time.
@@ -153,15 +153,15 @@ function l.settings(s,    t,pat)
 -- ## Run demos
 
 function l.toplevel ()
-  return not pcall(debug.getlocal,5,1) end 
+  return not pcall(debug.getlocal,5,1) end
 
 -- Run one.
-function l.try(s, settings, fun,     b4,status)
+function l.try(s, settings, fun,     before,status)
   math.randomseed(settings.seed or 1234567891)
-  b4={}; for k,v in pairs(settings) do b4[k]=v end
+  before={}; for k,v in pairs(settings) do b4[k]=v end
   io.write("🔷 ".. s.." ")
   status = fun()==false 
-  for k,v in pairs(b4) do settings[k]=v end
+  for k,v in pairs(before) do settings[k]=v end
   if   status
   then print(" ❌ FAIL"); return true
   else print("✅ PASS"); return false end  end
@@ -171,7 +171,7 @@ function l.run(settings, funs)
   l.cli(settings)
   for _,com in pairs(arg) do
      if com=="all" then  l.runall(settings,funs) end
-     if funs[com] then l.try(com, settings, funs[com]) end end 
+     if funs[com] then l.try(com, settings, funs[com]) end end
   l.rogues() end
   
 -- Run all.
@@ -190,8 +190,8 @@ function l.runall(settings,funs,     oops)
 -- For one class, calcuate statistics for symbolic classification.
 
 -- Create,
-function l.ABCD(klass, b4)
-  return {klass=klass, a=(b4 or 0), b=0, c=0, d=0} end
+function l.ABCD(klass, before)
+  return {klass=klass, a=(before or 0), b=0, c=0, d=0} end
 
 -- Update.
 function l.abcd(abcd1, want,got)
@@ -205,7 +205,7 @@ function l.recall(abcd1)    return abcd1.d           / (abcd1.b+abcd1.d+1E-30) e
 function l.accuracy(abcd1)  return (abcd1.a+abcd1.d) / (abcd1.a+abcd1.b+abcd1.c+abcd1.d+1E-30) end
 function l.precision(abcd1) return abcd1.d           / (abcd1.c+abcd1.d+1E-30) end
 function l.f(abcd1,   p,r)  p,r  = l.precision(abcd1),l.recall(abcd1); return (2*p*r)  / (p+r) end
-function l.g(abcd1,   n,f)  nf,r = 1-l.pf(abcd1),l.recall(abcd1);      return (2*nf*r) / (nf+r) end
+function l.g(abcd1,   nf,r)  nf,r = 1-l.pf(abcd1),l.recall(abcd1);      return (2*nf*r) / (nf+r) end
 
 -- ### ABCDS
 -- For many classes,  calcuate statistics for symbolic classification.

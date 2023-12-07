@@ -7,6 +7,14 @@
 small percent of all the method calls. And if replace
 that with just a little case-ing-on-top, are things really much worse?
 
+## Lots of Small Functions
+
+More than five lines per function makes me nervous, less than three makes me smile.
+
+## Few globals
+
+_N-1_ globals is better than _N_.
+
 ## Lots of small apps
 
 Common tricks are stored in some file `lib.lua`, that everyone loads.
