@@ -132,7 +132,7 @@ function l.csv(src)
 -- For each `key=value` in `t`, look for a command-line flag `-k` or `--key`
 -- then update `value` from command line. If the old `value` is a boolean,
 -- the `-k` is enough to flip it 
-function l.cli(t) 
+function l.cli(t)
   for k,v in pairs(t) do
     v = tostring(v)
     for n,x in ipairs(arg) do
@@ -173,12 +173,12 @@ function l.run(settings, funs)
      if com=="all" then  l.runall(settings,funs) end
      if funs[com] then l.try(com, settings, funs[com]) end end
   l.rogues() end
-  
+
 -- Run all.
 function l.runall(settings,funs,     oops)
   oops = -1 -- we have one test that deliberately fails
   for k,fun in l.items(funs) do
-    if k~="all" then 
+    if k~="all" then
       if l.try(k,settings, fun) then oops = oops + 1 end end end
   l.rogues()
   os.exit(oops) end
