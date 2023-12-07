@@ -1,7 +1,8 @@
 # SE for  Simpler AI: A Minimalist Approach
 
 <img align=right width=200 src="docs/revolution.png">
-**CHALLENGE**: AI software is still software. Hence, if we understand it, it can be refactored
+
+**CHALLENGE** : AI software is still software. Hence, if we understand it, it can be refactored
 and simplified.  Do you understand the software basis for AI?
 
 >  Graduates of this class will become software revolutionaries,
