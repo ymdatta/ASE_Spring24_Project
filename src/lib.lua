@@ -28,7 +28,7 @@ function l.rnd(n, ndecs)
 function l.push(t,x) t[1+#t]=x; return x end
 
 -- Lua's default sort does not return the sorted list. So....
-function l.sort(t,  fun) 
+function l.sort(t,  fun)
   table.sort(t,fun); return t end
 
 -- Return the `p`-th item in `t`.
@@ -61,7 +61,7 @@ function l.map(t,fun,...) --> t
   local u={};  for _,v in pairs(t) do u[1+#u] = fun(v,...) end; return u end
 
 -- Apply `fun` to all keys and values in `t`.
-function l.kap(t,fun,...)  
+function l.kap(t,fun,...)
   local u = {}; for k, v in pairs(t) do
                   u[1+#u] = fun(k,v,...) end; return u end
 
@@ -81,7 +81,7 @@ function l.report(ts, header, nwidth, u, say)
     function say(x) io.write(l.fmt("%" .. (nwidth or 4) .. "s", x)) end
     u = {}
     for _, t in pairs(ts) do
-      for k, _ in pairs(t) do u[1 + #u] = k end  
+      for k, _ in pairs(t) do u[1 + #u] = k end
       table.sort(u)
       say ""; for _, k in pairs(u) do say(k) end; print ""
       for k1, t in l.items(ts) do
@@ -160,7 +160,7 @@ function l.try(s, settings, fun,     before,status)
   math.randomseed(settings.seed or 1234567891)
   before={}; for k,v in pairs(settings) do b4[k]=v end
   io.write("🔷 ".. s.." ")
-  status = fun()==false 
+  status = fun()==false
   for k,v in pairs(before) do settings[k]=v end
   if   status
   then print(" ❌ FAIL"); return true
@@ -228,11 +228,11 @@ function l.abcdsreport(abcds1,     u)
     _c   = abcd1.c, 
     _d   = abcd1.d,
     acc  = l.accuracy(abcd1),
-    prec = l.precision(abcd1), 
-    pd   = l.recall(abcd1),     
+    prec = l.precision(abcd1),
+    pd   = l.recall(abcd1),
     pf   = l.pf(abcd1),
-    f    = l.f(abcd1),           
-    g    = l.g(abcd1)} end 
+    f    = l.f(abcd1),
+    g    = l.g(abcd1)} end
   return u end
 
   -- ## Main
