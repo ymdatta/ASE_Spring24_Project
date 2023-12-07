@@ -14,6 +14,9 @@ the  CEO and CTOs of whatever follows Google or OpenAI.
 
 Here are our themes;
 
+- **Beyond mere programmong:**. In devops, we automated everything. Here, we automate automation.
+  - In the post chatgpt-world, you don't want to be "just" a programmer
+  - You want to be the person trading off requirements, telling the programmers what to code (and what not to code).
 - **Simplification of AI and SE:** Emphasizing the transformation of complex AI concepts into simpler, more understandable forms.
 - **Learning and Skill Development:** Focus on enhancing coding skills and theoretical knowledge in AI and software engineering through practical examples.
 - **Empowerment through Knowledge:**  
