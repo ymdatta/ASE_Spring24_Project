@@ -19,6 +19,23 @@ function l.rnd(n, ndecs)
   local mult = 10^(ndecs or 3)
   return math.floor(n * mult + 0.5) / mult end
 
+-- Return a sample from a Gaussian of  `mu` and  `sd`
+function l.gaussian(mu,sd)
+  mu,sd = mu or 0, sd or 1
+  local sq,pi,log,cos,r = math.sqrt,math.pi,math.log,math.cos,math.random
+  return  mu + sd * sq(-2*log(r())) * cos(2*pi*r())  end
+
+-- Convert list of numbers to standard deviation. For more on this see
+-- [here](http://datagenetics.com/blog/november22017/index.html).
+function l.t2stdec(t,    d,n,mu,m2)
+	n,mu,m2 = 0,0,0
+  for _,x in pairs(t) do
+    n  = n+1
+    d  = x-mu
+    mu = mu + d/n
+    m2 = m2 + d*(x-mu) end
+	return n<2 and 0 or (m2/(n - 1))^.5 end
+
 -- ## Lists
 
 -- Push onto a list `t`.

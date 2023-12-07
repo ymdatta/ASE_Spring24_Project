@@ -12,12 +12,12 @@ export css
 define header
 </h1>
 <p>
-<a href="https://timm.github.io/min/index.html">home</a>
-:: <a href="https://github.com/timm/min/blob/main/CONTRIBUTE.md">notes</a>
-:: <a href="https://github.com/timm/min">github</a> 
-:: <a href="https://github.com/timm/min/issues">issues</a> 
+<a href="https://timm.github.io/lo/index.html">home</a>
+:: <a href="https://github.com/timm/lo/blob/main/CONTRIBUTE.md">notes</a>
+:: <a href="https://github.com/timm/lo">github</a> 
+:: <a href="https://github.com/timm/lo/issues">issues</a> 
 :: <a href="lib.html">lib</a>
-<br><img src="refactor.png" width=400>
+<center><img src="refactor.png" width=500></center>
 </div>
 endef
 export header
@@ -34,7 +34,7 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  ## update docs/*.html
 ../docs/%.html : %.lua ## make doc
 	pycco -d ../docs $^ 
 	gawk -v head="$$header" \
-		'n==0 && sub(/<.h1><.div>/,"") {n++; print $$0 head;next} 1 \
+		'sub(/<.h1><.div>/,"") {print $$0 head;next} 1 \
 		' $@ > _tmp; mv _tmp $@
 	echo "$$css" >> ../docs/pycco.css
 	git  add  $@
