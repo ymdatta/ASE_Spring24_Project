@@ -223,9 +223,9 @@ function l.abcds(abcds1,want,got)
 function l.abcdsreport(abcds1,     u)
   u={}; for k,abcd1 in pairs(abcds1.all) do u[k] = {
     _n   = abcd1.a+abcd1.b+abcd1.c+abcd1.d,
-    _a   = abcd1.a, 
-    _b   = abcd1.b, 
-    _c   = abcd1.c, 
+    _a   = abcd1.a,
+    _b   = abcd1.b,
+    _c   = abcd1.c,
     _d   = abcd1.d,
     acc  = l.accuracy(abcd1),
     prec = l.precision(abcd1),
