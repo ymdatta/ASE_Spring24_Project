@@ -1,4 +1,4 @@
--- <img src="min.png" width=400><br>
+-- <img src="refactor.png" width=400><br>
 -- [home](index.html) :: [github](https://github.com/timm/min) ::
 -- [issues](https://github.com/timm/min/issues) :: [lib](lib.html)
 -- :: [zero](zero,html) &rightarrow; count &rightarrow; [counts](counts.html)     
@@ -35,13 +35,13 @@ OPTIONS:
 -- ## Create one column
 
 -- Create NUMs
-function l.NUM(txt,at) 
+function l.NUM(txt,at)
   return {at=at, txt=txt, n=0, has={},
           isSorted=true,
           heaven= (txt or ""):find"-$" and 0 or 1} end
 
 -- Create SYMs
-function l.SYM(txt,at) 
+function l.SYM(txt,at)
   return {at=at, txt=txt, n=0, has={},
           mode=nil, most=0, isSym=true} end
 
@@ -66,27 +66,27 @@ function l.num(num1,x)
   if x~="?" then
     num1.n = num1.n + 1
     lib.push(num1.has,x)
-    num1.isSorted=false end end 
+    num1.isSorted=false end end
 
 -- Query one column
 function l.has(col1)
-  if not (col1.isSym or col1.isSorted) then 
+  if not (col1.isSym or col1.isSorted) then
     table.sort(col1.has); col1.isSorted=true end
   return col1.has end
 
 -- Central tendency 
-function l.mid(col1) 
+function l.mid(col1)
   return  col1.isSym and col1.mode or lib.median(l.has(col1)) end
 
 -- Diversity around central tendency
-function l.div(col1) 
+function l.div(col1)
   return (col1.isSym and lib.entropy or lib.stdev)(l.has(col1)) end
 
 -- ## COLS = multiple colums
 
 -- Creation
 function l.COLS(t, -- e.g. {"Age","job","Salary+"} 
-                x,y,all,klass,col1)  
+                x,y,all,klass,col1)
   x, y, all = {}, {}, {}
   for at, txt in pairs(t) do
     col1 =  l.COL(txt,at)
@@ -116,7 +116,7 @@ function l.data(data1,t)
   else  data1.cols= l.COLS(t) end end
 
 --  Query   data
-function l.stats(data1, my,     t,fun) 
+function l.stats(data1, my,     t,fun)
   my  = lib.defaults(my,{cols="x",ndecs=2,report=the.report})
   fun = l[my.report]
   t   = {[".N"]=#data1.rows}
