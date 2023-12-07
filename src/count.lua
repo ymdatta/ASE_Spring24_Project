@@ -1,8 +1,5 @@
 -- [zero](zero.html) &rightarrow; count &rightarrow; [counts](counts.html)     
 --   
---  Load data from disk, report central tendancies and diversity
---  around that centraility.
---   
 --     $  cat ../data/diabetes.csv | lua count.lua -r mid | fmt -55
 --   
 --       {:.N 768, :Age 29, :Insu 29, :Mass 32, :Pedi 0.37,
