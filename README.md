@@ -18,7 +18,7 @@ Here are our themes;
 - **Learning and Skill Development:** Focus on enhancing coding skills and theoretical knowledge in AI and software engineering through practical examples.
 - **Empowerment through Knowledge:**  
   - Motivating readers to become proficient in enhanced coding and analysis, enabling them to tackle complex problems with simplified solutions.
-   -  Yes, you (the developer) can understand it.
+    -  Yes, you (the developer) can understand it.
   - Enabling people, who are not the developers, to understand and critique
   a system and (in an effective manner) demand changes to that system.
     - Yes, you (the community) can critique it and propose improvements to  it.
