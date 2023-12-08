@@ -7,6 +7,8 @@ the  CEO and CTOs of whatever follows Google or OpenAI.
 
 Here are our themes;
 
+- <a name=less>**Lo is less, less is more:**</a> Seemingly complex problems can be approximated
+  in a very low dimensional space-- where all inference is much  simpler and faster [^lutosa].
 - **Simplification of AI and SE:** Emphasizing the transformation of complex AI concepts into simpler, more understandable forms.
   - Lots of small scripts doing lots of large AI tasks. 
   - Our case study: _semi-supervised explainable AI for multi-objective optimization_ 
@@ -34,8 +36,7 @@ Here are our themes;
     (and there are many examples of this [^btw] [^stealth] [^early]).
 - **Dimensionality Reduction:** Discussing how high-dimensional data can be simplified and understood in lower dimensions.
   - See case study, below
-- **Practical Problem-Solving Strategy:** Presenting a methodical approach to problem-solving by prioritizing clustering and minimizing assumptions
-
+- **Practical Problem-Solving Strategy:** Presenting a thodical approach to problem-solving by prioritizing clustering and minimizing assumptions
 
 
 [^wechat23]: For more on this, see T. Menzies. keynote ASE'23, 
