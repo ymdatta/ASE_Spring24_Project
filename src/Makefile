@@ -26,6 +26,8 @@ help:  ## show help
 			/^[a-zA-Z_0-9-]+:.*?## / {printf "   \033[36m%-10s\033[0m : %s\n", $$1, $$2} \
 			' $(MAKEFILE_LIST)
 
+saved: ## save and push  to main brach 
+	git add *;git commit -am save;git push;git status
 
 FILES=$(wildcard *.lua)
 docs: $(addprefix ../docs/, $(FILES:.lua=.html))  ## update docs/*.html
