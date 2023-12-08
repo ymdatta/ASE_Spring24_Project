@@ -1,3 +1,11 @@
+local about=[[
+
+lib: LUA is a "batteries not included" language. Here are my batteries.
+(c) 2023, Tim Menzies, BSD-2. Post issues to http://github.com/timm/lo
+
+USAGE:
+  lib=require"lib"]]
+
 local l={}
 
 -- ## Lint

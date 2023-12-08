@@ -24,7 +24,7 @@ USAGE:
   lua counts.lua -f x.csv [OPTIONS]
  
 OPTIONS:
-  -f --file    csv data file name           = ""
+  -f --file    csv data file name           = -
   -h --help    show help                    = false ]]
 
 -- ##  One Column
@@ -95,6 +95,11 @@ function l.COLS(t, -- e.g. {"Age","job","Salary+"}
 function l.cols(cols1, t)
   for _, col1 in pairs(cols1.all) do l.col(col1, t[col1.at]) end end
 
+-- ##  ROW 
+
+-- store one row of data
+function ROW(t) return {cells=t} end
+
 -- ##  DATA = rows + COLS
 
 -- Create a DATA from a string (assumed to be a file name) or a list of rows.   
@@ -110,15 +115,16 @@ function l.DATA(src,    data1)
 -- NEW
 function l.clone(data1,  rows,      data2)
   data2 = l.DATA({data1.cols.names})
-  for _,t in pairs(rows or {}) do l.data(data2,t) end
+  for _,row in pairs(rows or {}) do l.data(data2,row) end
   return data2 end
 
 -- Update DATA
-function l.data(data1,t)
+function l.data(data1,xs)
+  xs = xs.cells and xs or ROW(xs)
   if    data1.cols
-  then  l.cols(data1.cols, t)
-        lib.push(data1.rows, t)
-  else  data1.cols= l.COLS(t) end end
+  then  l.cols(data1.cols, xs.cells)
+        lib.push(data1.rows, xs)
+  else  data1.cols= l.COLS(xs.cells) end end
 
 -- Query data
 function l.stats(data1, my,     t,fun) 
@@ -136,12 +142,12 @@ function l.stats(data1, my,     t,fun)
 function l.main(     datas,all,key,divs,mids)
   the=lib.cli(the)
   datas,mids,divs,all = {},{},{},nil
-  for row in lib.csv(the.file) do
+  for t in lib.csv(the.file) do
     if   all
-    then key = row[all.cols.klass.at]
+    then key = t[all.cols.klass.at]
          datas[key] = datas[key] or l.clone(all)
-         l.data(datas[key], row)
-    else all = l.DATA({row}) end
+         l.data(datas[key], t)
+    else all = l.DATA({t}) end
   end
   for k, data1 in pairs(datas) do
     mids[k] = l.stats(data1, { report = "mid" })

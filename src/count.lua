@@ -21,7 +21,7 @@ USAGE:
   lua count.lua -f x.csv [OPTIONS]
  
 OPTIONS:
-  -f --file    csv data file name           = ""
+  -f --file    csv data file name           = -
   -h --help    show help                    = false
   -r --report  what to report? (mid or div) = mid]]
 
@@ -94,6 +94,11 @@ function l.COLS(t, -- e.g. {"Age","job","Salary+"}
 function l.cols(cols1, t)
   for _, col1 in pairs(cols1.all) do l.col(col1, t[col1.at]) end end
 
+-- ##  ROW 
+
+-- store one row of data
+function ROW(t) return {cells=t} end
+
 -- ## DATA = rows + a COLS
 
 -- Creation
@@ -103,11 +108,12 @@ function l.DATA(src,    data1)
   return data1 end
 
 -- Update data
-function l.data(data1,t)
+function l.data(data1,xs)
+  xs = xs.cells and xs or ROW(xs)
   if    data1.cols -- not our first row
-  then  l.cols(data1.cols, t)
-        lib.push(data1.rows, t)
-  else  data1.cols= l.COLS(t) end end
+  then  l.cols(data1.cols, xs.cells)
+        lib.push(data1.rows, xs)
+  else  data1.cols= l.COLS(xs.cells) end end
 
 --  Query   data
 function l.stats(data1, my,     t,fun)

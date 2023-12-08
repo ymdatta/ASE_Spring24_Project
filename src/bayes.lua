@@ -97,6 +97,11 @@ function l.COLS(t, -- e.g. {"Age","job","Salary+"}
 function l.cols(cols1, t)
   for _, col1 in pairs(cols1.all) do l.col(col1, t[col1.at]) end end
 
+-- ##  ROW 
+
+-- store one row of data
+function ROW(t) return {cells=t} end
+
 -- ##  DATA = rows + COLS
 
 -- Create a DATA from a string (assumed to be a file name) or a list of rows.   
@@ -114,11 +119,12 @@ function l.clone(data1,  rows,      data2)
   return data2 end
 
 -- Update DATA
-function l.data(data1,t)
+function l.data(data1,xs)
+  xs = xs.cells and xs or ROW(xs)
   if    data1.cols
-  then  l.cols(data1.cols, t)
-        lib.push(data1.rows, t)
-  else  data1.cols= l.COLS(t) end end
+  then  l.cols(data1.cols, xs.cells)
+        lib.push(data1.rows, xs)
+  else  data1.cols= l.COLS(xs.cells) end end
 
 -- Query data
 function l.stats(data1, my,     t,fun)
@@ -163,7 +169,7 @@ function l.nb(     datas,all,want,divs,mids,abcds1,n,h)
   abcds1, datas,mids,divs,n,h,all = l.ABCDS(),{},{},{},0,0,nil
   for row in lib.csv(lib.cli(the).file) do
     if   all
-    then want = row[all.cols.klass.at]
+    then want = row.cells[all.cols.klass.at]
          if not datas[want] then h=h+1; datas[want]=l.clone(all) end
          n = n + 1
          if   n > the.wait

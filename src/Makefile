@@ -47,10 +47,17 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  ## update docs/*.html
 	echo "$$css" >> ../docs/pycco.css
 	git  add  $@
 
+zero:
+	lua zero.lua  -f ../data/zero.csv
+	cat ../data/zero.csv | lua zero.lua
+
 count1: ## simple count from cli file
-	lua count.lua -r mid -f data/diabetes.csv
-	lua count.lua -r div -f data/diabetes.csv
+	lua count.lua -r mid -f ../data/diabetes.csv
+	lua count.lua -r div -f ../data/diabetes.csv
 
 count2:  ## simple count from standard input
-	cat data/diabetes.csv | lua count.lua -r mid  
-	cat data/diabetes.csv | lua count.lua -r div 
+	cat ../data/diabetes.csv | lua count.lua -r mid  
+	cat ../data/diabetes.csv | lua count.lua -r div 
+
+counts: ## simple count from cli file
+	cat ../data/diabetes.csv | lua counts.lua 
