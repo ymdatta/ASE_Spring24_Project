@@ -1,9 +1,6 @@
 # SE for  Simpler AI: A Minimalist Approach
 
-<img align=right width=200 src="docs/revolution.png">
-
-**CHALLENGE** : AI software is still software. Hence, if we understand it, it can be refactored
-and simplified.  Do you understand the software basis for AI?
+<img align=right width=300 src="docs/revolution.png">
 
 >  Graduates of this class will become software revolutionaries,
 the  CEO and CTOs of whatever follows Google or OpenAI.
@@ -30,7 +27,7 @@ Here are our themes;
 - **Data-Centric Approach:** Prioritizing a focus on data analysis over algorithmic or code-centric methods.
   - Data is the ultimate API
 - **Efficiency and Minimalism:** Advocating for more efficient solutions using fewer resources and simpler methods.
-  <img align=right width=200 src="docs/block.jpg">
+  <img align=right width=300 src="docs/block.jpg">
 - **Importance of 'Pruning' Data:** Highlighting the need to focus on important data and discard the irrelevant, drawing inspiration from Michelangelo’s sculpting philosophy.
   - "Every block of stone has a statue inside it and it is the task of the sculptor to discover it." -- Michelangelo
   - The best thing to do with most data is throw it away 
@@ -38,6 +35,8 @@ Here are our themes;
 - **Dimensionality Reduction:** Discussing how high-dimensional data can be simplified and understood in lower dimensions.
   - See case study, below
 - **Practical Problem-Solving Strategy:** Presenting a methodical approach to problem-solving by prioritizing clustering and minimizing assumptions
+
+
 
 [^wechat23]: For more on this, see T. Menzies. keynote ASE'23, 
  [Beware, some of the rhetoric on LLMs is misleading](http://tiny.cc/we-chat23).
