@@ -19,11 +19,11 @@ define  header
 Lo is less. Less is more. <br>
 &copy; 2023 Tim Menzies,<br><a href="mailto:timm@ieee.org">timm@ieee.org</a>, 
 <a href="https://github.com/timm/lo/blob/main/LICENSE.md">BSD-2</a><br>
+<center><img src="refactor.png" width=500></center>
 <a href="https://timm.github.io/lo/index.html">home</a>
 :: <a href="https://github.com/timm/lo/blob/main/CONTRIBUTE.md">notes</a>
 :: <a href="https://github.com/timm/lo/issues">issues</a> 
-:: <a href="lib.html">lib</a>
-<center><img src="refactor.png" width=500></center>
+:: <a href="lib.html">lib</a> :: 
 endef
 export header
 
