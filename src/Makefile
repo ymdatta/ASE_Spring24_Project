@@ -16,7 +16,7 @@ export banner
 
 define  header
 
-<a href="http://github.com/timm/io"><img src="https://skillicons.dev/icons?i=github"></a>
+<a href="http://github.com/timm/io"><img align=right src="https://skillicons.dev/icons?i=github"></a>
 
 &copy; 2023 Tim Menzies, <a href="mailto:timm@ieee.org">timm@ieee.org</a>, 
 <a href="https://github.com/timm/lo/blob/main/LICENSE.md">BSD-2</a><br>
