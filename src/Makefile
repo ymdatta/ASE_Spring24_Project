@@ -9,18 +9,25 @@ h2        { padding-top: 2px; border-top: 1px dotted #888; }
 endef
 export css
 
-define header
+define banner
+<a href="https://timm.github.io/lo/index.html"><img decoding="async" width="149" height="149" src="https://github.blog/wp-content/uploads/2008/12/forkme_right_red_aa0000.png?resize=149%2C149" class="attachment-full size-full" alt="Fork me on GitHub" loading="lazy" data-recalc-dims="1"></a>
+endef
+export banner
+
+define  header
 &copy; 2023 Tim Menzies, <a href="mailto:timm@ieee.org">timm@ieee.org</a>, 
 <a href="https://github.com/timm/lo/blob/main/LICENSE.md">BSD-2</a><br>
 <a href="https://timm.github.io/lo/index.html">home</a>
 :: <a href="https://github.com/timm/lo/blob/main/CONTRIBUTE.md">notes</a>
-:: <a href="https://github.com/timm/lo">github</a> 
+:: <a href="https://github.com/timm/lo">github</a>
 :: <a href="https://github.com/timm/lo/issues">issues</a> 
 :: <a href="lib.html">lib</a>
 <center><img src="refactor.png" width=500></center>
 endef
 export header
-	 
+
+#		 !b && sub(/<div class=.section.>/,"") {b=1; print $$0 "\n" banner ;next} \
+
 help:  ## show help
 	awk 'BEGIN {FS = ":.*?## "; print "\nmake [WHAT]" } \
 			/^[a-zA-Z_0-9-]+:.*?## / {printf "   \033[36m%-10s\033[0m : %s\n", $$1, $$2} \
@@ -34,8 +41,9 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  ## update docs/*.html
 
 ../docs/%.html : %.lua ## make doc
 	pycco -d ../docs $^ 
-	gawk -v head="$$header" \
-		'!n && sub(/<p>/,"") {n=1; print head $$0;next} 1  ' $@ > _tmp; mv _tmp $@
+	gawk -v head="$$header" -v banner="$$banner" \
+		'!p && sub(/<p>/,"") {p=1; print head $$0; next} \
+	  	1  ' $@ > _tmp; mv _tmp $@
 	echo "$$css" >> ../docs/pycco.css
 	git  add  $@
 
