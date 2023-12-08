@@ -1,11 +1,15 @@
+<img align=right width=300 src="docs/revolution.png">
+
 # SE for  Simpler AI: A Minimalist Approach
 
-<img align=right width=300 src="docs/revolution.png">
 
 >  Graduates of this class will become software revolutionaries,
 the  CEO and CTOs of whatever follows Google or OpenAI.
 
+<br clear=all><img align=right with=300 src="pca.png">
+
 Here are our themes;
+
 
 - <a name=less>**Lo is less, less is more:**</a> Seemingly complex problems can be approximated
   in a very low dimensional space-- where all inference is much  simpler and faster [^lutosa].
