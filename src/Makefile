@@ -16,7 +16,7 @@ export banner
 
 define  header
 <a href="http://github.com/timm/lo"><img align=right height=25 src="https://timm.github.io/lo/github.png"></a>
-Lo is less. Less is more. <br>
+Lo is less. <a href="https://github.com/timm/lo/blob/main/README.md#less">Less is more.</a> <br>
 &copy; 2023 Tim Menzies, <a href="mailto:timm@ieee.org">timm@ieee.org</a>, 
 <a href="https://github.com/timm/lo/blob/main/LICENSE.md">BSD-2</a><br>
 <center><img src="refactor.png" width=500></center>
