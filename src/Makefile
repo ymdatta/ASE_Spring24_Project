@@ -15,14 +15,14 @@ endef
 export banner
 
 define  header
-<a href="http://github.com/timm/lo"><img align=right height=25 src="https://timm.github.io/lo/github.png"></a>
+<p><a href="http://github.com/timm/lo"><img align=right height=25 src="https://timm.github.io/lo/github.png"></a>
 &copy; 2023 Tim Menzies, <a href="mailto:timm@ieee.org">timm@ieee.org</a>, 
 <a href="https://github.com/timm/lo/blob/main/LICENSE.md">BSD-2</a><br>
 <a href="https://timm.github.io/lo/index.html">home</a>
 :: <a href="https://github.com/timm/lo/blob/main/CONTRIBUTE.md">notes</a>
 :: <a href="https://github.com/timm/lo/issues">issues</a> 
-:: <a href="lib.html">lib</a><br>
-Lo is less. Less is more.
+:: <a href="lib.html">lib</a>
+<p>Lo is less. Less is more.
 <center><img src="refactor.png" width=500></center>
 endef
 export header
