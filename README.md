@@ -6,7 +6,7 @@
 >  Graduates of this class will become software revolutionaries,
 the  CEO and CTOs of whatever follows Google or OpenAI.
 
-<br clear=all><img align=right with=300 src="/docs/pca.png">
+<br clear=all><img align=right width=300 src="/docs/pca.png">
 
 Here are our themes;
 
