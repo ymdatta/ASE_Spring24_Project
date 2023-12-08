@@ -51,7 +51,7 @@
 <span class="s">  lua counts.lua -f x.csv [OPTIONS]</span>
 <span class="s"> </span>
 <span class="s">OPTIONS:</span>
-<span class="s">  -f --file    csv data file name           = &quot;&quot;</span>
+<span class="s">  -f --file    csv data file name           = -</span>
 <span class="s">  -h --help    show help                    = false ]]</span></pre></div>
     </div>
   </div>
@@ -248,7 +248,7 @@
       <div class='octowrap'>
         <a class='octothorpe' href='#section-14'>#</a>
       </div>
-      <h2>DATA = rows + COLS</h2>
+      <h2>ROW</h2>
     </div>
     <div class='code'>
       <div class="highlight"><pre></pre></div>
@@ -259,6 +259,30 @@
     <div class='docs'>
       <div class='octowrap'>
         <a class='octothorpe' href='#section-15'>#</a>
+      </div>
+      <p>store one row of data</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kr">function</span> <span class="nf">ROW</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="kr">return</span> <span class="p">{</span><span class="n">cells</span><span class="o">=</span><span class="n">t</span><span class="p">}</span> <span class="kr">end</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-16'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-16'>#</a>
+      </div>
+      <h2>DATA = rows + COLS</h2>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-17'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-17'>#</a>
       </div>
       <p>Create a DATA from a string (assumed to be a file name) or a list of rows. <br />
 MODIFIED</p>
@@ -273,10 +297,10 @@ MODIFIED</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-16'>
+  <div class='section' id='section-18'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-16'>#</a>
+        <a class='octothorpe' href='#section-18'>#</a>
       </div>
       <p>Create a new DATA, using the same structure as an older one.<br />
 NEW</p>
@@ -284,31 +308,32 @@ NEW</p>
     <div class='code'>
       <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">clone</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span>  <span class="n">rows</span><span class="p">,</span>      <span class="n">data2</span><span class="p">)</span>
   <span class="n">data2</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">DATA</span><span class="p">({</span><span class="n">data1</span><span class="p">.</span><span class="n">cols</span><span class="p">.</span><span class="n">names</span><span class="p">})</span>
-  <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">t</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">rows</span> <span class="ow">or</span> <span class="p">{})</span> <span class="kr">do</span> <span class="n">l</span><span class="p">.</span><span class="n">data</span><span class="p">(</span><span class="n">data2</span><span class="p">,</span><span class="n">t</span><span class="p">)</span> <span class="kr">end</span>
+  <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">row</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">rows</span> <span class="ow">or</span> <span class="p">{})</span> <span class="kr">do</span> <span class="n">l</span><span class="p">.</span><span class="n">data</span><span class="p">(</span><span class="n">data2</span><span class="p">,</span><span class="n">row</span><span class="p">)</span> <span class="kr">end</span>
   <span class="kr">return</span> <span class="n">data2</span> <span class="kr">end</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-17'>
+  <div class='section' id='section-19'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-17'>#</a>
+        <a class='octothorpe' href='#section-19'>#</a>
       </div>
       <p>Update DATA</p>
     </div>
     <div class='code'>
-      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">data</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span><span class="n">t</span><span class="p">)</span>
+      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">data</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span><span class="n">xs</span><span class="p">)</span>
+  <span class="n">xs</span> <span class="o">=</span> <span class="n">xs</span><span class="p">.</span><span class="n">cells</span> <span class="ow">and</span> <span class="n">xs</span> <span class="ow">or</span> <span class="n">ROW</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
   <span class="kr">if</span>    <span class="n">data1</span><span class="p">.</span><span class="n">cols</span>
-  <span class="kr">then</span>  <span class="n">l</span><span class="p">.</span><span class="n">cols</span><span class="p">(</span><span class="n">data1</span><span class="p">.</span><span class="n">cols</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
-        <span class="n">lib</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">data1</span><span class="p">.</span><span class="n">rows</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
-  <span class="kr">else</span>  <span class="n">data1</span><span class="p">.</span><span class="n">cols</span><span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">COLS</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="kr">end</span> <span class="kr">end</span></pre></div>
+  <span class="kr">then</span>  <span class="n">l</span><span class="p">.</span><span class="n">cols</span><span class="p">(</span><span class="n">data1</span><span class="p">.</span><span class="n">cols</span><span class="p">,</span> <span class="n">xs</span><span class="p">.</span><span class="n">cells</span><span class="p">)</span>
+        <span class="n">lib</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">data1</span><span class="p">.</span><span class="n">rows</span><span class="p">,</span> <span class="n">xs</span><span class="p">)</span>
+  <span class="kr">else</span>  <span class="n">data1</span><span class="p">.</span><span class="n">cols</span><span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">COLS</span><span class="p">(</span><span class="n">xs</span><span class="p">.</span><span class="n">cells</span><span class="p">)</span> <span class="kr">end</span> <span class="kr">end</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-18'>
+  <div class='section' id='section-20'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-18'>#</a>
+        <a class='octothorpe' href='#section-20'>#</a>
       </div>
       <p>Query data</p>
     </div>
@@ -323,10 +348,10 @@ NEW</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-19'>
+  <div class='section' id='section-21'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-19'>#</a>
+        <a class='octothorpe' href='#section-21'>#</a>
       </div>
       <h2>Main</h2>
     </div>
@@ -335,10 +360,10 @@ NEW</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-20'>
+  <div class='section' id='section-22'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-20'>#</a>
+        <a class='octothorpe' href='#section-22'>#</a>
       </div>
       <p>Main       <br />
 NEW</p>
@@ -347,12 +372,12 @@ NEW</p>
       <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">main</span><span class="p">(</span>     <span class="n">datas</span><span class="p">,</span><span class="n">all</span><span class="p">,</span><span class="n">key</span><span class="p">,</span><span class="n">divs</span><span class="p">,</span><span class="n">mids</span><span class="p">)</span>
   <span class="n">the</span><span class="o">=</span><span class="n">lib</span><span class="p">.</span><span class="n">cli</span><span class="p">(</span><span class="n">the</span><span class="p">)</span>
   <span class="n">datas</span><span class="p">,</span><span class="n">mids</span><span class="p">,</span><span class="n">divs</span><span class="p">,</span><span class="n">all</span> <span class="o">=</span> <span class="p">{},{},{},</span><span class="kc">nil</span>
-  <span class="kr">for</span> <span class="n">row</span> <span class="kr">in</span> <span class="n">lib</span><span class="p">.</span><span class="n">csv</span><span class="p">(</span><span class="n">the</span><span class="p">.</span><span class="n">file</span><span class="p">)</span> <span class="kr">do</span>
+  <span class="kr">for</span> <span class="n">t</span> <span class="kr">in</span> <span class="n">lib</span><span class="p">.</span><span class="n">csv</span><span class="p">(</span><span class="n">the</span><span class="p">.</span><span class="n">file</span><span class="p">)</span> <span class="kr">do</span>
     <span class="kr">if</span>   <span class="n">all</span>
-    <span class="kr">then</span> <span class="n">key</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">all</span><span class="p">.</span><span class="n">cols</span><span class="p">.</span><span class="n">klass</span><span class="p">.</span><span class="n">at</span><span class="p">]</span>
+    <span class="kr">then</span> <span class="n">key</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">all</span><span class="p">.</span><span class="n">cols</span><span class="p">.</span><span class="n">klass</span><span class="p">.</span><span class="n">at</span><span class="p">]</span>
          <span class="n">datas</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">datas</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="ow">or</span> <span class="n">l</span><span class="p">.</span><span class="n">clone</span><span class="p">(</span><span class="n">all</span><span class="p">)</span>
-         <span class="n">l</span><span class="p">.</span><span class="n">data</span><span class="p">(</span><span class="n">datas</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">row</span><span class="p">)</span>
-    <span class="kr">else</span> <span class="n">all</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">DATA</span><span class="p">({</span><span class="n">row</span><span class="p">})</span> <span class="kr">end</span>
+         <span class="n">l</span><span class="p">.</span><span class="n">data</span><span class="p">(</span><span class="n">datas</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">t</span><span class="p">)</span>
+    <span class="kr">else</span> <span class="n">all</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">DATA</span><span class="p">({</span><span class="n">t</span><span class="p">})</span> <span class="kr">end</span>
   <span class="kr">end</span>
   <span class="kr">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">data1</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">datas</span><span class="p">)</span> <span class="kr">do</span>
     <span class="n">mids</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">stats</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="p">{</span> <span class="n">report</span> <span class="o">=</span> <span class="s2">&quot;mid&quot;</span> <span class="p">})</span>

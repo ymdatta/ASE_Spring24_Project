@@ -49,7 +49,7 @@ $ cat ../data/diabetes.csv | lua count.lua -r div | fmt -60
 <span class="s">  lua count.lua -f x.csv [OPTIONS]</span>
 <span class="s"> </span>
 <span class="s">OPTIONS:</span>
-<span class="s">  -f --file    csv data file name           = &quot;&quot;</span>
+<span class="s">  -f --file    csv data file name           = -</span>
 <span class="s">  -h --help    show help                    = false</span>
 <span class="s">  -r --report  what to report? (mid or div) = mid]]</span></pre></div>
     </div>
@@ -247,7 +247,7 @@ $ cat ../data/diabetes.csv | lua count.lua -r div | fmt -60
       <div class='octowrap'>
         <a class='octothorpe' href='#section-14'>#</a>
       </div>
-      <h2>DATA = rows + a COLS</h2>
+      <h2>ROW</h2>
     </div>
     <div class='code'>
       <div class="highlight"><pre></pre></div>
@@ -259,6 +259,30 @@ $ cat ../data/diabetes.csv | lua count.lua -r div | fmt -60
       <div class='octowrap'>
         <a class='octothorpe' href='#section-15'>#</a>
       </div>
+      <p>store one row of data</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kr">function</span> <span class="nf">ROW</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="kr">return</span> <span class="p">{</span><span class="n">cells</span><span class="o">=</span><span class="n">t</span><span class="p">}</span> <span class="kr">end</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-16'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-16'>#</a>
+      </div>
+      <h2>DATA = rows + a COLS</h2>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-17'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-17'>#</a>
+      </div>
       <p>Creation</p>
     </div>
     <div class='code'>
@@ -269,26 +293,27 @@ $ cat ../data/diabetes.csv | lua count.lua -r div | fmt -60
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-16'>
+  <div class='section' id='section-18'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-16'>#</a>
+        <a class='octothorpe' href='#section-18'>#</a>
       </div>
       <p>Update data</p>
     </div>
     <div class='code'>
-      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">data</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span><span class="n">t</span><span class="p">)</span>
+      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">data</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span><span class="n">xs</span><span class="p">)</span>
+  <span class="n">xs</span> <span class="o">=</span> <span class="n">xs</span><span class="p">.</span><span class="n">cells</span> <span class="ow">and</span> <span class="n">xs</span> <span class="ow">or</span> <span class="n">ROW</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
   <span class="kr">if</span>    <span class="n">data1</span><span class="p">.</span><span class="n">cols</span> <span class="c1">-- not our first row</span>
-  <span class="kr">then</span>  <span class="n">l</span><span class="p">.</span><span class="n">cols</span><span class="p">(</span><span class="n">data1</span><span class="p">.</span><span class="n">cols</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
-        <span class="n">lib</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">data1</span><span class="p">.</span><span class="n">rows</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
-  <span class="kr">else</span>  <span class="n">data1</span><span class="p">.</span><span class="n">cols</span><span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">COLS</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="kr">end</span> <span class="kr">end</span></pre></div>
+  <span class="kr">then</span>  <span class="n">l</span><span class="p">.</span><span class="n">cols</span><span class="p">(</span><span class="n">data1</span><span class="p">.</span><span class="n">cols</span><span class="p">,</span> <span class="n">xs</span><span class="p">.</span><span class="n">cells</span><span class="p">)</span>
+        <span class="n">lib</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">data1</span><span class="p">.</span><span class="n">rows</span><span class="p">,</span> <span class="n">xs</span><span class="p">)</span>
+  <span class="kr">else</span>  <span class="n">data1</span><span class="p">.</span><span class="n">cols</span><span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">COLS</span><span class="p">(</span><span class="n">xs</span><span class="p">.</span><span class="n">cells</span><span class="p">)</span> <span class="kr">end</span> <span class="kr">end</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-17'>
+  <div class='section' id='section-19'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-17'>#</a>
+        <a class='octothorpe' href='#section-19'>#</a>
       </div>
       <p>Query   data</p>
     </div>
@@ -303,10 +328,10 @@ $ cat ../data/diabetes.csv | lua count.lua -r div | fmt -60
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-18'>
+  <div class='section' id='section-20'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-18'>#</a>
+        <a class='octothorpe' href='#section-20'>#</a>
       </div>
       <h2>Main</h2>
     </div>
