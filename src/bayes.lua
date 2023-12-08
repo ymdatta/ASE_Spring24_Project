@@ -11,11 +11,11 @@ USAGE:
   lua bayes.lua -f x.csv [OPTIONS]
  
 OPTIONS:
-  -f --file    csv data file name               = -
-  -h --help    show help                        = false 
-  -k --k       handle low class frequencies     = 2
-  -m --m       handle low attribute frequencies = 1
-  -w --wait    wait before classifications      = 20]]
+  -f --file   csv data file name                = -
+  -h --help   show help                         = false 
+  -k --k      handle low class frequencies      = 1
+  -m --m      handle low attribute frequencies  = 2
+  -w --wait   wait before classifications       = 20]]
 
 -- ##  One Column
 
@@ -51,11 +51,11 @@ function l.num(num1,x)
   if x~="?" then
     num1.n = num1.n + 1
     lib.push(num1.has,x)
-    num1.isSorted=false end end 
+    num1.isSorted=false end end
 
 -- Query one column
 function l.has(col1)
-  if not (col1.isSym or col1.isSorted) then 
+  if not (col1.isSym or col1.isSorted) then
     table.sort(col1.has); col1.isSorted=true end
   return col1.has end
 
@@ -83,7 +83,7 @@ function l.like(col1,x,prior,    nom,denom)
 
 -- Create one column
 function l.COLS(t, -- e.g. {"Age","job","Salary+"}  
-                x,y,all,klass,col1)  
+                x,y,all,klass,col1)
   x, y, all = {}, {}, {}
   for at, txt in pairs(t) do
     col1 =  l.COL(at,txt)
@@ -121,7 +121,7 @@ function l.data(data1,t)
   else  data1.cols= l.COLS(t) end end
 
 -- Query data
-function l.stats(data1, my,     t,fun) 
+function l.stats(data1, my,     t,fun)
   my  = lib.defaults(my,{cols="x",ndecs=2,report=the.report})
   fun = l[my.report]
   t   = {[".N"]=#data1.rows}
@@ -129,7 +129,8 @@ function l.stats(data1, my,     t,fun)
     t[col1.txt] = lib.rnd( fun(col1), my.ndecs) end
   return t end
 
--- Likes of one row `t` in one `data`.      
+-- Likes of one row `t` in one `data`.         
+-- $P(E|H) = P(E|H) P(H)/P(E)$     
 -- NEW
 function l.likes(t,data,n,h,       prior,out,col1,inc)
   prior = (#data.rows + the.k) / (n + the.k * h)
@@ -141,7 +142,9 @@ function l.likes(t,data,n,h,       prior,out,col1,inc)
       out = out + math.log(inc) end end
   return out end
 
--- Likes of one row `t` across many  `datas`.      
+-- Max like of one row `t` across many  `datas`
+-- (and here, `data` == `H`).     
+-- $\mathit{argmax}_i P(E|H)$   
 -- NEW
 function l.likesMost(t,datas,n,h,     most,tmp,out)
   most = -1E30
@@ -154,8 +157,8 @@ function l.likesMost(t,datas,n,h,     most,tmp,out)
 
 -- Main.   
 -- MODIFIED
-function l.main(     datas,all,k,divs,mids,abcds,n,h)
-  abcds, datas,mids,divs,n,h,all = l.ABCDS(),{},{},{},0,0,nil
+function l.nb(     datas,all,want,divs,mids,abcds1,n,h)
+  abcds1, datas,mids,divs,n,h,all = l.ABCDS(),{},{},{},0,0,nil
   for row in lib.csv(lib.cli(the).file) do
     if   all
     then want = row[all.cols.klass.at]
@@ -163,7 +166,7 @@ function l.main(     datas,all,k,divs,mids,abcds,n,h)
          n = n + 1
          if   n > the.wait
          then got = l.likesMost(t,datas,n,h)
-              l.abcds(want,got) end
+              l.abcds(abcds1,want,got) end
          l.data(datas[want], row)
     else all = l.DATA({row}) end
   end
@@ -174,4 +177,4 @@ function l.main(     datas,all,k,divs,mids,abcds,n,h)
   lib.report(mids,"\nmids",8)
   lib.report(divs,"\ndivs",8) end
 
-l.main()
+l.nb()

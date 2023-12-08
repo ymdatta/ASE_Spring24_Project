@@ -30,13 +30,13 @@ OPTIONS:
 -- ##  One Column
 
 -- Create one NUM
-function l.NUM(txt,at) 
+function l.NUM(txt,at)
   return {at=at, txt=txt, n=0, has={},
           isSorted=true,
           heaven= (txt or ""):find"-$" and 0 or 1} end
 
 -- Create one SYM
-function l.SYM(txt,at) 
+function l.SYM(txt,at)
   return {at=at, txt=txt, n=0, has={},
           mode=nil, most=0, isSym=true} end
 
@@ -61,7 +61,7 @@ function l.num(num1,x)
   if x~="?" then
     num1.n = num1.n + 1
     lib.push(num1.has,x)
-    num1.isSorted=false end end 
+    num1.isSorted=false end end
 
 -- Query one column.
 function l.has(col1)
@@ -70,11 +70,11 @@ function l.has(col1)
   return col1.has end
 
 -- Middle value of a column distribution
-function l.mid(col1) 
+function l.mid(col1)
   return  col1.isSym and col1.mode or lib.median(l.has(col1)) end
 
 -- Diversity of values in a column distribution.
-function l.div(col1) 
+function l.div(col1)
   return (col1.isSym and lib.entropy or lib.stdev)(l.has(col1)) end
 
 -- ## COLS= multiple colums
@@ -133,14 +133,14 @@ function l.stats(data1, my,     t,fun)
 
 -- Main         
 -- NEW
-function l.main(     datas,all,k,divs,mids)
+function l.main(     datas,all,key,divs,mids)
   the=lib.cli(the)
   datas,mids,divs,all = {},{},{},nil
   for row in lib.csv(the.file) do
     if   all
-    then k = row[all.cols.klass.at]
-         datas[k] = datas[k] or l.clone(all)
-         l.data(datas[k], row)
+    then key = row[all.cols.klass.at]
+         datas[key] = datas[key] or l.clone(all)
+         l.data(datas[key], row)
     else all = l.DATA({row}) end
   end
   for k, data1 in pairs(datas) do
@@ -151,7 +151,8 @@ function l.main(     datas,all,k,divs,mids)
   lib.report(divs,"\ndivs",8) end
 
 the = lib.settings(help)
-l.the = the
-if  pcall(debug.getlocal,4,1) then  main() end
 
-return l
+if   lib.toplevel()
+then lib.cli(the)
+     l.main()
+else l.the=the;  return l end
