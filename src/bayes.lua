@@ -129,8 +129,10 @@ function l.stats(data1, my,     t,fun)
     t[col1.txt] = lib.rnd( fun(col1), my.ndecs) end
   return t end
 
--- Likes of one row `t` in one `data`.         
--- $P(E|H) = P(E|H) P(H)/P(E)$     
+-- Likes of one row `t` in one `data`.           
+-- _P(H|E) = P(E|H) P(H)/P(E)_      
+-- or with our crrrent data structures:           
+-- _P(data|t) = P(t|data) P(data) / P(t)_      
 -- NEW
 function l.likes(t,data,n,h,       prior,out,col1,inc)
   prior = (#data.rows + the.k) / (n + the.k * h)
@@ -144,7 +146,7 @@ function l.likes(t,data,n,h,       prior,out,col1,inc)
 
 -- Max like of one row `t` across many  `datas`
 -- (and here, `data` == `H`).     
--- $\mathit{argmax}_i P(E|H)$   
+-- _argmax(i)  P(H<sub>i</sub>|E)_      
 -- NEW
 function l.likesMost(t,datas,n,h,     most,tmp,out)
   most = -1E30
