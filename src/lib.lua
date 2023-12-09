@@ -31,8 +31,8 @@ function l.rnd(n, ndecs)
 function l.gaussian(mu,sd)
   mu,sd = mu or 0, sd or 1
   local sq,pi,log,cos,r = math.sqrt,math.pi,math.log,math.cos,math.random
-  return  mu + sd * sq(-2*log(r())) * cos(2*pi*r())  end
-
+  return mu + sd * sq(-2*log(r())) * cos(2*pi*r())  end
+y
 -- Convert list of numbers to standard deviation. For more on this see
 -- [here](http://datagenetics.com/blog/november22017/index.html).
 function l.t2stdec(t,    d,n,mu,m2)
@@ -46,12 +46,23 @@ function l.t2stdec(t,    d,n,mu,m2)
 
 -- ## Lists
 
+-- Return any item.
+function l.any(t) return t[math.random(#t)] end
+
+-- Return any `n` items (there may be repeats).
+function l.many(t,n,     u)
+  u={}; for _ = 1,n do u[1+#u] = l.any(t) end; return u end
+
 -- Push onto a list `t`.
 function l.push(t,x) t[1+#t]=x; return x end
 
 -- Lua's default sort does not return the sorted list. So....
 function l.sort(t,  fun)
   table.sort(t,fun); return t end
+
+-- Return a function taht sorts on field `x`.
+function l.lt(x)
+  return function(a,b) return a[x] < b[x] end end
 
 -- Return the `p`-th item in `t`.
 function l.per(t, p) return t[(p * #t) // 1] end
@@ -94,6 +105,12 @@ function l.items(t,fun,    u,i)
   i=0
   return function()
     if i<#u then i=i+1; return u[i], t[u[i]] end end end
+
+-- Schwartzian transform:  decorate, sort, undecorate
+function l.keysort(t,fun,      tmp)
+  tmp = l.map(t,  function(x) return {x=x, y=fun(x)} end) -- decorate
+  tmp = l.sort(tmp, l.lt"y")                             -- sort
+  return l.map(tmp, function(xy) return xy.x end) end    -- undecorate
 
 -- Given a list of tables all with the same keys, then (a) print the
 -- the keys (in alphabetical order); then (b) print the values of
