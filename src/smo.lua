@@ -302,5 +302,58 @@ function l.tshow(node1,     _show,depth1)
     print(('|.. '):rep(depth), post) end
   l.climb(node1, _show); print""
   print( ("    "):rep(depth1), l.o(l.stats(node1.here))) end
+
 -- ----------------------------------------------------
+--- ## Discretization
+
+-- Create a RANGE  that tracks the y dependent values seen in 
+-- the range `lo` to `hi` some independent variable in column number `at` whose name is `txt`. 
+-- Note that the way this is used (in the `bins` function, below)
+-- for  symbolic columns, `lo` is always the same as `hi`.
+function l.RANGE(at,txt,lo,hi)
+  return {at=at,txt=txt,lo=lo,hi=lo or hi or lo,y=l.SYM()} end
+
+-- Update a RANGE to cover `x` and `y`
+function l.range(range1,n,s)
+  range1.lo = math.min(n, range1.lo)
+  range1.hi = math.max(n, range1.hi)
+  l.sym(range1.y, s) end
+
+-- Map `x` into a small number of bins. `SYM`s just get mapped
+-- to themselves but `NUM`s get mapped to one of `is.bins` values.
+function l.bin(col1,x,      gap,t,lo,hi)
+  if x=="?" or col1.isSym then return x end
+  t     = l.has(col1)
+  lo,hi = t[1], t[#t]
+  gap   = (hi - lo) / (the.bins - 1)
+  return hi == lo and 1 or math.floor(x/gap + .5)*gap end
+
+-- Return RANGEs that distinguish sets of rows (stored in `rowss`).
+-- To reduce the search space,
+-- values in `col` are mapped to small number of `bin`s.
+-- For NUMs, that number is `the.bins=16` (say) (and after dividing
+-- the column into, say, 16 bins, then we call `merges` to see
+-- how many of them can be combined with their neighboring bin).
+function l.bins(cols,rowss,      with1Col,withAllRows)
+  function with1Col(col,     n,ranges)
+    n,ranges = withAllRows(col)
+    ranges   = sort(map(ranges,lib.self),lib.lt"lo") -- keyArray to numArray, sorted
+    if   col.isSym
+    then return ranges
+    else return l.merges(ranges, n/the.bins, the.d*l.div(col)) end end
+  function withAllRows(col,    n,ranges,xy)
+    function xy(x,y,      k)
+      if x ~= "?" then
+        n = n + 1
+        k = l.bin(col,x)
+        ranges[k] = ranges[k] or l.RANGE(col.at,col.txt,x)
+        l.range(ranges[k], x, y) end
+    end -----------
+    n,ranges = 0,{}
+    for y,rows in pairs(rowss) do for _,row in pairs(rows) do xy(row[col.at],y) end end
+    return n, ranges 
+  end --------------
+  return map(cols, with1Col) end
+
+
 l.nb()

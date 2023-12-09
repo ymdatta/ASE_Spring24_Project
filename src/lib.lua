@@ -46,6 +46,9 @@ function l.t2stdec(t,    d,n,mu,m2)
 
 -- ## Lists
 
+-- Return self
+function l.self(x) return x end
+
 -- Return any item.
 function l.any(t) return t[math.random(#t)] end
 
