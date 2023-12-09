@@ -311,12 +311,13 @@ function l.tshow(node1,     _show,depth1)
 -- Note that the way this is used (in the `bins` function, below)
 -- for  symbolic columns, `lo` is always the same as `hi`.
 function l.RANGE(at,txt,lo,hi)
-  return {at=at,txt=txt,lo=lo,hi=lo or hi or lo,y=l.SYM()} end
+  return {n=0,at=at,txt=txt,lo=lo,hi=lo or hi or lo,y=l.SYM()} end
 
 -- Update a RANGE to cover `x` and `y`
 function l.range(range1,n,s)
   range1.lo = math.min(n, range1.lo)
   range1.hi = math.max(n, range1.hi)
+  range1.n  = range1.n + 1
   l.sym(range1.y, s) end
 
 -- Map `x` into a small number of bins. `SYM`s just get mapped
@@ -337,7 +338,7 @@ function l.bin(col1,x,      gap,t,lo,hi)
 function l.bins(cols,rowss,      with1Col,withAllRows)
   function with1Col(col,     n,ranges)
     n,ranges = withAllRows(col)
-    ranges   = sort(map(ranges,lib.self),lib.lt"lo") -- keyArray to numArray, sorted
+    ranges   = lib.sort(lib.map(ranges,lib.self),lib.lt"lo") -- keyArray to numArray, sorted
     if   col.isSym
     then return ranges
     else return l.merges(ranges, n/the.bins, the.d*l.div(col)) end end
@@ -355,5 +356,36 @@ function l.bins(cols,rowss,      with1Col,withAllRows)
   end --------------
   return map(cols, with1Col) end
 
+local merges,nogaps
+function l.bins(rowss,cols,   t,c,x,k,finish)
+  t = {}
+  for _,col1 in pairs(cols) do
+    c = col1.at
+    t[c] = {}
+    for y,rows in pairs(rowss) do 
+      for _,row in pairs(rows) do
+        x = row.cells[col1.at]
+        if x ~= "?" then
+           k       = l.bin(col1,x)
+           t[c][k] =  t[c][k] or l.RANGE(c, col1.txt, x) 
+           l.range(t[c][k],x y) end end end
+    t[c]  = lib.sort(lib.map(t[c],lib.self), lib.lt"lo") end  
+  return t end 
 
+function noGaps(t)
+  for j = 2,#t do t[j].lo = t[j-1].hi end
+  t[1].lo  = -math.huge
+  t[#t].hi =  math.huge 
+  return t end 
+
+function merges(ranges0,nSmall,nFar,     )
+   function try2Merge(left,right,j,     y)
+    y = merged(left.y, right.y, nSmall, nFar)
+    if y then 
+      j = j+1 -- next round, skip over right.
+      left.hi, left.y = right.hi, y end 
+    return j , left 
+  end -------------
+    end 
+function merges(ranges0,     ranges,
 l.nb()
