@@ -53,20 +53,21 @@ Here are our themes;
 - **Critical View of Current AI Systems:** 
   - LLMs are great, except when they ain't
   - Analyzing the limitations of current large language models, such as their inefficiency and lack of transparency or validation [^wechat23]
-- **Data-Centric Approach:** 
+- **Data-Centric Software 2.0:** 
   - Data is the ultimate API
   - Prioritizing a focus on data analysis over algorithmic or code-centric methods.
-  - Software 2.0 [^se2]
-    -  In Software 2.0 most often the source code comprises
-       - the dataset that defines the desirable behavior
-       - the architecture that gives the rough skeleton of the code, but with many details
-            (the config options) yet to be selected.
-       - The process of training learner  compiles the dataset into a model, from which we can
-         set the options.
+  -  In Software 2.0 [&se2]  most often the source code comprises
+     - the dataset that defines the desirable behavior
+     - the architecture that gives the rough skeleton of the code, but with many details
+       (the config options) yet to be selected.
+     - The process of training learner  compiles the dataset into a model, from which we can
+       set the options.
 - **Efficiency and Minimalism:** 
-  - Less is more.
   - Advocating for more efficient solutions using fewer resources and simpler methods.
-  <img align=right width=300 src="docs/block.jpg">
+  - Less is more.
+  - Less to test, less to deploy, less to maintain, less to check for security flaws, less
+    to port to other languages, less to document...
+    <img align=right width=300 src="docs/block.jpg">
 - **Importance of 'Pruning' Data:** 
   - The best thing to do with most data is throw it away (and there are many examples of this [^btw] [^stealth] [^early]).
   - Highlighting the need to focus on important data and discard the irrelevant, drawing inspiration from Michelangelo’s sculpting philosophy.
