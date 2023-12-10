@@ -391,7 +391,7 @@ function merges(ranges,few,    tmp,i,a,b)
       b = l.merged(a, ranges[i+1], few)
       if b then
         a = b
-        i = i+1 end end
+        i = i + 1 end end
     lib.push(tmp, a)
     i = i + 1 end
   return #tmp == #ranges and ranges or l.merges(tmp,few) end
