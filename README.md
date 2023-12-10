@@ -194,7 +194,7 @@ look for hints that constrain the model space, then restrict the reasoning aroun
 
 ## References
 
-[^cohen]: What he actually says is that  
+[^cohen]: What he actually says is that
 small and medium effect sizes occur at .2 and .5.
 So I split the difference at .35.
 
