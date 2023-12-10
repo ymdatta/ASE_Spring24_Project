@@ -21,6 +21,7 @@ define  header
 Lo is less. <a href="https://github.com/timm/lo/blob/main/README.md#less">Less is more.</a> <br>
 &copy; 2023 Tim Menzies, <a href="mailto:timm@ieee.org">timm@ieee.org</a>, 
 <a href="https://github.com/timm/lo/blob/main/LICENSE.md">BSD-2</a><br>
+To do anything: (1) cluster data in low dimensions; (2) reason over  the clusters.<br>
 <a href="http://github.com/timm/lo"><img align=center  height=25 src="github.png"></a>
 :: <a href="https://timm.github.io/lo/index.html">home</a>
 :: <a href="https://github.com/timm/lo/blob/main/CONTRIBUTE.md">notes</a>
