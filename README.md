@@ -8,6 +8,14 @@ the  CEO and CTOs of whatever follows Google or OpenAI.
 
 <br clear=all><img align=right width=300 src="/docs/pca.png">
 
+
+TL;DR: 
+- To promote efficient and effective problem-solving.
+  - Cluster (first), then think (less). 
+- Clustering should include dimensionality reduction
+  - Ignore the spurious
+  - Focus on what's important
+
 Here are our themes;
 
 
@@ -74,13 +82,6 @@ vol. 40, no. 3, pp. 43-53, May-June 2023, doi: 10.1109/MS.2023.3244713.
 
 [^early]: N.C. Shrikanth, Suvodeep Majumder, Tim Menzies  
 [Early Life Cycle Software Defect Prediction. Why? How?](https://arxiv.org/pdf/2011.13071.pdf), ICSE'21.
-
-
-TL;DR: 
-- "Cluster (first), then think (less)" to promote efficient and effective problem-solving.
-- Clustering should include dimensionality reduction
-  - Ignore the spurious
-  - Focus on what's important
 
 ## Case Studies
 
@@ -151,18 +152,20 @@ Why reduce dimensions?
 - So hard to find nearby (relevant) examples
   - Trick: find a transform to map higher to lower.
 
+<img align=right src="docs/z.jpg" width=300>
+
 e.g. (extremely optimistic case) suppose we can _sort_ all the examples along one dimension, 
   - To be $C$ confidence that after $n$ picks, we can find one example,
     is $C(n,p)= 1-(1-p)^n$  
     - Which re-arranges to $n(C,p)=log(1-C)/log(1-p)$
   - Cohen's $d$ tells us that any change smaller than $\sigma/.33$
     is a trivially small change.
-    - $\sigma$ ranges over six values: $-3 \le \sigma \le 3$
-    - So the     probability of randomly finding  solutions  insignificantly  different to the best solution is:   
-    $n(C=.95, p=.33/6)\approx 60$
+    - 99.7% of a normal curve is is covered by  six values: $-3 \le \sigma \le 3$
+    - So the  probability of randomly finding  solutions  insignificantly  different to the best solution is:   
+    $n(C=.97.5, p=.33/6)\approx 65$
   - Better yet, since the data is sorted,  we can do a binary chop to find this best solution after 
        
-    $\log_2(n(C=.95, p=.33/6))\approx 6$ samples.
+    $\log_2(n(C=.975, p=.33/6))\approx 6$ samples.
 
 So via  incredibly optimistic analysis,   when studying
     any number of examples, 6 binary chops should be enough to find 
