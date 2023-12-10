@@ -92,7 +92,7 @@ function l.cols(cols1, t)
 -- ##  ROW 
 
 -- store one row of data
-function ROW(t) return {cells=t} end
+function l.ROW(t) return {cells=t} end
 
 -- --------- --------- --------- --------- --------- --------- --------- ---------
 -- ##  DATA = rows + COLS
@@ -113,7 +113,7 @@ function l.clone(data1,  rows,      data2)
 
 -- Update DATA
 function l.data(data1,xs)
-  xs = xs.cells and xs or ROW(xs)
+  xs = xs.cells and xs or l.ROW(xs)
   if    data1.cols
   then  l.cols(data1.cols, xs.cells)
         lib.push(data1.rows, xs)
@@ -205,14 +205,6 @@ function l.like(col1,x,prior,    nom,denom)
        denom = (sd*((2*math.pi)^0.5))
        return nom/(denom  + 1E-30) end end
 
-  -- for k, data1 in pairs(datas) do
-  --   mids[k] = l.stats(data1, { report = "mid" })
-  --   divs[k] = l.stats(data1, { report = "div" })
-  -- end
-  -- lib.report(mids,"\nmids",8)
-  -- lib.report(divs,"\ndivs",8) end
-
--- --------- --------- --------- --------- --------- --------- --------- ---------
 -- ## Clustering 
 
 -- Normalize `x` 0..1 min..max (for NUMs), else return `x`.
@@ -253,7 +245,7 @@ function l.neighbors(data1,row1,rows,     fun)
   return l.keysort(rows or data1.rows, fun) end
 
 -- Return two distance points, and the distance between them.
-function l.twoFarPoints(data1, rows,sortp,a,b,far)
+function l.twoFarPoints(data1,rows,  sortp,a,    b,far)
   far = (#rows*the.Far)//1
   a   = a or l.neighbors(data1, l.any(rows), rows)[far]
   b   = l.neighbors(data1, a, rows)[far]
@@ -283,11 +275,11 @@ function l.tree(data1,sortp,      _tree)
     return node end
   return _tree(data1) end
 
-function l.branch(data1, sortp,      _,rest,_branch)
+function l.branch(data1,  sortp,      _,rest,_branch)
   rest = {}
   function _branch(data2,  above,    left,lefts,rights)
     if #data2.rows > 2*(#data1.rows)^.5
-    then lefts,rights,left = l.half(data1, data2.rows, sortp, above)
+    then lefts,rights,left = l.half(data1,data2.rows,sortp,above)
          for _,row1 in pairs(rights) do l.push(rest,row1) end
          return _branch(l.clone(data1,lefts),left)
     else return data2.rows, rest end end
@@ -334,11 +326,11 @@ function l.merge(range1,range2,     range3)
       l.sym(range3,k,v) end end
   return range3 end
 
-function l.merged(range1,range2,tooFew,   range3,e1,e2,e3)
+function l.merged(range1,range2,few,   range3,e1,e2,e3,n1,n2,n3) 
   range3 = l.merge(range1, range2)
   e1, e2, e3 = lib.ent(range1.y), lib.ent(range2.y), lib.ent(range3.y)
-  if range1.n <= tooFew or range2.n <= tooFew or
-    e3 <= (e1*e1.n + e2*e2.n) / e3.n then
+  n1, n2, n3 = range1.n, range2.n, range3.n 
+  if n1 <= few or  n2 <= few or e3 <= (e1*n1 + e2*n2) / n3 then
     return range3 end end
 
 -- Map `x` into a small number of bins. `SYM`s just get mapped
@@ -356,12 +348,12 @@ function l.bin(col1,x,      gap,t,lo,hi)
 -- For NUMs, that number is `the.bins=16` (say) (and after dividing
 -- the column into, say, 16 bins, then we call `merges` to see
 -- how many of them can be combined with their neighboring bin).
-local merges,noGaps
+ 
 function l.discretize(rowss,cols,   t,tmp,n)
   t={}
   for k,col1 in pairs(cols) do
     tmp,n = l.bins(rowss, col1)
-    t[k]  = col1.isSym and tmp or noGaps(merges(tmp, n^the.min)) end
+    t[k]  = col1.isSym and tmp or l.noGaps(l.merges(tmp, n^the.min)) end
   return t end
 
 function l.bins(rowss,col1,   t,c,x,k,n)
@@ -377,13 +369,13 @@ function l.bins(rowss,col1,   t,c,x,k,n)
         l.range(t[k],x,y) end end end
   return lib.sort(lib.map(t, lib.self), lib.lt"lo"),n end
 
-function noGaps(t)
+function l.noGaps(t)
   for j = 2,#t do t[j].lo = t[j-1].hi end
   t[1].lo  = -math.huge
   t[#t].hi =  math.huge
   return t end
 
-function merges(ranges,few,    tmp,i,a,b)
+function l.merges(ranges,few,    tmp,i,a,b)
   tmp,i = {},1
   while i <= #ranges do
     a = ranges[i]
