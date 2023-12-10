@@ -11,36 +11,55 @@ the  CEO and CTOs of whatever follows Google or OpenAI.
 Here are our themes;
 
 
-- <a name=less>**Lo is less, less is more:**</a> Seemingly complex problems can be approximated
+- <a name=less></a> **Lo is less, less is more**
+  - To go with the flow: go low.
+  - Seemingly complex problems can be approximated
   in a very low dimensional space-- where all inference is much  simpler and faster [^lutosa].
-- **Simplification of AI and SE:** Emphasizing the transformation of complex AI concepts into simpler, more understandable forms.
+  - High-dimensional data can be simplified and understood in lower dimensions.
+    - See case studies, below
+- **Simplification of AI and SE:** 
+  - Be quiet or I will replace you with one very small shell script.
+  - Emphasizing the transformation of complex AI concepts into simpler, more understandable forms.
   - Lots of small scripts doing lots of large AI tasks. 
   - Our case study: _semi-supervised explainable AI for multi-objective optimization_ 
   - Our results: tiny scripts with astonishing generality:
-    - Not by reusing some large libary
+    - Not by reusing some large library
     - But by focusing on core processes.
-- **Beyond mere programmong:**. In devops, we automated everything. Here, we automate automation.
+- **Beyond mere programming:**. 
+  - Stand out from the crowd.
+  - In devops, we automated everything. Here, we automate automation.
   - In the post chatgpt-world, you don't want to be "just" a programmer
   - You want to be the person trading off requirements, telling the programmers what to code (and what not to code).
-- **Learning and Skill Development:** Focus on enhancing coding skills and theoretical knowledge in AI and software engineering through practical examples.
+- **Learning and Skill Development:** 
+  - Cut the cr\*p.
+  - Focus on enhancing coding skills and theoretical knowledge in AI and software engineering through practical examples.
 - **Empowerment through Knowledge:**  
+  - More power to you.
   - Motivating readers to become proficient in enhanced coding and analysis, enabling them to tackle complex problems with simplified solutions.
     -  Yes, you (the developer) can understand it.
   - Enabling people, who are not the developers, to understand and critique
   a system and (in an effective manner) demand changes to that system.
     - Yes, you (the community) can critique it and propose improvements to  it.
-- **Critical View of Current AI Systems:** Analyzing the limitations of current large language models, such as their inefficiency and lack of transparency or validation [^wechat23]
-- **Data-Centric Approach:** Prioritizing a focus on data analysis over algorithmic or code-centric methods.
+- **Critical View of Current AI Systems:** 
+  - LLMs are great, except when they ain't
+  - Analyzing the limitations of current large language models, such as their inefficiency and lack of transparency or validation [^wechat23]
+- **Data-Centric Approach:** 
+  - Software 2.0
   - Data is the ultimate API
-- **Efficiency and Minimalism:** Advocating for more efficient solutions using fewer resources and simpler methods.
+  - Prioritizing a focus on data analysis over algorithmic or code-centric methods.
+  - Design systems as tools, joined by a spiderweb that are the configuration options.
+    - Learn best config from some local data source
+- **Efficiency and Minimalism:** 
+  - Less is more.
+  - Advocating for more efficient solutions using fewer resources and simpler methods.
   <img align=right width=300 src="docs/block.jpg">
-- **Importance of 'Pruning' Data:** Highlighting the need to focus on important data and discard the irrelevant, drawing inspiration from Michelangelo’s sculpting philosophy.
+- **Importance of 'Pruning' Data:** 
+  - The best thing to do with most data is throw it away (and there are many examples of this [^btw] [^stealth] [^early]).
+  - Highlighting the need to focus on important data and discard the irrelevant, drawing inspiration from Michelangelo’s sculpting philosophy.
   - "Every block of stone has a statue inside it and it is the task of the sculptor to discover it." -- Michelangelo
-  - The best thing to do with most data is throw it away 
-    (and there are many examples of this [^btw] [^stealth] [^early]).
-- **Dimensionality Reduction:** Discussing how high-dimensional data can be simplified and understood in lower dimensions.
-  - See case study, below
-- **Practical Problem-Solving Strategy:** Presenting a thodical approach to problem-solving by prioritizing clustering and minimizing assumptions
+- **Practical Problem-Solving Strategy:** 
+  - Yes you can.
+  - Presenting a practical approach to problem-solving by prioritizing clustering and minimizing assumptions
 
 
 [^wechat23]: For more on this, see T. Menzies. keynote ASE'23, 
