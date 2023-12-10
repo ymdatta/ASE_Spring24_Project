@@ -3,12 +3,12 @@ local l   = {}
 local lib = require"lib"
 local the,help = {},[[
 
-lo: semi-supervised multi-objective explanation
+golo: for ez SSL MOEA XAI, lo is less, less is more, go lo 
 (c) 2023, Tim Menzies, BSD-2
 
 USAGE:
-  cat x.csv | lua lo.lua [OPTIONS]
-  lua lo.lua -f x.csv [OPTIONS]
+  cat x.csv | lua golo.lua [OPTIONS]
+  lua golo.lua -f x.csv [OPTIONS]
  
 OPTIONS:
   -f --file   csv data file name                = -
