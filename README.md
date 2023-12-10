@@ -56,7 +56,7 @@ Here are our themes;
 - **Data-Centric Software 2.0:** 
   - Data is the ultimate API
   - Prioritizing a focus on data analysis over algorithmic or code-centric methods.
-  -  In Software 2.0 [&se2]  most often the source code comprises
+  -  In Software 2.0 [^se2]  most often the source code comprises
      - the dataset that defines the desirable behavior
      - the architecture that gives the rough skeleton of the code, but with many details
        (the config options) yet to be selected.
@@ -76,7 +76,8 @@ Here are our themes;
   - Yes you can.
   - Presenting a practical approach to problem-solving by prioritizing clustering and minimizing assumptions
 
-[^se2]: Andrej Karpathy [Software 2.0](https://karpathy.medium.com/software-2-0-a64152b37c35), 
+[^se2]: Andrej Karpathy 
+ [Software 2.0](https://karpathy.medium.com/software-2-0-a64152b37c35), 
 Medium.com Nov 11, 2027 Karpathy assumes the Software 2.0 learner is a neural  net. I say his point generalizes
 to any AI-drive configuration system.
 
