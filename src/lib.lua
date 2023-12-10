@@ -32,7 +32,7 @@ function l.gaussian(mu,sd)
   mu,sd = mu or 0, sd or 1
   local sq,pi,log,cos,r = math.sqrt,math.pi,math.log,math.cos,math.random
   return mu + sd * sq(-2*log(r())) * cos(2*pi*r())  end
-y
+
 -- Convert list of numbers to standard deviation. For more on this see
 -- [here](http://datagenetics.com/blog/november22017/index.html).
 function l.t2stdec(t,    d,n,mu,m2)

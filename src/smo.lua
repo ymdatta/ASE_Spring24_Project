@@ -62,11 +62,11 @@ function l.has(col1)
   return col1.has end
 
 -- Middle value of a column distribution
-function l.mid(col1) 
+function l.mid(col1)
   return  col1.isSym and col1.mode or lib.median(l.has(col1)) end
 
 -- Diversity of values in a column distribution
-function l.div(col1) 
+function l.div(col1)
   return (col1.isSym and lib.ent or lib.stdev)(l.has(col1)) end
 
 -- ## COLS= multiple colums
@@ -322,7 +322,7 @@ function l.range(range1,n,s)
   l.sym(range1.y, s) end
 
 function l.merge(range1,range2,     range3)
-  range3   = RANGE(range1.at, range1.txt, range1.lo, range2.hi)
+  range3   = l.RANGE(range1.at, range1.txt, range1.lo, range2.hi)
   range3.n = range1.n + range2.n
   for _,t in pairs{range1.y,range2.y} do
     for k,v in pairs(t) do 
@@ -331,11 +331,11 @@ function l.merge(range1,range2,     range3)
 
 function l.merged(range1,range2,tooFew,   range3,e1,e2,e3)
   range3 = l.merge(range1, range2)
-  e1, e2, e3 = ent(range.y), ent(range2.y), ent(range3.y)
-  if range1,n <= tooFew or range2.n <= tooFew or
+  e1, e2, e3 = lib.ent(range1.y), lib.ent(range2.y), lib.ent(range3.y)
+  if range1.n <= tooFew or range2.n <= tooFew or
     e3 <= (e1*e1.n + e2*e2.n) / e3.n then
-    return range3 end
-     
+    return range3 end end
+
 -- Map `x` into a small number of bins. `SYM`s just get mapped
 -- to themselves but `NUM`s get mapped to one of `is.bins` values.
 function l.bin(col1,x,      gap,t,lo,hi)
@@ -351,54 +351,32 @@ function l.bin(col1,x,      gap,t,lo,hi)
 -- For NUMs, that number is `the.bins=16` (say) (and after dividing
 -- the column into, say, 16 bins, then we call `merges` to see
 -- how many of them can be combined with their neighboring bin).
-function l.bins(cols,rowss,      with1Col,withAllRows)
-  p
-  unction with1Col(col,     n,ranges)
-    n,ranges = withAllRows(col)
-    ranges   = lib.sort(lib.map(ranges,lib.self),lib.lt"lo") -- keyArray to numArray, sorted
-    if   col.isSym
-    then return ranges
-    else return l.merges(ranges, n/the.bins, the.d*l.div(col)) end end
-  function withAllRows(col,    n,ranges,xy)
-    function xy(x,y,      k)
-      if x ~= "?" then
-        n = n + 1
-        k = l.bin(col,x)
-        ranges[k] = ranges[k] or l.RANGE(col.at,col.txt,x)
-        l.range(ranges[k], x, y) end
-    end -----------
-    n,ranges = 0,{}
-    for y,rows in pairs(rowss) do for _,row in pairs(rows) do xy(row[col.at],y) end end
-    return n, ranges 
-  end --------------
-  return map(cols, with1Col) end
-
 local merges,noGaps
 function l.discretize(rowss,cols,   t,tmp,n)
   t={}
   for k,col1 in pairs(cols) do
     tmp,n = l.bins(rowss, col1)
-    t[k] = col1.isSym and tmp or noGaps(merges(tmp, n^the.min)) end
+    t[k]  = col1.isSym and tmp or noGaps(merges(tmp, n^the.min)) end
   return t end
 
 function l.bins(rowss,col1,   t,c,x,k,n)
   t = {}
   n = 0
-  for y,rows in pairs(rowss) do 
+  for y,rows in pairs(rowss) do
     for _,row1 in pairs(rows) do
       x = row1.cells[col1.at]
       if x ~= "?" then
         n    = n + 1
         k    = l.bin(col1,x)
-        t[k] = t[k] or l.RANGE(col1.at, col1.txt, x) 
-        l.range(t[k],x y) end end end
+        t[k] = t[k] or l.RANGE(col1.at, col1.txt, x)
+        l.range(t[k],x,y) end end end
   return lib.sort(lib.map(t, lib.self), lib.lt"lo"),n end
 
 function noGaps(t)
   for j = 2,#t do t[j].lo = t[j-1].hi end
   t[1].lo  = -math.huge
-  t[#t].hi =  math.huge 
-  return t end 
+  t[#t].hi =  math.huge
+  return t end
 
 function merges(ranges,few,    tmp,i,a,b)
   tmp,i = {},1
@@ -410,5 +388,5 @@ function merges(ranges,few,    tmp,i,a,b)
         a = b
         i = i+1 end end
     lib.push(tmp, a)
-    i = i +  end
+    i = i + 1 end
   return #tmp == #ranges and ranges or l.merges(tmp,few) end
