@@ -26,7 +26,7 @@ Lo is less. <a href="https://github.com/timm/lo/blob/main/README.md#less">Less i
 :: <a href="https://timm.github.io/lo/index.html">home</a>
 :: <a href="https://github.com/timm/lo/blob/main/CONTRIBUTE.md">notes</a>
 :: <a href="https://github.com/timm/lo/issues">issues</a> 
-:: <a href="lib.html">lib</a> :: 
+:: <a href="lib.html">lib</a> 
 endef
 export header
 
@@ -46,7 +46,7 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  ## update docs/*.html
 ../docs/%.html : %.lua ## make doc
 	pycco -d ../docs $^ 
 	gawk -v head="$$header" -v banner="$$banner" \
-		'!p && sub(/<p>/,"") {p=1; print head  $$0; next} \
+		'!p && sub(/<p>/,"") {p=1; print $$0 head  ; next} \
 			1  ' $@ > _tmp; mv _tmp $@
 	echo "$$css" >> ../docs/pycco.css
 	git  add  $@
