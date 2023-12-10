@@ -16,6 +16,8 @@ TL;DR:
   - Ignore the spurious
   - Focus on what's important
 
+<br clear=all>
+
 Here are our themes;
 
 
