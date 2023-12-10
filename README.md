@@ -169,7 +169,7 @@ e.g. (extremely optimistic case) suppose we can _sort_ all the examples along on
   - To be $C$ confidence that after $n$ picks, we can find one example,
     is $C(n,p)= 1-(1-p)^n$  
     - Which re-arranges to $n(C,p)=log(1-C)/log(1-p)$
-     <img align=right src="docs/z.jpg" width=300>
+     <img align=right src="https://raw.githubusercontent.com/timm/lo/main/docs/z.jpg" width=300>
   - Cohen argues that that any change smaller than $\sigma/.33$
     is a trivially small change.
     - 99.7% of a normal curve is has the range: $-3 \le \sigma \le 3$
