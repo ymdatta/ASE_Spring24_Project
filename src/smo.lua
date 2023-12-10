@@ -383,7 +383,7 @@ function merges(ranges,few,    tmp,i,a,b)
   while i <= #ranges do
     a = ranges[i]
     if i < #ranges then
-      b = l.merged(a, ranges[i+1],few)
+      b = l.merged(a, ranges[i+1], few)
       if b then
         a = b
         i = i+1 end end
