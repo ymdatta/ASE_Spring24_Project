@@ -169,14 +169,15 @@ e.g. (extremely optimistic case) suppose we can _sort_ all the examples along on
   - To be $C$ confidence that after $n$ picks, we can find one example,
     is $C(n,p)= 1-(1-p)^n$  
     - Which re-arranges to $n(C,p)=log(1-C)/log(1-p)$
-    <img align=right src="docs/z.jpg" width=300>
+     <img align=right src="docs/z.jpg" width=300>
   - Cohen argues that that any change smaller than $\sigma/.33$
     is a trivially small change.
     - 99.7% of a normal curve is has the range: $-3 \le \sigma \le 3$
+    - So the space of indistinguishably best solutions is  $.33/(3- -3=6)= 0.055$
+    - Which has a $p=.95$ on a z-curve (ish)
     - So the  probability of randomly finding  solutions  insignificantly  different to the best solution is:   
-    $n(C=.97.5, p=.33/(3- -3=6))\approx 65$
-  - Better yet, since the data is sorted,  we can do a binary chop to find this best solution after 
-       
+    $n(C=.95, p=.055)\approx 60$
+  - Better yet, since the data is sorted,  we can do a binary chop to find this best solution after    
     $\log_2(n(C=.975, p=.33/6))\approx 6$ samples.
 
 So via  incredibly optimistic analysis,   when studying
