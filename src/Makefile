@@ -26,7 +26,7 @@ Lo is less. <a href="https://github.com/timm/lo/blob/main/README.md#less">Less i
 :: <a href="https://timm.github.io/lo/index.html">home</a>
 :: <a href="https://github.com/timm/lo/blob/main/CONTRIBUTE.md">notes</a>
 :: <a href="https://github.com/timm/lo/issues">issues</a> 
-:: <a href="lib.html">lib</a> 
+:: <a href="lib.html">lib</a>  <hr>
 endef
 export header
 
