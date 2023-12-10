@@ -17,7 +17,7 @@ OPTIONS:
   -m --m      handle low attribute frequencies  = 2
   -p --p      distance coeffecient              = 2
   -w --wait   wait before classifications       = 20]]
-
+-- --------- --------- --------- --------- --------- --------- -------- ----------
 -- ##  One Column
 
 -- Create one NUM
@@ -69,6 +69,7 @@ function l.mid(col1)
 function l.div(col1)
   return (col1.isSym and lib.ent or lib.stdev)(l.has(col1)) end
 
+-- --------- --------- --------- --------- --------- --------- --------- ---------
 -- ## COLS= multiple colums
 
 -- Create one column
@@ -87,11 +88,13 @@ function l.COLS(t, -- e.g. {"Age","job","Salary+"}
 function l.cols(cols1, t)
   for _, col1 in pairs(cols1.all) do l.col(col1, t[col1.at]) end end
 
+-- --------- --------- --------- --------- --------- --------- --------- ---------
 -- ##  ROW 
 
 -- store one row of data
 function ROW(t) return {cells=t} end
 
+-- --------- --------- --------- --------- --------- --------- --------- ---------
 -- ##  DATA = rows + COLS
 
 -- Create a DATA from a string (assumed to be a file name) or a list of rows.   
@@ -126,7 +129,8 @@ function l.stats(data1, my,     t,fun)
     t[col1.txt] = lib.rnd( fun(col1), my.ndecs) end
   return t end
 
--- Naivve Bayes Classifier
+-- --------- --------- --------- --------- --------- --------- --------- ---------
+-- ## Naivve Bayes Classifier
 
 -- Make new classifier (same creation pattern as `DATA`
 function l.NB(src,    nb1)
@@ -208,6 +212,7 @@ function l.like(col1,x,prior,    nom,denom)
   -- lib.report(mids,"\nmids",8)
   -- lib.report(divs,"\ndivs",8) end
 
+-- --------- --------- --------- --------- --------- --------- --------- ---------
 -- ## Clustering 
 
 -- Normalize `x` 0..1 min..max (for NUMs), else return `x`.
@@ -304,7 +309,7 @@ function l.tshow(node1,     _show,depth1)
   l.climb(node1, _show); print""
   print( ("    "):rep(depth1), l.o(l.stats(node1.here))) end
 
--- ----------------------------------------------------
+-- --------- --------- --------- --------- --------- --------- --------- ---------
 --- ## Discretization
 
 -- Create a RANGE  that tracks the y dependent values seen in 

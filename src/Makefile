@@ -3,8 +3,11 @@ MAKEFLAGS += --warn-undefined-variables
 .SILENT: 
 
 define css
-p,h2,h3   { text-align: right;} 
-h2        { padding-top: 2px; border-top: 1px dotted #888; }
+p,h2,h3   { text-align: right;}
+hr        { background-color: #EEE !important;
+    color: #EEE !important
+    border: solid 1px #EEE !important;
+    height: 1px !important; }
 .docs pre {font-size: 8pt; }
 endef
 export css
@@ -15,12 +18,12 @@ endef
 export banner
 
 define  header
-<a href="http://github.com/timm/lo"><img align=right height=25 src="https://timm.github.io/lo/github.png"></a>
 Lo is less. <a href="https://github.com/timm/lo/blob/main/README.md#less">Less is more.</a> <br>
 &copy; 2023 Tim Menzies, <a href="mailto:timm@ieee.org">timm@ieee.org</a>, 
 <a href="https://github.com/timm/lo/blob/main/LICENSE.md">BSD-2</a><br>
 <center><img src="refactor.png" width=500></center>
-<a href="https://timm.github.io/lo/index.html">home</a>
+<a href="http://github.com/timm/lo"><img align=middle height=20 src="https://timm.github.io/lo/github.png"></a>
+:: <a href="https://timm.github.io/lo/index.html">home</a>
 :: <a href="https://github.com/timm/lo/blob/main/CONTRIBUTE.md">notes</a>
 :: <a href="https://github.com/timm/lo/issues">issues</a> 
 :: <a href="lib.html">lib</a> :: 
@@ -47,6 +50,23 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  ## update docs/*.html
 			1  ' $@ > _tmp; mv _tmp $@
 	echo "$$css" >> ../docs/pycco.css
 	git  add  $@
+
+~/tmp/%.pdf: %.lua 
+	mkdir -p ~/tmp
+	echo "pdf-ing $^ ... "
+	a2ps                          \
+		-Br                          \
+		--chars-per-line 105          \
+		--file-align=fill              \
+		--line-numbers=1                \
+		--borders=no                     \
+		--pro=color                       \
+		--columns  3                       \
+		-M letter                           \
+		--pretty-print="../etc/lua.ssh"   \
+		-o ~/tmp/$^.ps $^ ;               \
+	ps2pdf ~/tmp/$^.ps $@ ;  rm ~/tmp/$^.ps; \
+  open $@
 
 zero:
 	lua zero.lua  -f ../data/zero.csv
