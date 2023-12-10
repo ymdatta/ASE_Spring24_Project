@@ -78,7 +78,7 @@ Here are our themes;
 
 [^se2]: Andrej Karpathy 
  [Software 2.0](https://karpathy.medium.com/software-2-0-a64152b37c35), 
-Medium.com Nov 11, 2027 Karpathy assumes the Software 2.0 learner is a neural  net. I say his point generalizes
+Medium.com Nov 11, 2017. Karpathy assumes the Software 2.0 learner is a neural  net. I say his point generalizes
 to any AI-drive configuration system.
 
 
