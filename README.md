@@ -164,17 +164,17 @@ Why reduce dimensions?
 - So hard to find nearby (relevant) examples
   - Trick: find a transform to map higher to lower.
 
-<img align=right src="docs/z.jpg" width=300>
 
 e.g. (extremely optimistic case) suppose we can _sort_ all the examples along one dimension, 
   - To be $C$ confidence that after $n$ picks, we can find one example,
     is $C(n,p)= 1-(1-p)^n$  
     - Which re-arranges to $n(C,p)=log(1-C)/log(1-p)$
-  - Cohen's $d$ tells us that any change smaller than $\sigma/.33$
+    <img align=right src="docs/z.jpg" width=300>
+  - Cohen argues that that any change smaller than $\sigma/.33$
     is a trivially small change.
-    - 99.7% of a normal curve is is covered by  six values: $-3 \le \sigma \le 3$
+    - 99.7% of a normal curve is has the range: $-3 \le \sigma \le 3$
     - So the  probability of randomly finding  solutions  insignificantly  different to the best solution is:   
-    $n(C=.97.5, p=.33/6)\approx 65$
+    $n(C=.97.5, p=.33/(3- -3=6))\approx 65$
   - Better yet, since the data is sorted,  we can do a binary chop to find this best solution after 
        
     $\log_2(n(C=.975, p=.33/6))\approx 6$ samples.
@@ -186,7 +186,8 @@ So via  incredibly optimistic analysis,   when studying
 In practice, this is too small. But as we shall see, 10-20 samples
 takes you a very long way. We will come back to this.
 
-In any case, take that big data!
+To say all that another way, instead of big data mining from data to wisdom,
+look for hints that constrain the model space, then restrict the reasoning around those hints.
 
 ![](https://forum.obsidian.md/uploads/default/original/2X/a/a84feb13a6f78c238c6872fcc400a69559596869.jpeg)
 
