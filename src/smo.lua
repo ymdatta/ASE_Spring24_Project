@@ -39,11 +39,12 @@ function l.COL(txt,at)
 function l.col(col1,x)
   return (col1.isSym  and l.sym or l.num)(col1,x) end
 
--- Update a SYM column
-function l.sym(sym1,x)
+-- Update a SYM column. The default is to add one to
+-- `sym1` (and that can be customized).
+function l.sym(sym1,x,  n)
   if x~="?" then
-    sym1.n = sym1.n + 1
-    sym1.has[x] = 1 + (sym1.has[x] or 0)
+    sym1.n      = (n or 1) + sym1.n
+    sym1.has[x] = (n or 1) + (sym1.has[x] or 0)
     if sym1.has[x] > sym1.most then
       sym1.most, sym1.mode = sym1.has[x],x end end end
 
@@ -66,7 +67,7 @@ function l.mid(col1)
 
 -- Diversity of values in a column distribution
 function l.div(col1) 
-  return (col1.isSym and lib.entropy or lib.stdev)(l.has(col1)) end
+  return (col1.isSym and lib.ent or lib.stdev)(l.has(col1)) end
 
 -- ## COLS= multiple colums
 
@@ -320,6 +321,21 @@ function l.range(range1,n,s)
   range1.n  = range1.n + 1
   l.sym(range1.y, s) end
 
+function l.merge(range1,range2,     range3)
+  range3   = RANGE(range1.at, range1.txt, range1.lo, range2.hi)
+  range3.n = range1.n + range2.n
+  for _,t in pairs{range1.y,range2.y} do
+    for k,v in pairs(t) do 
+      l.sym(range3,k,v) end end
+  return range3 end
+
+function l.merged(range1,range2,tooFew,   range3,e1,e2,e3)
+  range3 = l.merge(range1, range2)
+  e1, e2, e3 = ent(range.y), ent(range2.y), ent(range3.y)
+  if range1,n <= tooFew or range2.n <= tooFew or
+    e3 <= (e1*e1.n + e2*e2.n) / e3.n then
+    return range3 end
+     
 -- Map `x` into a small number of bins. `SYM`s just get mapped
 -- to themselves but `NUM`s get mapped to one of `is.bins` values.
 function l.bin(col1,x,      gap,t,lo,hi)
@@ -336,7 +352,8 @@ function l.bin(col1,x,      gap,t,lo,hi)
 -- the column into, say, 16 bins, then we call `merges` to see
 -- how many of them can be combined with their neighboring bin).
 function l.bins(cols,rowss,      with1Col,withAllRows)
-  function with1Col(col,     n,ranges)
+  p
+  unction with1Col(col,     n,ranges)
     n,ranges = withAllRows(col)
     ranges   = lib.sort(lib.map(ranges,lib.self),lib.lt"lo") -- keyArray to numArray, sorted
     if   col.isSym
@@ -356,21 +373,26 @@ function l.bins(cols,rowss,      with1Col,withAllRows)
   end --------------
   return map(cols, with1Col) end
 
-local merges,nogaps
-function l.bins(rowss,cols,   t,c,x,k,finish)
+local merges,noGaps
+function l.discretize(rowss,cols,   t,tmp,n)
+  t={}
+  for k,col1 in pairs(cols) do
+    tmp,n = l.bins(rowss, col1)
+    t[k] = col1.isSym and tmp or noGaps(merges(tmp, n^the.min)) end
+  return t end
+
+function l.bins(rowss,col1,   t,c,x,k,n)
   t = {}
-  for _,col1 in pairs(cols) do
-    c = col1.at
-    t[c] = {}
-    for y,rows in pairs(rowss) do 
-      for _,row in pairs(rows) do
-        x = row.cells[col1.at]
-        if x ~= "?" then
-           k       = l.bin(col1,x)
-           t[c][k] =  t[c][k] or l.RANGE(c, col1.txt, x) 
-           l.range(t[c][k],x y) end end end
-    t[c]  = lib.sort(lib.map(t[c],lib.self), lib.lt"lo") end  
-  return t end 
+  n = 0
+  for y,rows in pairs(rowss) do 
+    for _,row1 in pairs(rows) do
+      x = row1.cells[col1.at]
+      if x ~= "?" then
+        n    = n + 1
+        k    = l.bin(col1,x)
+        t[k] = t[k] or l.RANGE(col1.at, col1.txt, x) 
+        l.range(t[k],x y) end end end
+  return lib.sort(lib.map(t, lib.self), lib.lt"lo"),n end
 
 function noGaps(t)
   for j = 2,#t do t[j].lo = t[j-1].hi end
@@ -378,14 +400,15 @@ function noGaps(t)
   t[#t].hi =  math.huge 
   return t end 
 
-function merges(ranges0,nSmall,nFar,     )
-   function try2Merge(left,right,j,     y)
-    y = merged(left.y, right.y, nSmall, nFar)
-    if y then 
-      j = j+1 -- next round, skip over right.
-      left.hi, left.y = right.hi, y end 
-    return j , left 
-  end -------------
-    end 
-function merges(ranges0,     ranges,
-l.nb()
+function merges(ranges,few,    tmp,i,a,b)
+  tmp,i = {},1
+  while i <= #ranges do
+    a = ranges[i]
+    if i < #ranges then
+      b = l.merged(a, ranges[i+1],few)
+      if b then
+        a = b
+        i = i+1 end end
+    lib.push(tmp, a)
+    i = i +  end
+  return #tmp == #ranges and ranges or l.merges(tmp,few) end

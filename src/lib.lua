@@ -59,6 +59,12 @@ function l.many(t,n,     u)
 -- Push onto a list `t`.
 function l.push(t,x) t[1+#t]=x; return x end
 
+-- Deep copy
+function l.copy(t,    u)
+  if type(t) ~= "table" then return t end
+  u={}; for k,v in pairs(t) do u[l.copy(k)]=l.copy(v) end
+  return u end
+
 -- Lua's default sort does not return the sorted list. So....
 function l.sort(t,  fun)
   table.sort(t,fun); return t end
@@ -78,8 +84,8 @@ function l.median(t) return l.per(t, .5) end
 -- [computing percentiles](https://sphweb.bumc.bu.edu/otlt/mph-modules/bs/bs704_probability/bs704_probability10.html)).
 function l.stdev(t)   return (l.per(t,.9) - l.per(t,.1))/2.564 end
 
--- Entropy is the how mx binary chops are needed to isolate all the parts of a signal.
-function l.entropy(t, e, n)
+-- ent is the how mx binary chops are needed to isolate all the parts of a signal.
+function l.ent(t, e, n)
     e, n = 0, 0
     for _, v in pairs(t) do n = n + v end
     for _, v in pairs(t) do e = e - v / n * math.log(v / n, 2) end
