@@ -3,12 +3,12 @@ local l   = {}
 local lib = require"lib"
 local the,help = {},[[
 
-smo: semi-supervised multi-objective explanation
+lo: semi-supervised multi-objective explanation
 (c) 2023, Tim Menzies, BSD-2
 
 USAGE:
-  cat x.csv | lua smo.lua [OPTIONS]
-  lua smo.lua -f x.csv [OPTIONS]
+  cat x.csv | lua lo.lua [OPTIONS]
+  lua lo.lua -f x.csv [OPTIONS]
  
 OPTIONS:
   -f --file   csv data file name                = -

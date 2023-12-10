@@ -1,5 +1,5 @@
 local lib = require"Lib"
-local l   = require"smo"
+local l   = require"lo"
 local eg  = {}
 
 function eg.sym(     sym1,md,div)
