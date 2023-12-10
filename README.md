@@ -172,8 +172,8 @@ e.g. (extremely optimistic case) suppose we can _sort_ all the examples along on
      <img align=right src="https://raw.githubusercontent.com/timm/lo/main/docs/z.jpg" width=300>
   - Cohen argues that that any change smaller than $\sigma\*.35$ [^cohen]
     is a trivially small change.
-    - 99.7% of a normal curve is has the range: $-3 \le \sigma \le 3$
-    - So the space of indistinguishably best solutions is  $.35/(3- -3=6)= 0.058$
+    - Most of a normal curve is has the range: $-3 \le \sigma \le 3$
+    - So the space of indistinguishably best solutions falls in the x-range  $.35/(3- -3=6)= 0.058$
     - So the  probability of randomly finding  solutions  insignificantly  different to the best solution at
       confidence $C=.95$ is  
     $n(C=.95, p=.058)\approx 50$
@@ -194,7 +194,8 @@ look for hints that constrain the model space, then restrict the reasoning aroun
 
 ## References
 
-[^cohen:] What he actually says is that  that small and medium effect sizes occur at .2 and .5.
+[^cohen]: What he actually says is that  
+small and medium effect sizes occur at .2 and .5.
 So I split the difference at .35.
 
 [^why]: Why? Since we have to some heuristic for sorting examples on their independent 
