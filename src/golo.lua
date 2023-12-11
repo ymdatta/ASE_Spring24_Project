@@ -293,7 +293,7 @@ function l.tshow(node1,     _show,depth1)
   print( ("    "):rep(depth1), l.o(l.stats(node1.here))) end
 
 -- --------- --------- --------- --------- --------- --------- --------- ---------
---- ## Multi-objective optimization
+--- ## Semi-supervised Multi-objective optimization
 
 -- Return a small group of `best` rows, and all the `rest`.
 function l.branch(data1,  sortp,      _,rest,_branch)
