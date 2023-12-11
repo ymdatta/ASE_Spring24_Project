@@ -21,12 +21,12 @@ define  header
 Lo is less. <a href="https://github.com/timm/lo/blob/main/README.md#less">Less is more.</a> <br>
 &copy; 2023 Tim Menzies, <a href="mailto:timm@ieee.org">timm@ieee.org</a>, 
 <a href="https://github.com/timm/lo/blob/main/LICENSE.md">BSD-2</a><br>
-(1) cluster data in low dimensions; (2) reason over  the clusters.<br>
-<a href="http://github.com/timm/lo"><img align=center  height=25 src="github.png"></a>
+Cluster data to lower dimensions. Just reason about those clusters.<hr>
+<center><a href="http://github.com/timm/lo"><img align=center  height=25 src="github.png"></a>
 :: <a href="https://timm.github.io/lo/index.html">home</a>
 :: <a href="https://github.com/timm/lo/blob/main/CONTRIBUTE.md">notes</a>
 :: <a href="https://github.com/timm/lo/issues">issues</a> 
-:: <a href="lib.html">lib</a>  <hr>
+:: <a href="lib.html">lib</a>  </center><hr>
 endef
 export header
 
@@ -56,7 +56,7 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  ## update docs/*.html
 	echo "pdf-ing $^ ... "
 	a2ps                          \
 		-Br                          \
-		--chars-per-line 105          \
+		--chars-per-line 90          \
 		--file-align=fill              \
 		--line-numbers=1                \
 		--borders=no                     \

@@ -20,12 +20,12 @@
       <a href="counts.html">counts</a> &rightarrow;  bayes</p>Lo is less. <a href="https://github.com/timm/lo/blob/main/README.md#less">Less is more.</a> <br>
 &copy; 2023 Tim Menzies, <a href="mailto:timm@ieee.org">timm@ieee.org</a>, 
 <a href="https://github.com/timm/lo/blob/main/LICENSE.md">BSD-2</a><br>
-(1) cluster data in low dimensions; (2) reason over  the clusters.<br>
-<a href="http://github.com/timm/lo"><img align=center  height=25 src="github.png"></a>
+Cluster data to lower dimensions. Just reason about those clusters.<hr>
+<center><a href="http://github.com/timm/lo"><img align=center  height=25 src="github.png"></a>
 :: <a href="https://timm.github.io/lo/index.html">home</a>
 :: <a href="https://github.com/timm/lo/blob/main/CONTRIBUTE.md">notes</a>
 :: <a href="https://github.com/timm/lo/issues">issues</a> 
-:: <a href="lib.html">lib</a>  <hr>
+:: <a href="lib.html">lib</a>  </center><hr>
     </div>
     <div class='code'>
       <div class="highlight"><pre><span></span><span class="kd">local</span> <span class="n">l</span>   <span class="o">=</span> <span class="p">{}</span>
@@ -260,7 +260,7 @@
       <p>store one row of data</p>
     </div>
     <div class='code'>
-      <div class="highlight"><pre><span class="kr">function</span> <span class="nf">ROW</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="kr">return</span> <span class="p">{</span><span class="n">cells</span><span class="o">=</span><span class="n">t</span><span class="p">}</span> <span class="kr">end</span></pre></div>
+      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">ROW</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="kr">return</span> <span class="p">{</span><span class="n">cells</span><span class="o">=</span><span class="n">t</span><span class="p">}</span> <span class="kr">end</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
@@ -318,7 +318,7 @@
     </div>
     <div class='code'>
       <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">data</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span><span class="n">xs</span><span class="p">)</span>
-  <span class="n">xs</span> <span class="o">=</span> <span class="n">xs</span><span class="p">.</span><span class="n">cells</span> <span class="ow">and</span> <span class="n">xs</span> <span class="ow">or</span> <span class="n">ROW</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
+  <span class="n">xs</span> <span class="o">=</span> <span class="n">xs</span><span class="p">.</span><span class="n">cells</span> <span class="ow">and</span> <span class="n">xs</span> <span class="ow">or</span> <span class="n">l</span><span class="p">.</span><span class="n">ROW</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
   <span class="kr">if</span>    <span class="n">data1</span><span class="p">.</span><span class="n">cols</span>
   <span class="kr">then</span>  <span class="n">l</span><span class="p">.</span><span class="n">cols</span><span class="p">(</span><span class="n">data1</span><span class="p">.</span><span class="n">cols</span><span class="p">,</span> <span class="n">xs</span><span class="p">.</span><span class="n">cells</span><span class="p">)</span>
         <span class="n">lib</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">data1</span><span class="p">.</span><span class="n">rows</span><span class="p">,</span> <span class="n">xs</span><span class="p">)</span>
@@ -507,12 +507,8 @@ or with our crrrent data structures:         <br />
       <div class='octowrap'>
         <a class='octothorpe' href='#section-30'>#</a>
       </div>
-      <p>for k, data1 in pairs(datas) do
-  mids[k] = l.stats(data1, { report = &ldquo;mid&rdquo; })
-  divs[k] = l.stats(data1, { report = &ldquo;div&rdquo; })
-end
-lib.report(mids,&rdquo;\nmids&rdquo;,8)
-lib.report(divs,&rdquo;\ndivs&rdquo;,8) end</p>
+      <hr />
+<h2>Clustering</h2>
     </div>
     <div class='code'>
       <div class="highlight"><pre></pre></div>
@@ -524,19 +520,6 @@ lib.report(divs,&rdquo;\ndivs&rdquo;,8) end</p>
       <div class='octowrap'>
         <a class='octothorpe' href='#section-31'>#</a>
       </div>
-      <hr />
-<h2>Clustering</h2>
-    </div>
-    <div class='code'>
-      <div class="highlight"><pre></pre></div>
-    </div>
-  </div>
-  <div class='clearall'></div>
-  <div class='section' id='section-32'>
-    <div class='docs'>
-      <div class='octowrap'>
-        <a class='octothorpe' href='#section-32'>#</a>
-      </div>
       <p>Normalize <code>x</code> 0..1 min..max (for NUMs), else return <code>x</code>.</p>
     </div>
     <div class='code'>
@@ -547,10 +530,10 @@ lib.report(divs,&rdquo;\ndivs&rdquo;,8) end</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-33'>
+  <div class='section' id='section-32'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-33'>#</a>
+        <a class='octothorpe' href='#section-32'>#</a>
       </div>
       <p>Distance to heaven (using goal values).</p>
     </div>
@@ -564,10 +547,10 @@ lib.report(divs,&rdquo;\ndivs&rdquo;,8) end</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-34'>
+  <div class='section' id='section-33'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-34'>#</a>
+        <a class='octothorpe' href='#section-33'>#</a>
       </div>
       <p>Distance between two values in one column.</p>
     </div>
@@ -583,10 +566,10 @@ lib.report(divs,&rdquo;\ndivs&rdquo;,8) end</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-35'>
+  <div class='section' id='section-34'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-35'>#</a>
+        <a class='octothorpe' href='#section-34'>#</a>
       </div>
       <p>Distance between two rows.</p>
     </div>
@@ -600,10 +583,10 @@ lib.report(divs,&rdquo;\ndivs&rdquo;,8) end</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-36'>
+  <div class='section' id='section-35'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-36'>#</a>
+        <a class='octothorpe' href='#section-35'>#</a>
       </div>
       <p>All neighbors in <code>rows</code>, sorted by dustance to <code>row1</code>,</p>
     </div>
@@ -614,15 +597,15 @@ lib.report(divs,&rdquo;\ndivs&rdquo;,8) end</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-37'>
+  <div class='section' id='section-36'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-37'>#</a>
+        <a class='octothorpe' href='#section-36'>#</a>
       </div>
       <p>Return two distance points, and the distance between them.</p>
     </div>
     <div class='code'>
-      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">twoFarPoints</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span><span class="n">sortp</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">far</span><span class="p">)</span>
+      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">twoFarPoints</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span><span class="n">rows</span><span class="p">,</span>  <span class="n">sortp</span><span class="p">,</span><span class="n">a</span><span class="p">,</span>    <span class="n">b</span><span class="p">,</span><span class="n">far</span><span class="p">)</span>
   <span class="n">far</span> <span class="o">=</span> <span class="p">(</span><span class="o">#</span><span class="n">rows</span><span class="o">*</span><span class="n">the</span><span class="p">.</span><span class="n">Far</span><span class="p">)</span><span class="o">//</span><span class="mi">1</span>
   <span class="n">a</span>   <span class="o">=</span> <span class="n">a</span> <span class="ow">or</span> <span class="n">l</span><span class="p">.</span><span class="n">neighbors</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">l</span><span class="p">.</span><span class="n">any</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span> <span class="n">rows</span><span class="p">)[</span><span class="n">far</span><span class="p">]</span>
   <span class="n">b</span>   <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">neighbors</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">rows</span><span class="p">)[</span><span class="n">far</span><span class="p">]</span>
@@ -631,10 +614,10 @@ lib.report(divs,&rdquo;\ndivs&rdquo;,8) end</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-38'>
+  <div class='section' id='section-37'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-38'>#</a>
+        <a class='octothorpe' href='#section-37'>#</a>
       </div>
       <p>Divide <code>rows</code> into two halves, based on distance to two far points.</p>
     </div>
@@ -661,11 +644,11 @@ lib.report(divs,&rdquo;\ndivs&rdquo;,8) end</p>
     <span class="kr">return</span> <span class="n">node</span> <span class="kr">end</span>
   <span class="kr">return</span> <span class="n">_tree</span><span class="p">(</span><span class="n">data1</span><span class="p">)</span> <span class="kr">end</span>
 
-<span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">branch</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">sortp</span><span class="p">,</span>      <span class="n">_</span><span class="p">,</span><span class="n">rest</span><span class="p">,</span><span class="n">_branch</span><span class="p">)</span>
+<span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">branch</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span>  <span class="n">sortp</span><span class="p">,</span>      <span class="n">_</span><span class="p">,</span><span class="n">rest</span><span class="p">,</span><span class="n">_branch</span><span class="p">)</span>
   <span class="n">rest</span> <span class="o">=</span> <span class="p">{}</span>
   <span class="kr">function</span> <span class="nf">_branch</span><span class="p">(</span><span class="n">data2</span><span class="p">,</span>  <span class="n">above</span><span class="p">,</span>    <span class="n">left</span><span class="p">,</span><span class="n">lefts</span><span class="p">,</span><span class="n">rights</span><span class="p">)</span>
     <span class="kr">if</span> <span class="o">#</span><span class="n">data2</span><span class="p">.</span><span class="n">rows</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="o">#</span><span class="n">data1</span><span class="p">.</span><span class="n">rows</span><span class="p">)</span><span class="o">^</span><span class="mf">.5</span>
-    <span class="kr">then</span> <span class="n">lefts</span><span class="p">,</span><span class="n">rights</span><span class="p">,</span><span class="n">left</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">half</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">.</span><span class="n">rows</span><span class="p">,</span> <span class="n">sortp</span><span class="p">,</span> <span class="n">above</span><span class="p">)</span>
+    <span class="kr">then</span> <span class="n">lefts</span><span class="p">,</span><span class="n">rights</span><span class="p">,</span><span class="n">left</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">half</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span><span class="n">data2</span><span class="p">.</span><span class="n">rows</span><span class="p">,</span><span class="n">sortp</span><span class="p">,</span><span class="n">above</span><span class="p">)</span>
          <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">row1</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">rights</span><span class="p">)</span> <span class="kr">do</span> <span class="n">l</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span><span class="n">row1</span><span class="p">)</span> <span class="kr">end</span>
          <span class="kr">return</span> <span class="n">_branch</span><span class="p">(</span><span class="n">l</span><span class="p">.</span><span class="n">clone</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span><span class="n">lefts</span><span class="p">),</span><span class="n">left</span><span class="p">)</span>
     <span class="kr">else</span> <span class="kr">return</span> <span class="n">data2</span><span class="p">.</span><span class="n">rows</span><span class="p">,</span> <span class="n">rest</span> <span class="kr">end</span> <span class="kr">end</span>
@@ -689,10 +672,10 @@ lib.report(divs,&rdquo;\ndivs&rdquo;,8) end</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-39'>
+  <div class='section' id='section-38'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-39'>#</a>
+        <a class='octothorpe' href='#section-38'>#</a>
       </div>
       <hr />
 <ul>
@@ -706,10 +689,10 @@ lib.report(divs,&rdquo;\ndivs&rdquo;,8) end</p>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-40'>
+  <div class='section' id='section-39'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-40'>#</a>
+        <a class='octothorpe' href='#section-39'>#</a>
       </div>
       <p>Create a RANGE  that tracks the y dependent values seen in 
 the range <code>lo</code> to <code>hi</code> some independent variable in column number <code>at</code> whose name is <code>txt</code>. 
@@ -722,10 +705,10 @@ for  symbolic columns, <code>lo</code> is always the same as <code>hi</code>.</p
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-41'>
+  <div class='section' id='section-40'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-41'>#</a>
+        <a class='octothorpe' href='#section-40'>#</a>
       </div>
       <p>Update a RANGE to cover <code>x</code> and <code>y</code></p>
     </div>
@@ -744,19 +727,19 @@ for  symbolic columns, <code>lo</code> is always the same as <code>hi</code>.</p
       <span class="n">l</span><span class="p">.</span><span class="n">sym</span><span class="p">(</span><span class="n">range3</span><span class="p">,</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="kr">end</span> <span class="kr">end</span>
   <span class="kr">return</span> <span class="n">range3</span> <span class="kr">end</span>
 
-<span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">merged</span><span class="p">(</span><span class="n">range1</span><span class="p">,</span><span class="n">range2</span><span class="p">,</span><span class="n">tooFew</span><span class="p">,</span>   <span class="n">range3</span><span class="p">,</span><span class="n">e1</span><span class="p">,</span><span class="n">e2</span><span class="p">,</span><span class="n">e3</span><span class="p">)</span>
+<span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">merged</span><span class="p">(</span><span class="n">range1</span><span class="p">,</span><span class="n">range2</span><span class="p">,</span><span class="n">few</span><span class="p">,</span>   <span class="n">range3</span><span class="p">,</span><span class="n">e1</span><span class="p">,</span><span class="n">e2</span><span class="p">,</span><span class="n">e3</span><span class="p">,</span><span class="n">n1</span><span class="p">,</span><span class="n">n2</span><span class="p">,</span><span class="n">n3</span><span class="p">)</span> 
   <span class="n">range3</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">merge</span><span class="p">(</span><span class="n">range1</span><span class="p">,</span> <span class="n">range2</span><span class="p">)</span>
   <span class="n">e1</span><span class="p">,</span> <span class="n">e2</span><span class="p">,</span> <span class="n">e3</span> <span class="o">=</span> <span class="n">lib</span><span class="p">.</span><span class="n">ent</span><span class="p">(</span><span class="n">range1</span><span class="p">.</span><span class="n">y</span><span class="p">),</span> <span class="n">lib</span><span class="p">.</span><span class="n">ent</span><span class="p">(</span><span class="n">range2</span><span class="p">.</span><span class="n">y</span><span class="p">),</span> <span class="n">lib</span><span class="p">.</span><span class="n">ent</span><span class="p">(</span><span class="n">range3</span><span class="p">.</span><span class="n">y</span><span class="p">)</span>
-  <span class="kr">if</span> <span class="n">range1</span><span class="p">.</span><span class="n">n</span> <span class="o">&lt;=</span> <span class="n">tooFew</span> <span class="ow">or</span> <span class="n">range2</span><span class="p">.</span><span class="n">n</span> <span class="o">&lt;=</span> <span class="n">tooFew</span> <span class="ow">or</span>
-    <span class="n">e3</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="n">e1</span><span class="o">*</span><span class="n">e1</span><span class="p">.</span><span class="n">n</span> <span class="o">+</span> <span class="n">e2</span><span class="o">*</span><span class="n">e2</span><span class="p">.</span><span class="n">n</span><span class="p">)</span> <span class="o">/</span> <span class="n">e3</span><span class="p">.</span><span class="n">n</span> <span class="kr">then</span>
+  <span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">n3</span> <span class="o">=</span> <span class="n">range1</span><span class="p">.</span><span class="n">n</span><span class="p">,</span> <span class="n">range2</span><span class="p">.</span><span class="n">n</span><span class="p">,</span> <span class="n">range3</span><span class="p">.</span><span class="n">n</span> 
+  <span class="kr">if</span> <span class="n">n1</span> <span class="o">&lt;=</span> <span class="n">few</span> <span class="ow">or</span>  <span class="n">n2</span> <span class="o">&lt;=</span> <span class="n">few</span> <span class="ow">or</span> <span class="n">e3</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="n">e1</span><span class="o">*</span><span class="n">n1</span> <span class="o">+</span> <span class="n">e2</span><span class="o">*</span><span class="n">n2</span><span class="p">)</span> <span class="o">/</span> <span class="n">n3</span> <span class="kr">then</span>
     <span class="kr">return</span> <span class="n">range3</span> <span class="kr">end</span> <span class="kr">end</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-42'>
+  <div class='section' id='section-41'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-42'>#</a>
+        <a class='octothorpe' href='#section-41'>#</a>
       </div>
       <p>Map <code>x</code> into a small number of bins. <code>SYM</code>s just get mapped
 to themselves but <code>NUM</code>s get mapped to one of <code>is.bins</code> values.</p>
@@ -771,10 +754,10 @@ to themselves but <code>NUM</code>s get mapped to one of <code>is.bins</code> va
     </div>
   </div>
   <div class='clearall'></div>
-  <div class='section' id='section-43'>
+  <div class='section' id='section-42'>
     <div class='docs'>
       <div class='octowrap'>
-        <a class='octothorpe' href='#section-43'>#</a>
+        <a class='octothorpe' href='#section-42'>#</a>
       </div>
       <p>Return RANGEs that distinguish sets of rows (stored in <code>rowss</code>).
 To reduce the search space,
@@ -784,12 +767,11 @@ the column into, say, 16 bins, then we call <code>merges</code> to see
 how many of them can be combined with their neighboring bin).</p>
     </div>
     <div class='code'>
-      <div class="highlight"><pre><span class="kd">local</span> <span class="n">merges</span><span class="p">,</span><span class="n">noGaps</span>
-<span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">discretize</span><span class="p">(</span><span class="n">rowss</span><span class="p">,</span><span class="n">cols</span><span class="p">,</span>   <span class="n">t</span><span class="p">,</span><span class="n">tmp</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">discretize</span><span class="p">(</span><span class="n">rowss</span><span class="p">,</span><span class="n">cols</span><span class="p">,</span>   <span class="n">t</span><span class="p">,</span><span class="n">tmp</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
   <span class="n">t</span><span class="o">=</span><span class="p">{}</span>
   <span class="kr">for</span> <span class="n">k</span><span class="p">,</span><span class="n">col1</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span> <span class="kr">do</span>
     <span class="n">tmp</span><span class="p">,</span><span class="n">n</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">bins</span><span class="p">(</span><span class="n">rowss</span><span class="p">,</span> <span class="n">col1</span><span class="p">)</span>
-    <span class="n">t</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>  <span class="o">=</span> <span class="n">col1</span><span class="p">.</span><span class="n">isSym</span> <span class="ow">and</span> <span class="n">tmp</span> <span class="ow">or</span> <span class="n">noGaps</span><span class="p">(</span><span class="n">merges</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">n</span><span class="o">^</span><span class="n">the</span><span class="p">.</span><span class="n">min</span><span class="p">))</span> <span class="kr">end</span>
+    <span class="n">t</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>  <span class="o">=</span> <span class="n">col1</span><span class="p">.</span><span class="n">isSym</span> <span class="ow">and</span> <span class="n">tmp</span> <span class="ow">or</span> <span class="n">l</span><span class="p">.</span><span class="n">noGaps</span><span class="p">(</span><span class="n">l</span><span class="p">.</span><span class="n">merges</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">n</span><span class="o">^</span><span class="n">the</span><span class="p">.</span><span class="n">min</span><span class="p">))</span> <span class="kr">end</span>
   <span class="kr">return</span> <span class="n">t</span> <span class="kr">end</span>
 
 <span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">bins</span><span class="p">(</span><span class="n">rowss</span><span class="p">,</span><span class="n">col1</span><span class="p">,</span>   <span class="n">t</span><span class="p">,</span><span class="n">c</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="n">k</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
@@ -805,13 +787,13 @@ how many of them can be combined with their neighboring bin).</p>
         <span class="n">l</span><span class="p">.</span><span class="n">range</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="n">k</span><span class="p">],</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span> <span class="kr">end</span> <span class="kr">end</span> <span class="kr">end</span>
   <span class="kr">return</span> <span class="n">lib</span><span class="p">.</span><span class="n">sort</span><span class="p">(</span><span class="n">lib</span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">lib</span><span class="p">.</span><span class="n">self</span><span class="p">),</span> <span class="n">lib</span><span class="p">.</span><span class="n">lt</span><span class="s2">&quot;lo&quot;</span><span class="p">),</span><span class="n">n</span> <span class="kr">end</span>
 
-<span class="kr">function</span> <span class="nf">noGaps</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+<span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">noGaps</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
   <span class="kr">for</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span><span class="o">#</span><span class="n">t</span> <span class="kr">do</span> <span class="n">t</span><span class="p">[</span><span class="n">j</span><span class="p">].</span><span class="n">lo</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">].</span><span class="n">hi</span> <span class="kr">end</span>
   <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">lo</span>  <span class="o">=</span> <span class="o">-</span><span class="nb">math.huge</span>
   <span class="n">t</span><span class="p">[</span><span class="o">#</span><span class="n">t</span><span class="p">].</span><span class="n">hi</span> <span class="o">=</span>  <span class="nb">math.huge</span>
   <span class="kr">return</span> <span class="n">t</span> <span class="kr">end</span>
 
-<span class="kr">function</span> <span class="nf">merges</span><span class="p">(</span><span class="n">ranges</span><span class="p">,</span><span class="n">few</span><span class="p">,</span>    <span class="n">tmp</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)</span>
+<span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">merges</span><span class="p">(</span><span class="n">ranges</span><span class="p">,</span><span class="n">few</span><span class="p">,</span>    <span class="n">tmp</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)</span>
   <span class="n">tmp</span><span class="p">,</span><span class="n">i</span> <span class="o">=</span> <span class="p">{},</span><span class="mi">1</span>
   <span class="kr">while</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="o">#</span><span class="n">ranges</span> <span class="kr">do</span>
     <span class="n">a</span> <span class="o">=</span> <span class="n">ranges</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>

@@ -119,7 +119,6 @@ function l.data(data1,xs)
         lib.push(data1.rows, xs)
   else  data1.cols= l.COLS(xs.cells) end end
 
-
 -- data2stats
 function l.stats(data1, my,     t,fun)
   my  = lib.defaults(my,{cols="x",ndecs=2,report=the.report})
@@ -129,7 +128,7 @@ function l.stats(data1, my,     t,fun)
     t[col1.txt] = lib.rnd( fun(col1), my.ndecs) end
   return t end
 
--- --------- --------- --------- --------- --------- --------- --------- ---------
+-- --------- --------- --------- --------- --------- --------- --------- ---------
 -- ## Naivve Bayes Classifier
 
 -- Make new classifier (same creation pattern as `DATA`
@@ -205,6 +204,7 @@ function l.like(col1,x,prior,    nom,denom)
        denom = (sd*((2*math.pi)^0.5))
        return nom/(denom  + 1E-30) end end
 
+-- --------- --------- --------- --------- --------- --------- --------- ---------
 -- ## Clustering 
 
 -- Normalize `x` 0..1 min..max (for NUMs), else return `x`.
@@ -301,7 +301,7 @@ function l.tshow(node1,     _show,depth1)
   l.climb(node1, _show); print""
   print( ("    "):rep(depth1), l.o(l.stats(node1.here))) end
 
--- --------- --------- --------- --------- --------- --------- --------- ---------
+-- --------- --------- --------- --------- --------- --------- --------- ---------
 --- ## Discretization
 
 -- Create a RANGE  that tracks the y dependent values seen in 
@@ -348,7 +348,6 @@ function l.bin(col1,x,      gap,t,lo,hi)
 -- For NUMs, that number is `the.bins=16` (say) (and after dividing
 -- the column into, say, 16 bins, then we call `merges` to see
 -- how many of them can be combined with their neighboring bin).
- 
 function l.discretize(rowss,cols,   t,tmp,n)
   t={}
   for k,col1 in pairs(cols) do
