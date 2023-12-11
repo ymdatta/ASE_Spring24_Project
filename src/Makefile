@@ -18,7 +18,7 @@ endef
 export banner
 
 define  header
-Lo is less. <a href="https://github.com/timm/lo/blob/main/README.md#less">Less is more. So go lo.</a> <br>
+Lo is less. <a href="https://github.com/timm/lo/blob/main/README.md#less">Less is more</a>. So go lo. <br>
 &copy; 2023 Tim Menzies, <a href="mailto:timm@ieee.org">timm@ieee.org</a>, 
 <a href="https://github.com/timm/lo/blob/main/LICENSE.md">BSD-2</a><br>
 Cluster data to lower dimensions. Just reason about those clusters.<hr>
