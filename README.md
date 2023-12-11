@@ -1,10 +1,8 @@
-<img align=right width=300 src="docs/revolution.png">
 
 # SE for  Simpler AI: A Minimalist Approach
 
+<img align=right width=300 src="docs/revolution.png">
 
->  Graduates of this class will become software revolutionaries,
-the  CEO and CTOs of whatever follows Google or OpenAI.
 
 
 
@@ -15,6 +13,10 @@ TL;DR:
 - Clustering should include dimensionality reduction
   - Ignore the spurious
   - Focus on what's important
+
+>  Graduates of this class will become software revolutionaries,
+the  CEO and CTOs of whatever follows Google or OpenAI.
+
 
 <br clear=all><img align=right width=300 src="/docs/pca.png">
 
