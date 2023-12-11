@@ -236,20 +236,6 @@ function l.neighbors(data1,row1,rows,     fun)
   fun = function(row2) return l.dists(data1,row1,row2) end
   return l.keysort(rows or data1.rows, fun) end
 
-function l.tree(data1,sortp,      _tree)
-  function _tree(data2,above,     lefts,rights,node)
-    node = {here=data2}
-    if   #data2.rows > 2*(#data1.rows)^.5
-    then lefts, rights, node.left, node.right, node.C, node.cut =
-                            l.half(data1,data2.rows,sortp,above)
-          node.lefts  = _tree(l.clone(data1, lefts),  node.left)
-          node.rights = _tree(l.clone(data1, rights), node.right) end
-    return node end
-  return _tree(data1) end
-
--- --------- --------- --------- --------- --------- --------- --------- ---------
--- ## Semi-supervised Learning
-
 -- Distance to heaven (using goal values).
 function l.d2h(data1,row1,       n,d)
   n,d = 0,0
@@ -278,6 +264,17 @@ function l.half(data1,rows,sortp,before)
     l.push(n <=(#rows)//2 and as or bs, row1) end
   return as, bs, a, b, C, d(a, bs[1])  end
 
+-- Show a tree. 
+function l.tree(data1,sortp,      _tree)
+  function _tree(data2,above,     lefts,rights,node)
+    node = {here=data2}
+    if   #data2.rows > 2*(#data1.rows)^.5
+    then lefts, rights, node.left, node.right, node.C, node.cut =
+                            l.half(data1,data2.rows,sortp,above)
+          node.lefts  = _tree(l.clone(data1, lefts),  node.left)
+          node.rights = _tree(l.clone(data1, rights), node.right) end
+    return node end
+  return _tree(data1) end
 
 function l.climb(node, fun, depth)
   if node then
