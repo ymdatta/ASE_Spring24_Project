@@ -22,11 +22,14 @@ Here are our themes;
 
 
 - <a name=less></a> **Lo is less, less is more**
-  - To go with the flow: go low.
+  - Lo is less. Less is more. So go lo.
   - Seemingly complex problems can be approximated
   in a very low dimensional space-- where all inference is much  simpler and faster [^lutosa].
   - High-dimensional data can be simplified and understood in lower dimensions.
     - See case studies, below
+  - Less is best:
+    - less to code, less to learn, less to test, less to deploy, less to maintain, less to check for security flaws, less
+    to port to other languages, less to document, less, less, less, less, less...
 - **Simplification of AI and SE:** 
   - Be quiet or I will replace you with one very small shell script.
   - Emphasizing the transformation of complex AI concepts into simpler, more understandable forms.
@@ -64,9 +67,6 @@ Here are our themes;
        set the options.
 - **Efficiency and Minimalism:** 
   - Advocating for more efficient solutions using fewer resources and simpler methods.
-  - Less is more.
-  - Less to test, less to deploy, less to maintain, less to check for security flaws, less
-    to port to other languages, less to document...
     <img align=right width=300 src="docs/block.jpg">
 - **Importance of 'Pruning' Data:** 
   - The best thing to do with most data is throw it away (and there are many examples of this [^btw] [^stealth] [^early]).
