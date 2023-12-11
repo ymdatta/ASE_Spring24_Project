@@ -3,7 +3,7 @@ local l   = {}
 local lib = require"lib"
 local the,help = {},[[
 
-golo: for ez SSL MOEA XAI, lo is less, less is more, go lo 
+golo: for ez SSL MOEA and XAI, lo is less, less is more. So go lo.
 (c) 2023, Tim Menzies, BSD-2
 
 USAGE:
