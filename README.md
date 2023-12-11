@@ -1,7 +1,7 @@
 
 # SE for  Simpler AI: A Minimalist Approach
 
-<img align=right width=300 src="docs/revolution.png">
+<img align=right width=200 src="docs/revolution.png">
 
 
 
