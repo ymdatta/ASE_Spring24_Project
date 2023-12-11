@@ -213,14 +213,6 @@ function l.norm(col1,x,    a)
   return (x=="?" or col1.isSym) and x or
          (x - a[1]) / (a[#a] - a[1] + 1E-30) end
 
--- Distance to heaven (using goal values).
-function l.d2h(data1,row1,       n,d)
-  n,d = 0,0
-  for _,col1 in pairs(data1.cols.y) do
-    n= n + 1
-    d= d + (col1.heaven - l.norm(data1,row1.cells[col1.at]))^2 end
-  return (d/n) ^ (1/the.p) end
-
 -- Distance between two values in one column.
 function l.dist(col1,x,y)
   if     x=="?" and y=="?" then return 1
@@ -244,6 +236,28 @@ function l.neighbors(data1,row1,rows,     fun)
   fun = function(row2) return l.dists(data1,row1,row2) end
   return l.keysort(rows or data1.rows, fun) end
 
+function l.tree(data1,sortp,      _tree)
+  function _tree(data2,above,     lefts,rights,node)
+    node = {here=data2}
+    if   #data2.rows > 2*(#data1.rows)^.5
+    then lefts, rights, node.left, node.right, node.C, node.cut =
+                            l.half(data1,data2.rows,sortp,above)
+          node.lefts  = _tree(l.clone(data1, lefts),  node.left)
+          node.rights = _tree(l.clone(data1, rights), node.right) end
+    return node end
+  return _tree(data1) end
+
+-- --------- --------- --------- --------- --------- --------- --------- ---------
+-- ## Semi-supervised Learning
+
+-- Distance to heaven (using goal values).
+function l.d2h(data1,row1,       n,d)
+  n,d = 0,0
+  for _,col1 in pairs(data1.cols.y) do
+    n= n + 1
+    d= d + (col1.heaven - l.norm(data1,row1.cells[col1.at]))^2 end
+  return (d/n) ^ (1/the.p) end
+
 -- Return two distance points, and the distance between them.
 function l.twoFarPoints(data1,rows,  sortp,a,    b,far)
   far = (#rows*the.Far)//1
@@ -264,26 +278,6 @@ function l.half(data1,rows,sortp,before)
     l.push(n <=(#rows)//2 and as or bs, row1) end
   return as, bs, a, b, C, d(a, bs[1])  end
 
-function l.tree(data1,sortp,      _tree)
-  function _tree(data2,above,     lefts,rights,node)
-    node = {here=data2}
-    if   #data2.rows > 2*(#data1.rows)^.5
-    then lefts, rights, node.left, node.right, node.C, node.cut =
-                            l.half(data1,data2.rows,sortp,above)
-         node.lefts  = _tree(l.clone(data1, lefts),  node.left)
-         node.rights = _tree(l.clone(data1, rights), node.right) end
-    return node end
-  return _tree(data1) end
-
-function l.branch(data1,  sortp,      _,rest,_branch)
-  rest = {}
-  function _branch(data2,  above,    left,lefts,rights)
-    if #data2.rows > 2*(#data1.rows)^.5
-    then lefts,rights,left = l.half(data1,data2.rows,sortp,above)
-         for _,row1 in pairs(rights) do l.push(rest,row1) end
-         return _branch(l.clone(data1,lefts),left)
-    else return data2.rows, rest end end
-  return _branch(data1) end
 
 function l.climb(node, fun, depth)
   if node then
@@ -300,6 +294,20 @@ function l.tshow(node1,     _show,depth1)
     print(('|.. '):rep(depth), post) end
   l.climb(node1, _show); print""
   print( ("    "):rep(depth1), l.o(l.stats(node1.here))) end
+
+-- --------- --------- --------- --------- --------- --------- --------- ---------
+--- ## Multi-objective optimization
+
+-- Return a small group of `best` rows, and all the `rest`.
+function l.branch(data1,  sortp,      _,rest,_branch)
+  rest = {}
+  function _branch(data2,  above,    left,lefts,rights)
+    if #data2.rows > 2*(#data1.rows)^.5
+    then lefts,rights,left = l.half(data1,data2.rows,sortp,above)
+         for _,row1 in pairs(rights) do l.push(rest,row1) end
+         return _branch(l.clone(data1,lefts),left)
+    else return data2.rows, rest end end
+  return _branch(data1) end
 
 -- --------- --------- --------- --------- --------- --------- --------- ---------
 --- ## Discretization
@@ -386,3 +394,6 @@ function l.merges(ranges,few,    tmp,i,a,b)
     lib.push(tmp, a)
     i = i + 1 end
   return #tmp == #ranges and ranges or l.merges(tmp,few) end
+
+-- --------- --------- --------- --------- --------- --------- -------- ----------
+-- ##  Explanation (rule generation)
