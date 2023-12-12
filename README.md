@@ -105,13 +105,14 @@ What can companies learn from each other (about e.g. defect prediction in code).
 without giving away secrets?
 
 Why share all the data? why not just cluster and just share a few cluster centroids?[^peters]
-  - [Fayola Peters](https://www.ezzoterik.com/papers/15lace2.pdf) used cluster + contrast to prune data, as she passed data around a community. 
-   - For example, in the following, green rows are those nearest the cluster centroids and blue rows are the ones most associated with the last column (bugs/10Kloc).
-   - Discard things are aren't blue of green. 
-   - She ended up sharing 20% of the rows and around a third of the columns. 1 - 1/5\*1/3 thus offered 93%   privacy
-   - As for the remaining 7% of the data, we ran a mutator that pushed up items up the boundary point between classes (and no further). Bu certain common measures of privacy, that made the 7% space 80% private. 
-   - Net effect 93% + .8*7 = 98.4% private,
-   - And, FYI, inference on the tiny green+blue region was as effective as inference over all
+
+- [Fayola Peters](https://www.ezzoterik.com/papers/15lace2.pdf) used cluster + contrast to prune data, as she passed data around a community. 
+- For example, in the following, green rows are those nearest the cluster centroids and blue rows are the ones most associated with the last column (bugs/10Kloc).
+- Discard things are aren't blue of green. 
+- She ended up sharing 20% of the rows and around a third of the columns. 1 - 1/5\*1/3 thus offered 93%   privacy
+- As for the remaining 7% of the data, we ran a mutator that pushed up items up the boundary point between classes (and no further). Bu certain common measures of privacy, that made the 7% space 80% private. 
+- Net effect 93% + .8*7 = 98.4% private,
+- And, FYI, inference on the tiny green+blue region was as effective as inference over all
 
 <img width=700 src="https://github.com/timm/tested/blob/main//etc/img/peters1.png">
 
@@ -172,7 +173,7 @@ e.g. (extremely optimistic case) suppose we can _sort_ all the examples along on
     is $C(n,p)= 1-(1-p)^n$  
     - Which re-arranges to $n(C,p)=log(1-C)/log(1-p)$
      <img align=right src="https://raw.githubusercontent.com/timm/lo/main/docs/z.jpg" width=300>
-  - Cohen argues that that any change smaller than $\sigma\*.35$ [^cohen]
+  - Cohen argues that that any change smaller than $\sigma{\times}0.35$ [^cohen]
     is a trivially small change.
     - Most of a normal curve is has the range: $-3 \le \sigma \le 3$
     - So the space of indistinguishably best solutions falls in the x-range  $.35/(3- -3=6)= 0.058$

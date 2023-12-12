@@ -1,5 +1,5 @@
 local the = {bins=7, cohen=.35}
-local as,of={},{}
+local as,was={},{}
 
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
@@ -53,7 +53,7 @@ local function DATA(src, rows,cols)
   return {rows=rows, cols=cols} end
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
-function as.num(s)   
+function as.num(s)
   return math.tointeger(s) or tonumber(s) end
 
 function as.nonum(s)
@@ -73,24 +73,27 @@ function as.rows(src)
     if line then return as.things(line) else io.close(src) end end end
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
-function of.x(t,pre,post)
+function was.x(t,  pre,post,seen)
   if type(t) ~= "table" then return tostring(t) end
-  return (#t==0 and of.keys or of.array)(t,pre,post) end
+  seen = seen or {}
+  if seen[t] then return "..." end
+  seen[t] = t
+  return (#t==0 and was.keys or was.array)(t,pre,post,seen) end
 
-function of.keys(t,pre,post,     u)
-  u={}; for k,v in pairs(t) do u[k]= string.format(":%s %s",k, of.x(v,pre,post)) end
+function was.keys(t,  pre,post,seen,     u)
+  u={}; for k,v in pairs(t) do u[k]= string.format(":%s %s",k, was.x(v,pre,post,seen)) end
   table.sort(u)
   return (pre or "{")..table.concat(u," ")..(post or "}") end
 
-function of.array(t,pre,post,    u)
-  u={}; for k,v in pairs(t) do u[k]=  of.x(v,pre,post) end
+function was.array(t,  pre,post,seen,   u)
+  u={}; for k,v in pairs(t) do u[k]=  was.x(v,pre,post,seen) end
   return (pre or "{")..table.concat(u,", ")..(post or "}") end
 
-function of.matrix(ts,pre,post,    u)
-  u={} for k,t in pairs(ts) do u[k]= of.x(t,pre,post) end
+function was.matrix(ts,pre,post,    u)
+  u={} for k,t in pairs(ts) do u[k]= was.x(t,pre,post) end
   return (pre or "{").. table.concat(u,"\n")..(post or "}") end
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
-d = DATA("../data/auto93.csv")
-print(of.x(d.cols.names,"",""))
-print(of.matrix(d.rows,"",""))
+local d = DATA("../data/auto93.csv")
+print(was.x(d.cols.names,"",""))
+print(was.matrix(d.rows,"",""))

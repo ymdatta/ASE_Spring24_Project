@@ -33,16 +33,17 @@ function l.gaussian(mu,sd)
   local sq,pi,log,cos,r = math.sqrt,math.pi,math.log,math.cos,math.random
   return mu + sd * sq(-2*log(r())) * cos(2*pi*r())  end
 
--- Convert list of numbers to standard deviation. For more on this see
+-- Convert list of numbers to mean, standard deviation and sample size. For more on this see
 -- [here](http://datagenetics.com/blog/november22017/index.html).
-function l.t2stdec(t,    d,n,mu,m2)
+-- This function also returns the mean and sample size of this list 
+function l.t2stats(t,    d,n,mu,m2)
 	n,mu,m2 = 0,0,0
   for _,x in pairs(t) do
     n  = n+1
     d  = x-mu
     mu = mu + d/n
     m2 = m2 + d*(x-mu) end
-	return n<2 and 0 or (m2/(n - 1))^.5 end
+	return mu, n<2 and 0 or (m2/(n - 1))^.5, n end
 
 -- ## Lists
 
@@ -53,7 +54,8 @@ function l.self(x) return x end
 function l.any(t) return t[math.random(#t)] end
 
 -- Return any `n` items (there may be repeats).
-function l.many(t,n,     u)
+function l.many(t,  n,     u)
+  n = n or #t
   u={}; for _ = 1,n do u[1+#u] = l.any(t) end; return u end
 
 -- Push onto a list `t`.
@@ -283,5 +285,42 @@ function l.abcdsreport(abcds1,     u)
     g    = l.g(abcd1)} end
   return u end
 
+-- Non-parametric effect-size test
+-- M.Hess, J.Kromrey. 
+-- Robust Confidence Intervals for Effect Sizes: 
+-- A Comparative Study of Cohen's d and Cliff's Delta Under Non-normality and Heterogeneous Variances
+-- American Educational Research Association, San Diego, April 12 - 16, 2004    
+-- 0.147=  small, 0.33 =  medium, 0.474 = large; med --> small at .2385
+function l.cliffsDelta(ns1,ns2,  cliffs) 
+  if #ns1 > 256     then ns1 = l.many(ns1,256) end
+  if #ns2 > 256     then ns2 = l.many(ns2,256) end
+  if #ns1 > 10*#ns2 then ns1 = l.many(ns1,10*#ns2) end
+  if #ns2 > 10*#ns1 then ns2 = l.many(ns2,10*#ns1) end
+  local n,gt,lt = 0,0,0
+  for _,x in pairs(ns1) do
+    for _,y in pairs(ns2) do
+      n = n + 1
+      if x > y then gt = gt + 1 end
+      if x < y then lt = lt + 1 end end end
+  return math.abs(lt - gt)/n > cliffs end
+
+-- Non-parametric significant test. From p220 to 223 of theg
+-- Efron text  'introduction to the boostrap'.
+-- https://bit.ly/3iSJz8B Typically, conf=0.05 and bootstraps is 100s to 1000s.
+function l.bootstrap(y0,z0,bootstraps,conf,      _,__)
+  local function delta(y,z)
+    local ymu,ysd,yn = l.t2stats(y)
+    local zmu,zsd,zn = l.t2stats(z)
+    return math.abs(ymu - zmu) / ((1E-30 + ysd^2/yn + zsd^2/zn)^.5) end
+  local x, y, z, yhat, zhat = l.copy(y0), l.copy(y0), l.copy(z0), {}, {}
+  for _,z1 in pairs(z0) do l.push(x,z1) end
+  local n, tobs = 0, delta(y,z)
+  local xmu,ymu,zmu = l.t2stats(x), l.t2stats(y), l.t2stats(z)
+  for _,y1 in pairs(y0) do l.push(yhat, y1 - ymu + xmu) end
+  for _,z1 in pairs(z0) do l.push(zhat, z1 - zmu + xmu) end
+  for _= 1,bootstraps do
+    if delta(l.many(yhat), l.many(zhat)) > tobs then n = n + 1 end end 
+  return n / bootstraps >= conf end
+
   -- ## Main
-  return l
+return l
