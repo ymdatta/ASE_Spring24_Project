@@ -1,5 +1,8 @@
 
+ <img align=right width=500 src="docs/s20.png">
+
 # SE for  Simpler AI: A Minimalist Approach
+
 
 
  <img align=right width=500 src="docs/ceo.png">
