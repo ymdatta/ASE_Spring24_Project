@@ -1,7 +1,11 @@
 
 # SE for  Simpler AI: A Minimalist Approach
 
-<br clear=all><img align=right width=300 src="/docs/pca.png">
+
+ <img align=right width=400 src="docs/ceo.png">
+
+>  Graduates of this class will become software revolutionaries,
+the  CEO and CTOs of whatever follows Google or OpenAI.
 
 
 
@@ -16,14 +20,13 @@ TL;DR:
   - Ignore the spurious
   - Focus on what's important
 
->  Graduates of this class will become software revolutionaries,
-the  CEO and CTOs of whatever follows Google or OpenAI.
-
 
 <br clear=all>
 
 Here are our themes;
-<img align=right width=300 src="docs/diabetes.png">
+<br clear=all><img align=right width=300 src="/docs/pca.png">
+
+
 
 - <a name=less></a> **Lo is less, less is more**
   - Lo is less. Less is more. So go lo.
@@ -72,7 +75,7 @@ Here are our themes;
 - **Efficiency and Minimalism:** 
   - Advocating for more efficient solutions using fewer resources and simpler methods.
     <img align=right width=300 src="docs/block.jpg">
-- **Importance of 'Pruning' Data:** 
+- **Importance of 'Pruning' Data:**  <img align=right width=300 src="docs/diabetes.png">
   - The best thing to do with most data is throw it away (and there are many examples of this [^btw] [^stealth] [^early]).
   - Highlighting the need to focus on important data and discard the irrelevant, drawing inspiration from Michelangelo’s sculpting philosophy.
   - "Every block of stone has a statue inside it and it is the task of the sculptor to discover it." -- Michelangelo
@@ -151,7 +154,7 @@ Assume the analysis of the last section generalizes. What does that mean for SE:
 High-dimensional data can be approximated in lower dimension
 - **Continuity Assumption:**  Points which are closer to each other are more likely to have the same output label.
 - **Cluster Assumption:**  Data can be divided into discrete clusters and points in the same cluster are more likely to share an output label.
-- **Manifold Assumption:**  high dimensional data can be randomly projected into a lower dimensional  space while controlling the distortion in the pairwise distances. 
+- **Manifold Assumption:**   high dimensional data can be randomly projected into a lower dimensional  space while controlling the distortion in the pairwise distances. 
   - <a href="https://scikit-learn.org/stable/auto_examples/miscellaneous/plot_johnson_lindenstrauss_bound.html">Examples</a>.
 - So we only have to   fit relatively simple, low-dimensional, highly structured subspaces.
 - Within a manifolds,  we can  interpolate between two inputs, that is to say, morph one into another via a continuous path along which all points fall on the manifold. 
