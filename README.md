@@ -2,7 +2,7 @@
 # SE for  Simpler AI: A Minimalist Approach
 
 
- <img align=right width=400 src="docs/ceo.png">
+ <img align=right width=500 src="docs/ceo.png">
 
 >  Graduates of this class will become software revolutionaries,
 the  CEO and CTOs of whatever follows Google or OpenAI.
@@ -12,7 +12,7 @@ the  CEO and CTOs of whatever follows Google or OpenAI.
 
 
 
-
+<br clear=all>
 TL;DR: 
 - To promote efficient and effective problem-solving.
   - Cluster (first), then think (less). 
@@ -21,7 +21,7 @@ TL;DR:
   - Focus on what's important
 
 
-<br clear=all>
+ 
 
 Here are our themes;
 <br clear=all><img align=right width=300 src="/docs/pca.png">
