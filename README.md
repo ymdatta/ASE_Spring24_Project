@@ -51,7 +51,7 @@ Here are our themes;
   - In devops, we automated everything. Here, we automate automation.
   - In the post chatgpt-world, you don't want to be "just" a programmer
   - You want to be the person trading off requirements, telling the programmers what to code (and what not to code).
-- **Learning and Skill Development:** 
+- **Learning and Skill Development:**  <img align=right width=300 src="docs/diabetes.png">
   - Cut the cr\*p.
   - Focus on enhancing coding skills and theoretical knowledge in AI and software engineering through practical examples.
 - **Empowerment through Knowledge:**  
@@ -76,7 +76,7 @@ Here are our themes;
 - **Efficiency and Minimalism:** 
   - Advocating for more efficient solutions using fewer resources and simpler methods.
     <img align=right width=300 src="docs/block.jpg">
-- **Importance of 'Pruning' Data:**  <img align=right width=300 src="docs/diabetes.png">
+- **Importance of 'Pruning' Data:**  
   - The best thing to do with most data is throw it away (and there are many examples of this [^btw] [^stealth] [^early]).
   - Highlighting the need to focus on important data and discard the irrelevant, drawing inspiration from Michelangelo’s sculpting philosophy.
   - "Every block of stone has a statue inside it and it is the task of the sculptor to discover it." -- Michelangelo
