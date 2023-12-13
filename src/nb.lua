@@ -45,10 +45,9 @@ function bins.split1(rows, c, imin, imax, ismall, xsmall)
     if i <= imax-ismall then
       local x,xnext = rows[i][c],rows[i+1][c]
       if x ~= xnext and x - xb4 > xsmall and i - ib4 > ismall then
-        bin = rows[i][c]
-        all[ 1+#all ] = bin
+        all[ 1+#all ] = x
         ib4, xb4 = i, x end end
-    rows[i][c] = bin end
+    rows[i][c] = ib4 end
   return all end
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
