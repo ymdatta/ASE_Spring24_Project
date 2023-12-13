@@ -1,7 +1,9 @@
 
 # SE for  Simpler AI: A Minimalist Approach
 
-<img align=right width=200 src="docs/revolution.png">
+<br clear=all><img align=right width=300 src="/docs/pca.png">
+
+
 
 
 
@@ -18,10 +20,10 @@ TL;DR:
 the  CEO and CTOs of whatever follows Google or OpenAI.
 
 
-<br clear=all><img align=right width=300 src="/docs/pca.png">
+
 
 Here are our themes;
-
+<img align=right width=200 src="docs/diabetes.png">
 
 - <a name=less></a> **Lo is less, less is more**
   - Lo is less. Less is more. So go lo.
