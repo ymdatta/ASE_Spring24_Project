@@ -13,6 +13,7 @@ the  CEO and CTOs of whatever follows Google or OpenAI.
 
 
 <br clear=all>
+
 TL;DR: 
 - To promote efficient and effective problem-solving.
   - Cluster (first), then think (less). 
