@@ -150,8 +150,8 @@ Assume the analysis of the last section generalizes. What does that mean for SE:
 
 High-dimensional data can be approximated in lower dimension
 - **Continuity Assumption:**  Points which are closer to each other are more likely to have the same output label.
-- **Cluster Assumption:**    Data can be divided into discrete clusters and points in the same cluster are more likely to share an output label.
-- **Manifold Assumption:**    high dimensional data can be randomly projected into a lower dimensional  space while controlling the distortion in the pairwise distances. 
+- **Cluster Assumption:**  Data can be divided into discrete clusters and points in the same cluster are more likely to share an output label.
+- **Manifold Assumption:**  high dimensional data can be randomly projected into a lower dimensional  space while controlling the distortion in the pairwise distances. 
   - <a href="https://scikit-learn.org/stable/auto_examples/miscellaneous/plot_johnson_lindenstrauss_bound.html">Examples</a>.
 - So we only have to   fit relatively simple, low-dimensional, highly structured subspaces.
 - Within a manifolds,  we can  interpolate between two inputs, that is to say, morph one into another via a continuous path along which all points fall on the manifold. 
