@@ -28,7 +28,7 @@ TL;DR:
  
 
 Here are our themes;
-<br clear=all><img align=right width=300 src="/docs/pca.png">
+<br clear=all><img align=right width=300 src="docs/pca.png">
 
 
 
@@ -50,7 +50,7 @@ Here are our themes;
        (the config options) yet to be selected.
      - The process of training learner  compiles the dataset into a model, from which we can
        set the options.
-- **Simplification of AI and SE:**  <img align=right width=300 src="/docs/replace.png">
+- **Simplification of AI and SE:**  <img align=right width=300 src="docs/replace.png">
   - Emphasizing the transformation of complex AI concepts into simpler, more understandable forms.
   - Lots of small scripts doing lots of large AI tasks. 
   - Our case study: _semi-supervised explainable AI for multi-objective optimization_ 
