@@ -71,34 +71,32 @@ function as.rows(src)
     if line then return as.things(line) else io.close(src) end end end
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
-function was.x(x,  ...)
-  return was.number(x) or was.notTable(x) or was.table(x,...) end
+function was.x(x,...)
+  local is=type(x)
+  return is=="number" and was.num(x) or is=="table" and was.tbl(x,...) or tostring(x) end
 
-function was.notTable(x) 
-  if type(x) ~= "table" then return tostring(x) end end
+function was.num(x)
+  return string.format(math.floor(x)==x and "%.0f" or "%.3f", x) end
 
-function was.number(x) 
-  if type(x)=="number" then 
-    return string.format(type(x) =="number" and "%s" or "%.3f",x) end end
-
-function was.table(t,  pre,post,seen)
+function was.tbl(t,  pre,post,seen,     u)
   seen = seen or {}
   if seen[t] then return "..." end
-  seen[t] = t
-  return (#t==0 and was.keys or was.array)(t,pre or "{",post or "}",seen) end
+  seen[t] = true
+  u = (#t==0 and was.keys or was.array)(t,pre,post,seen)
+  return (pre or "{") .. u .. (post or "}") end
 
-function was.keys(t,  pre,post,seen,     u)
-  u={}; for k,v in pairs(t) do u[k]=string.format(":%s %s",k,was.x(v,pre,post,seen)) end
+function was.keys(t,...)
+  local u={}; for k,v in pairs(t) do u[k]=string.format(":%s %s",k,was.x(v,...)) end
   table.sort(u)
-  return  pre ..table.concat(u," ")..post   end
+  return table.concat(u," ") end
 
-function was.array(t,  pre,post,seen,   u)
-  u={}; for k,v in pairs(t) do u[k]=  was.x(v,pre,post,seen) end
-  return  pre..table.concat(u,", ")..post  end
+function was.array(t,...)
+  local u={}; for k,v in pairs(t) do u[k]=  was.x(v,...) end
+  return table.concat(u,", ") end
 
 function was.matrix(ts,pre,post,    u)
-  u={} for k,t in pairs(ts) do u[k]= was.x(t,pre,post) end
-  return pre.. table.concat(u,"\n")..post end
+  u={}; for k,t in pairs(ts) do u[k]= was.x(t,pre,post) end
+  return (pre or "{") .. table.concat(u,"\n") .. (post or "}") end
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
 local d = DATA("../data/auto93.csv")
