@@ -1,7 +1,20 @@
 local the = {bins=7, cohen=.35}
 local as,was={},{}
 
+-- --------- --------- --------- --------- --------- --------- --------- --------- ------
+local function COLS(t)
+  local rows, nums, klass = {},{},nil
+  for k,v in pairs(t) do
+    if v:find"^[A-Z]" then nums[k]= {} end
+    if v:find"!$"     then klass = k   end end
+  return {rows=rows, nums=nums, names=t, klass=klass} end
 
+local function DATA(src, rows,cols)
+  local rows = {}
+  for t in as.rows(src) do
+    if cols then rows[1+#rows]=t else cols=COLS(t) end end
+  return {rows=rows, cols=cols} end
+  
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
 local bins={}
 local function BINS(rows,klass,    z,t)
@@ -38,20 +51,6 @@ function bins.split1(rows, c, imin, imax, ismall, xsmall)
     rows[i][c] = bin end
   return all end
 
--- --------- --------- --------- --------- --------- --------- --------- --------- ------
-local function COLS(t)
-  local rows, nums, klass = {},{},nil
-  for k,v in pairs(t) do
-    if v:find"^[A-Z]" then nums[k]= {} end
-    if v:find"!$"     then klass = k   end end
-  return {rows=rows, nums=nums, names=t, klass=klass} end
-
-local function DATA(src, rows,cols)
-  local rows = {}
-  for t in as.rows(src) do
-    if cols then rows[1+#rows]=t else cols=COLS(t) end end
-  return {rows=rows, cols=cols} end
-
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
 function as.num(s)
   return math.tointeger(s) or tonumber(s) end
@@ -73,25 +72,34 @@ function as.rows(src)
     if line then return as.things(line) else io.close(src) end end end
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
-function was.x(t,  pre,post,seen)
-  if type(t) ~= "table" then return tostring(t) end
+function was.x(x,  ...)
+  return was.number(x) or was.notTable(x) or was.table(x,...) end
+
+function was.notTable(x) 
+  if type(x) ~= "table" then return tostring(x) end end
+
+function was.number(x) 
+  if type(x)=="number" then 
+    return string.format(type(x) =="number" and "%s" or "%.3f",x) end end
+
+function was.table(t,  pre,post,seen)
   seen = seen or {}
   if seen[t] then return "..." end
   seen[t] = t
-  return (#t==0 and was.keys or was.array)(t,pre,post,seen) end
+  return (#t==0 and was.keys or was.array)(t,pre or "{",post or "}",seen) end
 
 function was.keys(t,  pre,post,seen,     u)
-  u={}; for k,v in pairs(t) do u[k]= string.format(":%s %s",k, was.x(v,pre,post,seen)) end
+  u={}; for k,v in pairs(t) do u[k]=string.format(":%s %s",k,was.x(v,pre,post,seen)) end
   table.sort(u)
-  return (pre or "{")..table.concat(u," ")..(post or "}") end
+  return  pre ..table.concat(u," ")..post   end
 
 function was.array(t,  pre,post,seen,   u)
   u={}; for k,v in pairs(t) do u[k]=  was.x(v,pre,post,seen) end
-  return (pre or "{")..table.concat(u,", ")..(post or "}") end
+  return  pre..table.concat(u,", ")..post  end
 
 function was.matrix(ts,pre,post,    u)
   u={} for k,t in pairs(ts) do u[k]= was.x(t,pre,post) end
-  return (pre or "{").. table.concat(u,"\n")..(post or "}") end
+  return pre.. table.concat(u,"\n")..post end
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
 local d = DATA("../data/auto93.csv")
