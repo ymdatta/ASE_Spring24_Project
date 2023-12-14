@@ -14,10 +14,14 @@ local function col(col1,x,    d)
     col1.m2 = col1.m2 + d*(x - col1.mu)
     col1.sd = col1.n < 2 and 0 or (col1.m2/(col1.n - 1))^.5  end end 
 
-local function train(col1, klass,  x,k)
-  x = col1.isSym and x or ((x-col1.mu)/col1.sd / (6/the.bins) + .5)//1
-  k = {klass, col1.at, x}
-  col1.f[k] = 1 + (col1.f[k] or 0) end
+local function bins(cols1,t,     u)
+  u={}; for k,col1 in pairs(cols1) do 
+          x = t[col1.at]
+          u[k] = (cols1.klass.at==col1.at or cols1.isSym) and x or bins(col1.x) end
+  return u end
+
+local function bin(col1, x)
+  return (col1.isSym or x=="?") and x or ((x-col1.mu) / col1.sd/(6/the.bins) + .5)//1 end
 
 local function COLS(t,    all,klass)
   all, klass = {},nil
@@ -30,6 +34,7 @@ local function cols(cols1,t,  isTraining)
   for _,col1 in pairs(cols1.all) do
     x = t[col1.at]
     if x ~= '?' then
+      
       col(col1, x)
       if isTraining then train(col1, t[cols1.klass.at],x) end end end end
 
