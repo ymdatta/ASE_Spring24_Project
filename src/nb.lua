@@ -1,20 +1,51 @@
-local the = {bins=7, cohen=.35}
+local the = {bins=12, cohen=.35}
 local as,was={},{}
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
-local function COLS(t)
-  local rows, nums, klass = {},{},nil
-  for k,v in pairs(t) do
-    if v:find"^[A-Z]" then nums[k]= {} end
-    if v:find"!$"     then klass = k   end end
-  return {rows=rows, nums=nums, names=t, klass=klass} end
+local NUM,SYM,COL,col,discretize
+function NUM(s,n) return {txt=s or "", at=n or 0, n=0, mu=0, m2=0, sd=0}   end
+function SYM(s,n) return {txt=s or "", at=n or 0, n=0, has={}, isSym=true} end
+function COL(s,n) return (s:find"^[A-Z]" and NUM or SYM)(s,n) end
 
-local function DATA(src, rows,cols)
-  local rows = {}
-  for t in as.rows(src) do
-    if cols then rows[1+#rows]=t else cols=COLS(t) end end
-  return {rows=rows, cols=cols} end
-  
+function col(col1,x,    d)
+  if x ~= "?" then
+    col1.n = col1.n + 1
+    if col1.isSym then col1.has[x] = 1+(col1.has[x] or 0) else
+      d = x - col1.mu
+      col1.mu = col1.mu + d/col1.n
+      col1.m2 = col1.m2 + d*(x - col1.mu)
+      col1.sd = col1.n < 2 and 0 or (col1.m2/(col1.n - 1))^.5  end end end
+
+function discretize(data1,row1,     x)
+  for _,col1 in pairs(data1.cols.all) do
+    if col1.at ~= data1.cols.klass then
+      x = row1[col1.at]
+      x = (col1.isSym or x=="?") and x or ((x-col1.mu)/col1.sd / (6/the.bins) + .5)//1
+      row1[col1.at] = x end end end
+
+local COLS,cols
+function COLS(t,    all,klass)
+  all, klass = {},nil
+  for k,v in pairs(t) do
+    all[1+#all]= COL(v,k)
+    if v:find"!$" then klass = all[#all] end end
+  return {all=all, klass=klass} end
+
+function cols(cols1,t)
+   for _,col1 in pairs(cols1.all) do col(col1, t[col1.at]) end
+   return t end
+
+local DATA,data
+function DATA(src,    data1)
+  data1={rows = {},cols=nil}
+  for t in as.rows(src) do data(data1,t) end
+  for t in pairs(data1.rows) do discretize(data1,t) end
+  return data1 end
+
+function data(data1,t)
+  if   data1.cols
+  then data1.rows[1 + #data1.rows] = cols(data1.cols,t)
+  else data1.cols = COLS(t) end end
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
 local bins={}
 local function BINS(rows,klass,    z,t)
