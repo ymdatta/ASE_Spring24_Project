@@ -1,4 +1,4 @@
-local the = {bins=12, cohen=.35}
+local the = {bins=12, cohen=.35,wait=20}
 local as,was={},{}
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
@@ -6,22 +6,22 @@ local function NUM(s,n) return {txt=s or '', at=n or 0, n=0, f={},mu=0, m2=0, sd
 local function SYM(s,n) return {txt=s or '', at=n or 0, n=0, f={},has={}, isSym=true} end
 local function COL(s,n) return (s:find'^[A-Z]' and NUM or SYM)(s,n) end
 
-local function col(col1,x,    d)
-  col1.n = col1.n + 1
-  if col1.isSym then col1.has[x] = 1+(col1.has[x] or 0) else
-    d = x - col1.mu
-    col1.mu = col1.mu + d/col1.n
-    col1.m2 = col1.m2 + d*(x - col1.mu)
-    col1.sd = col1.n < 2 and 0 or (col1.m2/(col1.n - 1))^.5  end end 
+local function col(col1, x, d)
+  if x ~= "?" then
+    col1.n = col1.n + 1
+    if col1.isSym then col1.has[x] = 1+(col1.has[x] or 0) else
+      d = x - col1.mu
+      col1.mu = col1.mu + d/col1.n
+      col1.m2 = col1.m2 + d*(x - col1.mu)
+      col1.sd = col1.n < 2 and 0 or (col1.m2/(col1.n - 1))^.5  end end end
 
-local function bins(cols1,t,     u)
-  u={}; for k,col1 in pairs(cols1) do 
-          x = t[col1.at]
-          u[k] = (cols1.klass.at==col1.at or cols1.isSym) and x or bins(col1.x) end
-  return u end
-
-local function bin(col1, x)
+local function discretize(col1,x)
   return (col1.isSym or x=="?") and x or ((x-col1.mu) / col1.sd/(6/the.bins) + .5)//1 end
+
+local function discretizes(data1, t)
+  for _, col1 in pairs(data1.colsl) do
+    if col1.isNum then
+        t[col1.at] = discretize(col1, t[col1.at]) end  end end
 
 local function COLS(t,    all,klass)
   all, klass = {},nil
@@ -30,24 +30,23 @@ local function COLS(t,    all,klass)
     if v:find'!$' then klass = all[#all] end end
   return {all=all, names=t, klass=klass, f={}} end
 
-local function cols(cols1,t,  isTraining)
-  for _,col1 in pairs(cols1.all) do
-    x = t[col1.at]
-    if x ~= '?' then
-      
-      col(col1, x)
-      if isTraining then train(col1, t[cols1.klass.at],x) end end end end
+local function cols(cols1,t) 
+  for _,col1 in pairs(cols1.all) do col(col1,t[col1.at]) end end
 
 local function data(data1,t)
   if   data1.cols
   then data1.rows[1 + #data1.rows] = t
-       cols(data1.cols, t, #data1.rows>the.wait)
+       cols(data1.cols, t, #data1.rows > the.wait)
   else data1.cols = COLS(t) end end
 
-local function DATA(src,    data1)
-  data1={rows = {}, cols=nil}
-  for t in as.rows(src) do data(data1,t) end
-  return data1 end
+local function DATA(src, data1)
+    data1 = { rows = {}, cols = nil }
+    for t in as.rows(src) do data(data1, t) end
+    for t in data1.rows do discretizes(data1, t) end
+    return data1 end
+
+-- local function learn(data1)
+--   for _,row in pairs(data1.rows) do
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
 function as.num(s) return math.tointeger(s) or tonumber(s) end
