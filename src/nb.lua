@@ -4,9 +4,9 @@ local the = {
     file = "../data/auto93.csv",
     seed = 1234567891,
     eg = "the",
-    wait=20}
-local as,was = {},{}
-local o, oo, fmt
+    wait = 20
+}
+local o, oo -- pretty print stuff
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
 local function NUM(s,n) return {txt=s or '', at=n or 0, n=0, f={},mu=0, m2=0, sd=0}   end
@@ -22,13 +22,25 @@ local function col(col1,x,     d)
       col1.m2 = col1.m2 + d*(x - col1.mu)
       col1.sd = col1.n < 2 and 0 or (col1.m2/(col1.n - 1))^.5  end end end
 
-local function discretize(col1,x)
-  return (col1.isSym or x=="?") and x or ((x-col1.mu) / col1.sd/(6/the.bins) + .5)//1 end
+local function discretize(num1,x)
+  return x=="?" and x or ((x-num1.mu) / conum1l1.sd/(6/the.bins) + .5)//1 end end
+
+local function inc2(t,x,y)
+  local a = t[x];  if a==nil then a={};  t[x] = a end
+| local b = a[y];  b = b and b+1 or 1 
+  b[y] = b;
+  return a end
 
 local function discretizes(data1,row1)
+  f = {}
   for _, col1 in pairs(data1.cols.all) do
-    if not col1.isSym then
-      row1.cooked[col1.at] = discretize(col1, row1.cells[col1.at]) end end end
+    if col1.at ~= data1.klass.at and not col1.isSym then
+      x = discretize(col1, row1.cells[col1.at])
+      if x then
+        inc2(f, row1[data1.cols.klass.at], {col1.at, x}) end end end end
+
+
+      end end end
 
 local function COLS(t,    all,klass)
   all, klass = {},nil
@@ -51,7 +63,7 @@ local function data(data1, xs, row1)
 
 local function DATA(src,    data1)
   data1 = {rows = {}, cols = nil,  f={}}
-  for   row1 in as.rows(src)      do data(data1, row1) end
+  for   row1 in csv(src) do data(data1, row1) end
   for _,row1 in pairs(data1.rows) do discretizes(data1, row1) end
   return data1 end
 
@@ -59,61 +71,38 @@ local function clone(data1,  rows,    data2)
   data2 = DATA{ data1.cols.names }
   for row1 in as.rows(rows or {}) do data(data2, row1) end
   return data2 end
-  
--- --------- --------- --------- --------- --------- --------- --------- --------- ------
-function as.num(s) return math.tointeger(s) or tonumber(s) end
 
-function as.nonum(s)
-  s = s:match'^%s*(.*%S)'
-  if s=='nil' then return nil else return s=='true' or (s~='false' and s) end end
-
-function as.thing(s) return as.num(s) or as.nonum(s) end
-
-function as.things(s,    t)
-  t={}; for s1 in s:gmatch('([^,]+)') do t[1+#t]=as.thing(s1) end; return t end
-
-function as.rows(src,     n)
-  if type(src)=='string' then return as.csv(src) else
-    src = src or {}
-    n=0; return function() if n < #src then n=n+1; return src[n] end end end end
-
-function as.csv(src)
-  src = src==nil and io.stdin or io.input(src)
-  return function(   line)
-    line = io.read()
-    if line then return as.things(line) else io.close(src) end end end
-
--- --------- --------- --------- --------- --------- --------- --------- --------- ------
 fmt = string.format
 function o(x) return was.x(x) end
 function oo(x) print(o(x)); return x end
+  
+-- String to int or float or nil or bool.
+local function coerce(s1,    fun)
+  function fun(s2)
+    if s2=="nil" then return nil
+    else return s2=="true" or (s2~="false" and s2) end end
+  return math.tointeger(s1) or tonumber(s1) or fun(s1:match'^%s*(.*%S)') end
 
-function was.x(x,...)
-  local is = type(x)
-  return is=='number' and was.num(x) or is=='table' and was.tbl(x,...) or tostring(x) end
+-- Iterate over a csv file, one row as a time.
+local function csv(src)
+  src = src=="-" and io.stdin or io.input(src)
+  return function(   s)
+    s = io.read()
+    if s then
+      t={}; for s1 in s:gmatch("([^,]+)") do t[1+#t]=coerce(s1) end; return t
+    else 
+      io.close(src) end end end
 
-function was.num(x)
-  return string.format(math.floor(x)==x and '%.0f' or '%.3f', x) end
+function oo(x) print(o(x)); return x end
 
-function was.tbl(t,  pre,post,seen,     u)
-  seen = seen or {}
-  if seen[t] then return '...' end
-  seen[t] = true
-  u = (#t == 0 and was.keys or was.array)(t, pre, post, seen)
-  return (pre or '{') .. u .. (post or '}') end
-
-function was.keys(t, ...)
-  local u = {}; for k,v in pairs(t) do u[1+#u] = fmt(':%s %s', k, was.x(v, ...)) end
-  table.sort(u)
-  return table.concat(u,' ') end
-
-function was.array(t,...)
-  local u={}; for k,v in pairs(t) do u[1+#u]=  was.x(v,...) end
-  return table.concat(u,', ') end
-
-function was.matrix(ts,pre,post,    u)
-  u={}; for k,t in pairs(ts) do u[k] = was.x(t,pre,post) end
-  return (pre or '{') .. table.concat(u,'\n') .. (post or '}') end
+function o(x,        x,gap,keys,arrays)
+  function keys(u)
+    for k,v in pairs(u) do u[1+#u]=fmt(":%s %s",k,o(v)) end; table.sort(u); return u end
+  function arrays(u)
+    for k,v in pairs(u) do u[k]=o(v) end; return u end
+  if type(x) ~= "table" then return tostring(x) end
+  x,gap = #x==0 and keys(x,{})," " or arrays(x,{}),", "
+  return "{" .. table.concat(x,gap) .. "}" end
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
 local eg = {}
