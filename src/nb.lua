@@ -60,7 +60,6 @@ local function clone(data1,  rows,    data2)
   for row1 in as.rows(rows or {}) do data(data2, row1) end
   return data2 end
   
-
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
 function as.num(s) return math.tointeger(s) or tonumber(s) end
 
@@ -117,15 +116,6 @@ function was.matrix(ts,pre,post,    u)
   return (pre or '{') .. table.concat(u,'\n') .. (post or '}') end
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
-local function cli(t)
-  for k, v in pairs(t) do
-    v = tostring(v)
-    for argv,s in pairs(arg) do
-      if s=="-"..(k:sub(1,1)) or s=="--"..k then
-        v = v=="true" and "false" or v=="false" and "true" or arg[argv + 1]
-        t[k] = as.thing(v) end end end
-  return t end
-
 local eg = {}
 function eg.all() for k, _ in pairs(eg) do if k ~= "all" then eg.one(k) end end end
 
@@ -164,6 +154,15 @@ function eg.data()
   print(was.matrix(DATA(the.file).rows)) end
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
+local function cli(t)
+  for k, v in pairs(t) do
+    v = tostring(v)
+    for argv,s in pairs(arg) do
+      if s=="-"..(k:sub(1,1)) or s=="--"..k then
+        v = v=="true" and "false" or v=="false" and "true" or arg[argv + 1]
+        t[k] = as.thing(v) end end end
+    return t end
+
 eg.one(cli(the).eg)
 
 -- local d = DATA('../data/auto93.csv')
