@@ -1,4 +1,10 @@
-local the = {bins=12, cohen=.35, seed=1234567891, eg="the", wait=20}
+local the = {
+    bins = 10,
+    cohen = .35,
+    file = "../data/auto93.csv",
+    seed = 1234567891,
+    eg = "the",
+    wait=20}
 local as,was = {},{}
 local o, oo, fmt
 
@@ -19,37 +25,43 @@ local function col(col1,x,     d)
 local function discretize(col1,x)
   return (col1.isSym or x=="?") and x or ((x-col1.mu) / col1.sd/(6/the.bins) + .5)//1 end
 
-local function discretizes(data1, t)
-  for _, col1 in pairs(data1.colsl) do
+local function discretizes(data1,row1)
+  for _, col1 in pairs(data1.cols.all) do
     if not col1.isSym then
-      t.cooked[col1.at] = discretize(col1, t.raw[col1.at]) end  end end
+      row1.cooked[col1.at] = discretize(col1, row1.cells[col1.at]) end end end
 
 local function COLS(t,    all,klass)
   all, klass = {},nil
   for k,v in pairs(t) do
-    all[1+#all]= COL(v,k)
+    all[1+#all] = COL(v,k)
     if v:find'!$' then klass = all[#all] end end
   return {all=all, names=t, klass=klass, f={}} end
 
-local function cols(cols1,t)
-  for _, col1 in pairs(cols1.all) do col(col1, t[col1.at]) end
-  return t end
+local function cols(cols1,row1)
+  for _, col1 in pairs(cols1.all) do col(col1, row1.cells[col1.at]) end
+  return row1 end
 
-local function ROW(t) return {cells={}, cooked={}} end
+local function ROW(t) return {cells=t, cooked={}} end
 
-local function data(data1,xs,     row1)
-  row1 = xs.cells and xs and ROW(xs)
+local function data(data1, xs, row1)
+  row1 = xs.cells and xs or ROW(xs)
   if   data1.cols
-  then data1.rows[1 + #data1.rows] = cols(data1.cols, row1.cells)
+  then data1.rows[1 + #data1.rows] = cols(data1.cols, row1)
   else data1.cols = COLS(row1.cells) end end
 
 local function DATA(src,    data1)
-  data1 = {rows = {}, cols = nil}
+  data1 = {rows = {}, cols = nil,  f={}}
   for   row1 in as.rows(src)      do data(data1, row1) end
   for _,row1 in pairs(data1.rows) do discretizes(data1, row1) end
   return data1 end
 
-  -- --------- --------- --------- --------- --------- --------- --------- --------- ------
+local function clone(data1,  rows,    data2)
+  data2 = DATA{ data1.cols.names }
+  for row1 in as.rows(rows or {}) do data(data2, row1) end
+  return data2 end
+  
+
+-- --------- --------- --------- --------- --------- --------- --------- --------- ------
 function as.num(s) return math.tointeger(s) or tonumber(s) end
 
 function as.nonum(s)
@@ -63,6 +75,7 @@ function as.things(s,    t)
 
 function as.rows(src,     n)
   if type(src)=='string' then return as.csv(src) else
+    src = src or {}
     n=0; return function() if n < #src then n=n+1; return src[n] end end end end
 
 function as.csv(src)
@@ -96,7 +109,7 @@ function was.keys(t, ...)
   return table.concat(u,' ') end
 
 function was.array(t,...)
-  local u={}; for k,v in pairs(t) do u[k]=  was.x(v,...) end
+  local u={}; for k,v in pairs(t) do u[1+#u]=  was.x(v,...) end
   return table.concat(u,', ') end
 
 function was.matrix(ts,pre,post,    u)
@@ -119,15 +132,14 @@ function eg.all() for k, _ in pairs(eg) do if k ~= "all" then eg.one(k) end end 
 function eg.one(k,      old)
     old = {}; for k0,v0 in pairs(the) do old[k0] = v0 end
     math.randomseed(the.seed)
-    print(string.format(" %s %s", eg[k]()==false and "❌ FAIL" or "✅ PASS", k))
+    print(fmt(" %s %s",eg[k]()==false and "❌ FAIL" or "✅ PASS", k))
     for k1,v1 in pairs(old) do the[k1] = v1 end end
+
+function eg.the() io.write(o(the)) end
 
 local function norm(mu, sd)
   return (mu or 0) + (sd or 1) * math.sqrt(-2 * math.log(math.random()))
                                * math.cos(2 * math.pi * math.random()) end
-  
-function eg.the() io.write(o(the)) end
-
 function eg.norm(     u)
   u={}; for _ = 1,100 do u[1+#u] = norm(100,10)//1 end
   table.sort(u)
@@ -139,6 +151,19 @@ function eg.num(    num1)
   mu, sd = num1.mu, num1.sd
   return 9.95 < mu and mu < 10.05 and 0.975 < sd and sd < 1.025 end
 
+function eg.rows()
+    for t in as.rows(the.file) do print(100, o(t)) end
+    print ""
+    for t in as.rows {
+        { 8, 318, 210, 4382, 13.500, 70, 1, 10 },
+        { 8, 429, 208, 4633, 11,     72, 1, 10 },
+        { 8, 400, 150, 4997, 14,     73, 1, 10 },
+        { 8, 350, 180, 3664, 11,     73, 1, 10 } } do print(200, o(t)) end end
+
+function eg.data()
+  print(was.matrix(DATA(the.file).rows)) end
+
+-- --------- --------- --------- --------- --------- --------- --------- --------- ------
 eg.one(cli(the).eg)
 
 -- local d = DATA('../data/auto93.csv')
