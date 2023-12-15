@@ -22,25 +22,24 @@ local function col(col1,x,     d)
       col1.m2 = col1.m2 + d*(x - col1.mu)
       col1.sd = col1.n < 2 and 0 or (col1.m2/(col1.n - 1))^.5  end end end
 
-local function discretize(num1,x)
-  return x=="?" and x or ((x-num1.mu) / conum1l1.sd/(6/the.bins) + .5)//1 end end
+local function discretize(col1,x)
+  return (col1.isSym or x=="?") and x or ((x-col1.mu) / col1.sd/(6/the.bins) + .5)//1 end
 
-local function inc2(t,x,y)
-  local a = t[x];  if a==nil then a={};  t[x] = a end
-| local b = a[y];  b = b and b+1 or 1 
-  b[y] = b;
+local function inc2(t,x,y,     a,b)
+  a = t[x];  if a==nil then a={};  t[x] = a end
+  b = a[y];  b = b and b+1 or 1 
+  a[y] = b;
   return a end
 
-local function discretizes(data1,row1)
+local function discretizes(data1,row1,    f)
   f = {}
   for _, col1 in pairs(data1.cols.all) do
     if col1.at ~= data1.klass.at and not col1.isSym then
       x = discretize(col1, row1.cells[col1.at])
-      if x then
-        inc2(f, row1[data1.cols.klass.at], {col1.at, x}) end end end end
-
-
-      end end end
+      row1.cooked[col.at] = x
+      if x ~= "?" then
+        inc2(f, row1[data1.cols.klass.at], {col1.at, x}) end end end 
+  return f end
 
 local function COLS(t,    all,klass)
   all, klass = {},nil
