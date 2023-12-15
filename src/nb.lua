@@ -1,5 +1,6 @@
-local the = {bins=12, cohen=.35,wait=20}
-local as,was={},{}
+local the = {bins=12, cohen=.35, seed=1234567891, eg="the", wait=20}
+local as,was = {},{}
+local o, oo, fmt
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
 local function NUM(s,n) return {txt=s or '', at=n or 0, n=0, f={},mu=0, m2=0, sd=0}   end
@@ -20,8 +21,8 @@ local function discretize(col1,x)
 
 local function discretizes(data1, t)
   for _, col1 in pairs(data1.colsl) do
-    if col1.isNum then
-        t[col1.at] = discretize(col1, t[col1.at]) end  end end
+    if not col1.isSym then
+      t.cooked[col1.at] = discretize(col1, t.raw[col1.at]) end  end end
 
 local function COLS(t,    all,klass)
   all, klass = {},nil
@@ -30,23 +31,23 @@ local function COLS(t,    all,klass)
     if v:find'!$' then klass = all[#all] end end
   return {all=all, names=t, klass=klass, f={}} end
 
-local function cols(cols1,t) 
-  for _,col1 in pairs(cols1.all) do col(col1,t[col1.at]) end end
+local function cols(cols1,t)
+  for _, col1 in pairs(cols1.all) do col(col1, t[col1.at]) end
+  return t end
 
-local function data(data1,t)
+local function row(t) return {cells={}, cooked={}} end
+
+local function data(data1,xs,     row1)
+  row1 = xs.cells and xs and ROW(xs)
   if   data1.cols
-  then data1.rows[1 + #data1.rows] = t
-       cols(data1.cols, t, #data1.rows > the.wait)
-  else data1.cols = COLS(t) end end
+  then data1.rows[1 + #data1.rows] = cols(data1.cols, row1.cells)
+  else data1.cols = COLS(row1.cells) end end
 
-local function DATA(src, data1)
-    data1 = { rows = {}, cols = nil }
-    for t in as.rows(src) do data(data1, t) end
-    for t in data1.rows do discretizes(data1, t) end
-    return data1 end
-
--- local function learn(data1)
---   for _,row in pairs(data1.rows) do
+local function DATA(src,    data1)
+  data1 = {rows = {}, cols = nil}
+  for   row1 in as.rows(src)      do data(data1, row1) end
+  for _,row1 in pairs(data1.rows) do discretizes(data1, row1) end
+  return data1 end
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
 function as.num(s) return math.tointeger(s) or tonumber(s) end
@@ -71,8 +72,12 @@ function as.csv(src)
     if line then return as.things(line) else io.close(src) end end end
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
+fmt = string.format
+function o(x) return was.x(x) end
+function oo(x) print(o(x)); return x end
+
 function was.x(x,...)
-  local is=type(x)
+  local is = type(x)
   return is=='number' and was.num(x) or is=='table' and was.tbl(x,...) or tostring(x) end
 
 function was.num(x)
@@ -82,11 +87,11 @@ function was.tbl(t,  pre,post,seen,     u)
   seen = seen or {}
   if seen[t] then return '...' end
   seen[t] = true
-  u = (#t==0 and was.keys or was.array)(t,pre,post,seen)
+  u = (#t == 0 and was.keys or was.array)(t, pre, post, seen)
   return (pre or '{') .. u .. (post or '}') end
 
-function was.keys(t,...)
-  local u={}; for k,v in pairs(t) do u[k]=string.format(':%s %s',k,was.x(v,...)) end
+function was.keys(t, ...)
+  local u = {}; for k,v in pairs(t) do u[1+#u] = fmt(':%s %s', k, was.x(v, ...)) end
   table.sort(u)
   return table.concat(u,' ') end
 
@@ -95,10 +100,33 @@ function was.array(t,...)
   return table.concat(u,', ') end
 
 function was.matrix(ts,pre,post,    u)
-  u={}; for k,t in pairs(ts) do u[k]= was.x(t,pre,post) end
+  u={}; for k,t in pairs(ts) do u[k] = was.x(t,pre,post) end
   return (pre or '{') .. table.concat(u,'\n') .. (post or '}') end
 
--- --------- --------- --------- --------- --------- --------- --------- --------- ------
-local d = DATA('../data/auto93.csv')
-print(was.x(d.cols.names,'',''))
-print(was.matrix(d.rows,'',''))
+-- --------- --------- --------- --------- --------- --------- --------- --------- ------
+local function cli(t)
+  for k, v in pairs(t) do
+    v = tostring(v)
+    for argv,s in pairs(arg) do
+      if s=="-"..(k:sub(1,1)) or s=="--"..k then
+        v = v=="true" and "false" or v=="false" and "true" or arg[argv + 1]
+        t[k] = as.thing(v) end end end
+  return t end
+
+local eg = {}
+function eg.all() for k, _ in pairs(eg) do if k ~= "all" then eg.one(k) end end end
+
+function eg.one(k,      old)
+    old = {}; for k0,v0 in pairs(the) do old[k0] = v0 end
+    math.randomseed(the.seed)
+    print(string.format(" %s %s", eg[k]()==false and "❌ FAIL" or "✅ PASS", k))
+    for k1,v1 in pairs(old) do the[k1] = v1 end end
+
+function eg.the() io.write(o(the)) end
+
+
+eg.one(cli(the).eg)
+
+-- local d = DATA('../data/auto93.csv')
+-- print(was.x(d.cols.names,'',''))
+-- print(was.matrix(d.rows,'',''))
