@@ -7,7 +7,7 @@ local function NUM(s,n) return {txt=s or '', at=n or 0, n=0, f={},mu=0, m2=0, sd
 local function SYM(s,n) return {txt=s or '', at=n or 0, n=0, f={},has={}, isSym=true} end
 local function COL(s,n) return (s:find'^[A-Z]' and NUM or SYM)(s,n) end
 
-local function col(col1, x, d)
+local function col(col1,x,     d)
   if x ~= "?" then
     col1.n = col1.n + 1
     if col1.isSym then col1.has[x] = 1+(col1.has[x] or 0) else
@@ -35,7 +35,7 @@ local function cols(cols1,t)
   for _, col1 in pairs(cols1.all) do col(col1, t[col1.at]) end
   return t end
 
-local function row(t) return {cells={}, cooked={}} end
+local function ROW(t) return {cells={}, cooked={}} end
 
 local function data(data1,xs,     row1)
   row1 = xs.cells and xs and ROW(xs)
@@ -49,7 +49,7 @@ local function DATA(src,    data1)
   for _,row1 in pairs(data1.rows) do discretizes(data1, row1) end
   return data1 end
 
--- --------- --------- --------- --------- --------- --------- --------- --------- ------
+  -- --------- --------- --------- --------- --------- --------- --------- --------- ------
 function as.num(s) return math.tointeger(s) or tonumber(s) end
 
 function as.nonum(s)
@@ -103,7 +103,7 @@ function was.matrix(ts,pre,post,    u)
   u={}; for k,t in pairs(ts) do u[k] = was.x(t,pre,post) end
   return (pre or '{') .. table.concat(u,'\n') .. (post or '}') end
 
--- --------- --------- --------- --------- --------- --------- --------- --------- ------
+-- --------- --------- --------- --------- --------- --------- --------- --------- ------
 local function cli(t)
   for k, v in pairs(t) do
     v = tostring(v)
@@ -122,8 +122,22 @@ function eg.one(k,      old)
     print(string.format(" %s %s", eg[k]()==false and "❌ FAIL" or "✅ PASS", k))
     for k1,v1 in pairs(old) do the[k1] = v1 end end
 
+local function norm(mu, sd)
+  return (mu or 0) + (sd or 1) * math.sqrt(-2 * math.log(math.random()))
+                               * math.cos(2 * math.pi * math.random()) end
+  
 function eg.the() io.write(o(the)) end
 
+function eg.norm(     u)
+  u={}; for _ = 1,100 do u[1+#u] = norm(100,10)//1 end
+  table.sort(u)
+  oo(u) end
+
+function eg.num(    num1)
+  num1 = NUM()
+  for _ = 1, 1000 do col(num1, norm(10, 1)) end
+  mu, sd = num1.mu, num1.sd
+  return 9.95 < mu and mu < 10.05 and 0.975 < sd and sd < 1.025 end
 
 eg.one(cli(the).eg)
 
