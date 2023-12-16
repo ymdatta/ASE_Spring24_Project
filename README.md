@@ -53,9 +53,9 @@ Here are our themes;
      - The process of training learner  compiles the dataset into a model, from which we can
        set the options.
 - SE moves from a **coding process** to a **decision process**:
-  -   Programmers don't program (usually)
+  -   Programmers don't program (usually) [^meyer]
   -   Now the challenge is know what to use, how to tune, what to ignore
-  -   On a normal day, programmers spend around 2 hours coding, or less. The rest is spent on meetings, working with clinets,
+  -   On a normal day, programmers spend around 2 hours coding, or less. The rest is spent on meetings, working with clients,
       career development, writing documentation,
           running tests, debugging failed tests,  etc etc
       - In fact much of the time of a programmer is deciding what not to code.
@@ -96,6 +96,12 @@ Here are our themes;
 - **Practical Problem-Solving Strategy:** 
   - Yes you can.
   - Presenting a practical approach to problem-solving by prioritizing clustering and minimizing assumptions
+
+[^meyer]: Meyer et al. reports in a survey of 5000+ programmers, that programmers
+ spend less tha 20% per day programming 
+(see Table2 of https://www.zora.uzh.ch/id/eprint/170375/1/devtime-preprint-TSE19.pdf).
+A. N. Meyer, E. T. Barr, C. Bird and T. Zimmermann, "Today Was a Good Day: The Daily Life of Software Developers," in IEEE Transactions on Software Engineering, vol. 47, no. 5, pp. 863-880, 1 May 2021, doi: 10.1109/TSE.2019.2904957.
+
 
 [^debt]: Lenarduzzi, V., Besker, T., Taibi, D., Martini, A., & Fontana, F. A. (2021). A systematic literature review on technical debt prioritization: Strategies, processes, factors, and tools. Journal of Systems and Software, 171, 110827.
 
