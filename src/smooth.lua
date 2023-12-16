@@ -7,10 +7,10 @@ USAGE:
   lua smooth.lua [OPTIONS] [eg ACTION]
 
 OPTIONS:
-  -b --bin    number of bins                    = 10
+  -b --bins    number of bins                    = 10
   -c --cohen  small effect size sd*cohen        = .35
   -e --eg     start up action                   = help
-  -f --file   csv data file name                = ../data/auto93.csv
+  -f --file   csv data file name                = ../data/diabetes.csv
   -h --help   show help                         = false
   -k --k      handle low class frequencies      = 1
   -m --m      handle low attribute frequencies  = 2
@@ -34,23 +34,24 @@ local function col(col1,x,     d)
       col1.m2 = col1.m2 + d*(x - col1.mu)
       col1.sd = col1.n < 2 and 0 or (col1.m2/(col1.n - 1))^.5  end end end
 
-local function discretize(col1,x)
-  return (col1.isSym or x=="?") and x or ((x-col1.mu) / col1.sd/(6/the.bins) + .5)//1 end
+local function discretize(col1,x,     y)
+  y= (col1.isSym or x=="?") and x or ((x-col1.mu) / col1.sd/ (6/the.bins) + .5)//1 
+  return string.char(109+y) end
 
 local function inc2(t,x,y,     a,b)
-  a = t[x];  if a==nil then a={};  t[x] = a end
-  b = a[y];  b = b and b+1 or 1 
-  a[y] = b;
-  return a end
+  a = t[x]; if a==nil then a={}; t[x]=a end
+  b = a[y]; if b==nil then b=1 else b=b+1; a[y] = b; end end
 
-local function discretizes(data1,row1,    f)
+local function discretizes(data1,row1,    f,x)
   f = {}
   for _, col1 in pairs(data1.cols.all) do
-    if col1.at ~= data1.klass.at and not col1.isSym then
-      x = discretize(col1, row1.cells[col1.at])
+    x = row1.cells[col1.at]
+    row1.cooked[col1.at] = x   
+    if col1.at ~= data1.cols.klass.at and not col1.isSym then
+      x = discretize(col1, x)
       row1.cooked[col1.at] = x
       if x ~= "?" then
-        inc2(f, row1[data1.cols.klass.at], {col1.at, x}) end end end 
+        inc2(f, row1.cells[data1.cols.klass.at], {col1.at, x}) end end end 
   return f end
 
 local function COLS(t,    all,klass)
@@ -80,7 +81,7 @@ local function DATA(src,    data1)
 
 local function clone(data1,  rows,    data2)
   data2 = DATA{ data1.cols.names }
-  for row1 in as.rows(rows or {}) do data(data2, row1) end
+  for row1 in l.rows(rows or {}) do data(data2, row1) end
   return data2 end
 
 local fmt = string.format
@@ -101,7 +102,7 @@ function l.items(t,    n)
 
 function l.csv(src)
   src = src=="-" and io.stdin or io.input(src)
-  return function(   s)
+  return function(      s,t)
     s = io.read()
     if s then
       t={}; for s1 in s:gmatch("([^,]+)") do t[1+#t] = coerce(s1) end; return ROW(t)
@@ -110,11 +111,9 @@ function l.csv(src)
 
 function l.o(x,      y,gap, keys, arrays)
   function keys(u)
-    for k, v in pairs(x) do u[1 + #u] = fmt(":%s %s", k, l.o(v)) end; table.sort(u)
-    return u end
+    for k, v in pairs(x) do u[1 + #u] = fmt(":%s %s", k, l.o(v)) end; table.sort(u);return u end
   function arrays(u)
-    for k, v in pairs(x) do u[k] = l.o(v) end
-    return u end
+    for k, v in pairs(x) do u[k] = l.o(v) end; return u end
   if type(x) ~= "table" then return tostring(x) end
   y   = (#x==0 and keys or arrays){}
   gap = #x==0 and " " or ", "
@@ -170,7 +169,7 @@ function eg.rows()
         { 8, 350, 180, 3664, 11,     73, 1, 10 } } do print(200, o(t)) end end
 
 function eg.data()
-  for _row in pairs(DATA(the.file).rows) do oo(row) end end
+  for _,row in pairs(DATA(the.file).rows) do oo(row) end end
 
 -- return ((col1.has[x] or 0) + the.m*prior)/(col1.n+the.m)
 
