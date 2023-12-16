@@ -1,12 +1,24 @@
-local the = {
-    bins = 10,
-    cohen = .35,
-    file = "../data/auto93.csv",
-    seed = 1234567891,
-    eg = "the",
-    wait = 20
-}
+local the,help = {},[[
+
+smooth: simple Bayesian sequential model optimization
+(c) 2023, Tim Menzies, BSD-2
+
+USAGE:
+  lua smooth.lua [OPTIONS] [--eg ACTION]
+
+OPTIONS:
+  -b --bin    number of bins                    = 10
+  -c --cohen  small effect size sd*cohen        = .35
+  -e --eg     start up action                   = help
+  -f --file   csv data file name                = ../data/auto93.csv
+  -h --help   show help                         = false
+  -k --k      handle low class frequencies      = 1
+  -m --m      handle low attribute frequencies  = 2
+  -s --seed   random number seed                = 1234567891
+  -w --wait   wait before classifications       = 20]]
+
 local o, oo -- pretty print stuff
+local l={}  -- library utils, defined at end of file
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
 local function NUM(s,n) return {txt=s or '', at=n or 0, n=0, f={},mu=0, m2=0, sd=0}   end
@@ -36,7 +48,7 @@ local function discretizes(data1,row1,    f)
   for _, col1 in pairs(data1.cols.all) do
     if col1.at ~= data1.klass.at and not col1.isSym then
       x = discretize(col1, row1.cells[col1.at])
-      row1.cooked[col.at] = x
+      row1.cooked[col1.at] = x
       if x ~= "?" then
         inc2(f, row1[data1.cols.klass.at], {col1.at, x}) end end end 
   return f end
@@ -62,7 +74,7 @@ local function data(data1, xs, row1)
 
 local function DATA(src,    data1)
   data1 = {rows = {}, cols = nil,  f={}}
-  for   row1 in csv(src) do data(data1, row1) end
+  for   row1 in rows(src) do data(data1, row1) end
   for _,row1 in pairs(data1.rows) do discretizes(data1, row1) end
   return data1 end
 
@@ -82,17 +94,21 @@ local function coerce(s1,    fun)
     else return s2=="true" or (s2~="false" and s2) end end
   return math.tointeger(s1) or tonumber(s1) or fun(s1:match'^%s*(.*%S)') end
 
--- Iterate over a csv file, one row as a time.
-local function csv(src)
+-- Iterate over the rows in either file `src` or list `src`. 
+function l.rows(src)
+  return type(src)=="string" and l.csv(src) or l.items(src or {}) end
+
+function l.items(t,    n)
+  n=0; return function() if n<#t then n=n+1; return t[n] end end end
+
+function l.csv(src)
   src = src=="-" and io.stdin or io.input(src)
   return function(   s)
     s = io.read()
     if s then
-      t={}; for s1 in s:gmatch("([^,]+)") do t[1+#t]=coerce(s1) end; return t
-    else 
+      t={}; for s1 in s:gmatch("([^,]+)") do t[1+#t] = coerce(s1) end; return ROW(t)
+    else
       io.close(src) end end end
-
-function oo(x) print(o(x)); return x end
 
 function o(x,        x,gap,keys,arrays)
   function keys(u)
@@ -103,6 +119,17 @@ function o(x,        x,gap,keys,arrays)
   x,gap = #x==0 and keys(x,{})," " or arrays(x,{}),", "
   return "{" .. table.concat(x,gap) .. "}" end
 
+function oo(x) print(o(x)); return x end
+
+function l.cli(t)
+  for k, v in pairs(t) do
+    v = tostring(v)
+    for argv,s in pairs(arg) do
+      if s=="-"..(k:sub(1,1)) or s=="--"..k then
+        v = v=="true" and "false" or v=="false" and "true" or arg[argv + 1]
+        t[k] = coerce(v) end end end
+    return t end
+
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
 local eg = {}
 function eg.all() for k, _ in pairs(eg) do if k ~= "all" then eg.one(k) end end end
@@ -112,6 +139,8 @@ function eg.one(k,      old)
     math.randomseed(the.seed)
     print(fmt(" %s %s",eg[k]()==false and "❌ FAIL" or "✅ PASS", k))
     for k1,v1 in pairs(old) do the[k1] = v1 end end
+
+function eg.help() return os.exit(print(help)) end
 
 function eg.the() io.write(o(the)) end
 
@@ -141,18 +170,32 @@ function eg.rows()
 function eg.data()
   print(was.matrix(DATA(the.file).rows)) end
 
+-- return ((col1.has[x] or 0) + the.m*prior)/(col1.n+the.m)
+
+  -- function l.likesMost(t,datas,n,h,     most,tmp,out)
+  --   most = -1E30
+  --   for k,data in pairs(datas) do
+  --     tmp = l.likes(t,data,n,h)
+  --     if tmp > most then out,most = k,tmp end end
+  --   return out,most end
+  
+  -- -- Likes of one row `t` in one `data`.           
+  -- -- _P(H|E) = P(E|H) P(H)/P(E)_      
+  -- -- or with our crrrent data structures:           
+  -- -- _P(data|t) = P(t|data) P(data) / P(t)_      
+  -- function l.likes(t,data,n,h,       prior,out,col1,inc)
+  --   prior = (#data.rows + the.k) / (n + the.k * h)
+  --   out   = math.log(prior)
+  --   for at,v in pairs(t) do
+  --     col1 = data.cols.x[at]
+  --     if col1 and v ~= "?" then
+  --       inc = l.like(col1,v,prior)
+  --       out = out + math.log(inc) end end
+  --   return out end
+
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
-local function cli(t)
-  for k, v in pairs(t) do
-    v = tostring(v)
-    for argv,s in pairs(arg) do
-      if s=="-"..(k:sub(1,1)) or s=="--"..k then
-        v = v=="true" and "false" or v=="false" and "true" or arg[argv + 1]
-        t[k] = as.thing(v) end end end
-    return t end
+for k, v in help:gmatch("\n[%s]+[-][%S][%s]+[-][-]([%S]+)[^\n]+= ([%S]+)") do  
+  the[k] = coerce(v); print(k,the[k]) end
 
-eg.one(cli(the).eg)
-
--- local d = DATA('../data/auto93.csv')
--- print(was.x(d.cols.names,'',''))
--- print(was.matrix(d.rows,'',''))
+oo(the)
+return eg.one(l.cli(the).eg)
