@@ -84,9 +84,7 @@ local function clone(data1,  rows,    data2)
   return data2 end
 
 fmt = string.format
-function o(x) return was.x(x) end
-function oo(x) print(o(x)); return x end
-  
+
 -- String to int or float or nil or bool.
 local function coerce(s1,    fun)
   function fun(s2)
@@ -110,7 +108,7 @@ function l.csv(src)
     else
       io.close(src) end end end
 
-function o(x,        x,gap,keys,arrays)
+function o(x,      gap, keys, arrays)
   function keys(u)
     for k,v in pairs(u) do u[1+#u]=fmt(":%s %s",k,o(v)) end; table.sort(u); return u end
   function arrays(u)
@@ -194,8 +192,8 @@ function eg.data()
   --   return out end
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
-for k, v in help:gmatch("\n[%s]+[-][%S][%s]+[-][-]([%S]+)[^\n]+= ([%S]+)") do  
-  the[k] = coerce(v); print(k,the[k]) end
+for k, v in help:gmatch("\n[%s]+[-][%S][%s]+[-][-]([%S]+)[^\n]+= ([%S]+)") do
+  the[k] = coerce(v) end
 
 oo(the)
-return eg.one(l.cli(the).eg)
+--return eg.one(l.cli(the).eg)
