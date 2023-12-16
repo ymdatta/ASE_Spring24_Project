@@ -108,14 +108,17 @@ function l.csv(src)
     else
       io.close(src) end end end
 
-function o(x,      gap, keys, arrays)
+function o(x,      y,gap, keys, arrays)
   function keys(u)
-    for k,v in pairs(u) do u[1+#u]=fmt(":%s %s",k,o(v)) end; table.sort(u); return u end
+    for k, v in pairs(u) do u[1 + #u] = fmt(":%s %s", k, o(v)) end; table.sort(u)
+    return u end
   function arrays(u)
-    for k,v in pairs(u) do u[k]=o(v) end; return u end
+    for k, v in pairs(u) do u[k] = o(v) end
+    return u end
   if type(x) ~= "table" then return tostring(x) end
-  x,gap = #x==0 and keys(x,{})," " or arrays(x,{}),", "
-  return "{" .. table.concat(x,gap) .. "}" end
+  y   = #x == 0 and keys(x, {}) or arrays(x, {})
+  gap = #x==0 and " " or ", "
+  return "{" .. table.concat(y, gap) .. "}" end
 
 function oo(x) print(o(x)); return x end
 
@@ -157,9 +160,9 @@ function eg.num(    num1)
   return 9.95 < mu and mu < 10.05 and 0.975 < sd and sd < 1.025 end
 
 function eg.rows()
-    for t in as.rows(the.file) do print(100, o(t)) end
+    for t in l.rows(the.file) do print(100, o(t)) end
     print ""
-    for t in as.rows {
+    for t in rows {
         { 8, 318, 210, 4382, 13.500, 70, 1, 10 },
         { 8, 429, 208, 4633, 11,     72, 1, 10 },
         { 8, 400, 150, 4997, 14,     73, 1, 10 },
@@ -195,5 +198,5 @@ function eg.data()
 for k, v in help:gmatch("\n[%s]+[-][%S][%s]+[-][-]([%S]+)[^\n]+= ([%S]+)") do
   the[k] = coerce(v) end
 
-oo(the)
---return eg.one(l.cli(the).eg)
+
+return eg.one(l.cli(the).eg)
