@@ -4,7 +4,7 @@ smooth: simple Bayesian sequential model optimization
 (c) 2023, Tim Menzies, BSD-2
 
 USAGE:
-  lua smooth.lua [OPTIONS] [--eg ACTION]
+  lua smooth.lua [OPTIONS] [eg ACTION]
 
 OPTIONS:
   -b --bin    number of bins                    = 10
@@ -17,7 +17,7 @@ OPTIONS:
   -s --seed   random number seed                = 1234567891
   -w --wait   wait before classifications       = 20]]
 
-local o, oo -- pretty print stuff
+local b4={}; for k,_ in pairs(_ENV) do b4[k]=k end
 local l={}  -- library utils, defined at end of file
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
@@ -74,7 +74,7 @@ local function data(data1, xs, row1)
 
 local function DATA(src,    data1)
   data1 = {rows = {}, cols = nil,  f={}}
-  for   row1 in rows(src) do data(data1, row1) end
+  for   row1 in l.rows(src) do data(data1, row1) end
   for _,row1 in pairs(data1.rows) do discretizes(data1, row1) end
   return data1 end
 
@@ -83,7 +83,7 @@ local function clone(data1,  rows,    data2)
   for row1 in as.rows(rows or {}) do data(data2, row1) end
   return data2 end
 
-fmt = string.format
+local fmt = string.format
 
 -- String to int or float or nil or bool.
 local function coerce(s1,    fun)
@@ -108,19 +108,19 @@ function l.csv(src)
     else
       io.close(src) end end end
 
-function o(x,      y,gap, keys, arrays)
+function l.o(x,      y,gap, keys, arrays)
   function keys(u)
-    for k, v in pairs(u) do u[1 + #u] = fmt(":%s %s", k, o(v)) end; table.sort(u)
+    for k, v in pairs(x) do u[1 + #u] = fmt(":%s %s", k, l.o(v)) end; table.sort(u)
     return u end
   function arrays(u)
-    for k, v in pairs(u) do u[k] = o(v) end
+    for k, v in pairs(x) do u[k] = l.o(v) end
     return u end
   if type(x) ~= "table" then return tostring(x) end
-  y   = #x == 0 and keys(x, {}) or arrays(x, {})
+  y   = (#x==0 and keys or arrays){}
   gap = #x==0 and " " or ", "
   return "{" .. table.concat(y, gap) .. "}" end
 
-function oo(x) print(o(x)); return x end
+function l.oo(x) print(l.o(x)); return x end
 
 function l.cli(t)
   for k, v in pairs(t) do
@@ -129,9 +129,10 @@ function l.cli(t)
       if s=="-"..(k:sub(1,1)) or s=="--"..k then
         v = v=="true" and "false" or v=="false" and "true" or arg[argv + 1]
         t[k] = coerce(v) end end end
-    return t end
+  return t end
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
+local o, oo = l.o, l.oo
 local eg = {}
 function eg.all() for k, _ in pairs(eg) do if k ~= "all" then eg.one(k) end end end
 
@@ -141,7 +142,7 @@ function eg.one(k,      old)
     print(fmt(" %s %s",eg[k]()==false and "❌ FAIL" or "✅ PASS", k))
     for k1,v1 in pairs(old) do the[k1] = v1 end end
 
-function eg.help() return os.exit(print(help)) end
+function eg.help() return print(help) end
 
 function eg.the() io.write(o(the)) end
 
@@ -153,7 +154,7 @@ function eg.norm(     u)
   table.sort(u)
   oo(u) end
 
-function eg.num(    num1)
+function eg.num(    num1,mu,sd)
   num1 = NUM()
   for _ = 1, 1000 do col(num1, norm(10, 1)) end
   mu, sd = num1.mu, num1.sd
@@ -162,14 +163,14 @@ function eg.num(    num1)
 function eg.rows()
     for t in l.rows(the.file) do print(100, o(t)) end
     print ""
-    for t in rows {
+    for t in l.rows {
         { 8, 318, 210, 4382, 13.500, 70, 1, 10 },
         { 8, 429, 208, 4633, 11,     72, 1, 10 },
         { 8, 400, 150, 4997, 14,     73, 1, 10 },
         { 8, 350, 180, 3664, 11,     73, 1, 10 } } do print(200, o(t)) end end
 
 function eg.data()
-  print(was.matrix(DATA(the.file).rows)) end
+  for _row in pairs(DATA(the.file).rows) do oo(row) end end
 
 -- return ((col1.has[x] or 0) + the.m*prior)/(col1.n+the.m)
 
@@ -196,7 +197,8 @@ function eg.data()
 
 -- --------- --------- --------- --------- --------- --------- --------- --------- ------
 for k, v in help:gmatch("\n[%s]+[-][%S][%s]+[-][-]([%S]+)[^\n]+= ([%S]+)") do
-  the[k] = coerce(v) end
+  the[k] = coerce(v)  end
 
-
-return eg.one(l.cli(the).eg)
+the = l.cli(the)
+eg.one(the.eg)
+for k,_ in pairs(_ENV) do if not b4[k] then print("?",k) end end
