@@ -45,13 +45,21 @@ Here are our themes;
     to port to other languages, less to document, less, less, less, less, less...
 - **Data-Centric Software 2.0:** 
   - Data is the ultimate API
-  - Prioritizing a focus on data analysis over algorithmic or code-centric methods.
+  -  Prioritizing a focus on data analysis over algorithmic or code-centric methods.
   -  In Software 2.0 [^se2]  most often the source code comprises
      - the dataset that defines the desirable behavior
      - the architecture that gives the rough skeleton of the code, but with many details
        (the config options) yet to be selected.
      - The process of training learner  compiles the dataset into a model, from which we can
        set the options.
+- SE moves from a **coding process** to a **decision process**:
+  -   Programmers don't program (usually)
+  -   Now the challenge is know what to use, how to tune, what to ignore
+  -   On a normal day, programmers spend around 2 hours coding, or less. The rest is spent on meetings, working with clinets,
+      career development, writing documentation,
+          running tests, debugging failed tests,  etc etc
+      - In fact much of the time of a programmer is deciding what not to code.
+         - If we coded up every change request, that would lead to massive technical debt [^debt].  
 - **Simplification of AI and SE:**  <img align=right width=300 src="docs/repalce.png">
   - Emphasizing the transformation of complex AI concepts into simpler, more understandable forms.
   - Lots of small scripts doing lots of large AI tasks. 
@@ -88,6 +96,10 @@ Here are our themes;
 - **Practical Problem-Solving Strategy:** 
   - Yes you can.
   - Presenting a practical approach to problem-solving by prioritizing clustering and minimizing assumptions
+
+[^debt]: Lenarduzzi, V., Besker, T., Taibi, D., Martini, A., & Fontana, F. A. (2021). A systematic literature review on technical debt prioritization: Strategies, processes, factors, and tools. Journal of Systems and Software, 171, 110827.
+
+[^hard]: What I would say is that while coding is now easier, writing **good code** remains a challenge. 
 
 [^se2]: Andrej Karpathy 
  [Software 2.0](https://karpathy.medium.com/software-2-0-a64152b37c35), 
