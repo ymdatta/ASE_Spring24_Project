@@ -4,10 +4,11 @@ MAKEFLAGS += --warn-undefined-variables
 
 define css
 p,h2,h3   { text-align: right;}
-hr        { background-color: #EEE !important;
-    color: #EEE !important
-    border: solid 1px #EEE !important;
-    height: 1px !important; }
+hr        { background-color: #DDD !important;
+            color: #DDD !important
+						border: 0;
+            border-top: solid  1px #DDD !important;
+            height: 1px !important; }
 .docs pre {font-size: 8pt; }
 endef
 export css

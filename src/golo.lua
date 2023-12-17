@@ -193,7 +193,6 @@ function l.likes(t,data,n,h,       prior,out,col1,inc)
       out = out + math.log(inc) end end
   return out end
 
-
 -- How much does a column like one value `x`?       
 function l.like(col1,x,prior,    nom,denom)
   if   col1.isSym
