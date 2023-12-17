@@ -27,7 +27,7 @@ local ROW, DATA, NUM, SYM, COL, COLS
 local clone, col, cols, data, discretize,discretizes
 -- Library utils, defined later.
 local cli, coerce, csv, div, ent, fmt, gt, has3, inc3, items, lt
-local mid, mode, o, oo, rows, sort
+local mid, mode, o, oo, R, rows, shuffle, sort
 
 -- ----------------------------------------------------------------------------
 -- ## One Column
@@ -126,6 +126,12 @@ function discretizes(data1, row1,      x,y,d)
 -- ----------------------------------------------------------------------------
 -- ## Library Routines
 
+-- ### Short-cuts
+-- Random numbers.
+R=math.random
+-- Emulate printf
+fmt=string.format
+
 -- ### Lists
 
 -- Mode
@@ -155,43 +161,35 @@ function has3(c,x,y,z,     a,b)
     if a ~= nil then
       return a[z] end end end
         
--- Iterator.
-function items(t,    n)
-  n=0; return function() if n<#t then n=n+1; return t[n] end end end
-
--- Return a list with indexes 1,2,3...n
-local function asList(t,u)
-  u={}; for _,x in pairs(t) do u[1+#u]=x; end; return u end
+-- Iterator. Return items in key order.
+function items(t,    n,u,i)
+  u={}; for k,v in pairs(t) do u[1+#u] = {k=k,v=v} end 
+  table.sort(u, lt"k")
+  i=0; return function() if i<#u then i=i+1; return u[i].k, u[i].v end end end
 
 -- return a (shallow) copy, sorted.
-function sort(t, fun,     u) 
-  u = asList(t); table.sort(u,fun); return u end
+function sort(t, fun,     u)
+  u={}; for _,x in pairs(t) do u[1+#u]=x; end;
+  table.sort(u,fun); return u end
 
 -- Functions to sort up or down on a field `x`
 function lt(x) return function(a, b) return a[x] < b[x] end end
 function gt(x) return function(a, b) return a[x] > b[x] end end
 
 -- Return a (shallow) copy, randomly shulled.
-function shuffle(t)
-  u= asList(t); table.shuffle(u); return u end
+function shuffle(t,    u,j)
+  u={}; for _,x in pairs(t) do u[1+#u]=x; end;
+  for i = #u,2,-1 do j=R(i); u[i],u[j] = u[j],u[i] end
+  return u end
 
 -- ### Thing to String
 
--- Emulate `pritnf`.
-fmt = string.format
-
 -- Generate a string from a nested structure.
-function o(x,      y,gap, keys, arrays)
-  function keys(u)
-    for k, v in pairs(x) do u[1 + #u] = fmt(":%s %s", o(k), o(v)) end; table.sort(u)
-    return u end
-  function arrays(u)
-    for k, v in pairs(x) do u[k] = o(v) end
-    return u end
+function o(x,      t)
   if type(x) ~= "table" then return tostring(x) end
-  y   = (#x==0 and keys or arrays){}
-  gap = #x==0 and " " or ", "
-  return "{" .. table.concat(y, gap) .. "}" end
+  t={}; for k, v in items(x) do
+    t[1 + #t] =  #x==0 and fmt(":%s %s", o(k), o(v)) or o(v) end
+  return "{" .. table.concat(t, #x==0 and " " or ", ") .. "}" end
 
 -- Print a string representing a nested structure. Return that structure.
 function oo(x) print(o(x)); return x end
@@ -199,16 +197,19 @@ function oo(x) print(o(x)); return x end
 -- ### String to Thing
 
 -- String to int or float or nil or bool.
-local function coerce(s1,    fun)
+function coerce(s1,    fun)
   function fun(s2)
     if s2=="nil" then return nil
     else return s2=="true" or (s2~="false" and s2) end end
   return math.tointeger(s1) or tonumber(s1) or fun(s1:match'^%s*(.*%S)') end
 
 -- Iterate over the rows in either file `src` or list `src`. 
-function rows(src)
-  return type(src)=="string" and csv(src) or items(src or {}) end
-
+function rows(src,    i)
+  if type(src)=="string" then return csv(src) else
+    i=0
+    return function()
+      if i<#src then i=i+1; return src[i] end end end end
+      
 -- Iterator for files.
 function csv(src)
   src = src=="-" and io.stdin or io.input(src)
@@ -251,8 +252,8 @@ function eg.help() return os.exit(print("\n"..help)) end
 function eg.the() oo(the) end
 
 local function norm(mu, sd)
-  return (mu or 0) + (sd or 1) * math.sqrt(-2 * math.log(math.random()))
-                               * math.cos(2 * math.pi * math.random()) end
+  return (mu or 0) + (sd or 1) * math.sqrt(-2 * math.log(R()))
+                               * math.cos(2 * math.pi * R()) end
 
 function eg.num(      t,num1,mu,sd)
   t,num1 = {},NUM()
@@ -298,7 +299,7 @@ function eg.rows()
 function eg.data()
     for _, row in pairs(DATA(the.file).rows) do oo(row) end end
   
-function eg.f()
+function eg.f(     d)
     d = DATA('../data/diabetes.csv')
     oo(d.f) end
 
