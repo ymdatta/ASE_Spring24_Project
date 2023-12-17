@@ -1,6 +1,5 @@
--- Some trics
+-- .
 local the,help = {},[[
-
 smooth: simple Bayesian sequential model optimization
 (c) 2023, Tim Menzies, BSD-2
 
@@ -22,15 +21,13 @@ OPTIONS:
 
 -- `b4` is used at end to lint for rogue globals,
 local b4 = {}; for k, _ in pairs(_ENV) do b4[k] = k end
-
 -- Class constructors
 local ROW, DATA, NUM, SYM, COL, COLS
-
 -- Methods
 local clone, col, cols, data, discretize,discretizes
-
 -- Library utils, defined later.
-local cli, coerce, csv, fmt, inc2, items, lt, o, oo, rows, sort
+local cli, coerce, csv, div, ent, fmt, gt, has3, inc3, items, lt
+local mid, mode, o, oo, rows, sort
 
 -- ----------------------------------------------------------------------------
 -- ## One Column
@@ -51,6 +48,14 @@ function col(col1,x,     d)
       col1.sd = col1.n < 2 and 0 or (col1.m2/(col1.n - 1))^.5  end end 
   return x end
 
+-- Queries
+function mid(col1)
+  return col1.isSym and mode(col1.has) or col1.mu end
+
+function div(col1)
+  return col1.isSym and ent(col1.has) or col1.sd end
+  
+-- ----------------------------------------------------------------------------
 -- ## Sets of columns
 
 -- Create  a list of column names into columns.
@@ -70,7 +75,7 @@ function cols(cols1,row1)
 -- ## Row
 
 -- Create.
-function ROW(t) return {cells=t, cooked={}} end
+function ROW(t) return {cells=t, cooked={},used=0} end
 
 -- ----------------------------------------------------------------------------
 -- ## DATA = rows + COLS
@@ -97,46 +102,72 @@ function clone(data1,  rows,    data2)
 
 -- ----------------------------------------------------------------------------
 -- ## Descretization
+
 -- Map a column value into a small number of values. Used `m` for the
 -- middle value and  `l,j,etc` for values under middle and 
 -- `n,o,p,etc' for values above middle.
 function discretize(col1,x,     y)
-  y= (col1.isSym or x=="?") and x or ((the.bins)*(x-col1.mu) / col1.sd / 6 + .5)//1 
-  return string.char(109+y) end
+  if col1.isSym or x == "?" then return x end
+  return string.char(109+((the.bins) * (x - col1.mu) / col1.sd / 6 + .5) // 1) end
 
 -- Descrretize row values and, as a side effect, update  a `f` frequency table
 -- `f[klass][{col.at, val}]=count`. 
-function discretizes(data1,row1,f,    x)
-  f = f or {}
+function discretizes(data1, row1,      x,y,d,k)
   for _, col1 in pairs(data1.cols.all) do
     x = row1.cells[col1.at]
-    row1.cooked[col1.at] = x   
-    if col1.at ~= data1.cols.klass.at and not col1.isSym then
-      x = discretize(col1, x)
-      row1.cooked[col1.at] = x
-      if x ~= "?" then
-        inc2(f, row1.cells[data1.cols.klass.at], {col1.at, x}) end end end 
-  return f end
-
--- ----------------------------------------------------------------------------
+    y = row1.cells[data1.cols.klass.at]
+    row1.cooked[col1.at] = x
+    d = discretize(col1, x)
+    if d ~= "?" then
+      k = { y, col1.at, d }
+      inc3(data1.f, y, col1.at, d) end end end
+-- ----------------------------------------------------------------------------
 -- ## Library Routines
 
 -- ### Lists
 
--- Update frequency table.
-function inc2(t,x,y,     a,b)
-  a = t[x]; if a==nil then a={}; t[x]=a end
-  b = a[y]; if b==nil then b=1 else b=b+1; a[y] = b; end end
+-- Mode
+function mode(t,  out,most)
+  most=0
+  for x,n in pairs(t) do if n>most then out,most = x,n end end
+  return out end
 
+-- Entropy
+function ent(t,  e,N)
+  e,N = 0,0
+  for x,n in pairs(t) do N = N+n end
+  for _,n in pairs(t) do e = e - n/N * math.log(n/N,2) end
+  return out end
+
+-- Update nested frequency table.
+function inc3(c,x,y,z,    a,b)
+  b = c[x] if b==nil then b={} c[x] = b end
+  a = b[y] if a==nil then a={} b[y] = a end
+  a[z] = (a[z] or 0) + 1 end
+  
+-- Lookup nested frequency table.
+function has3(c,x,y,z,     a,b)
+   b = c[x]
+  if b ~= nil then
+    a = b[y]
+    if a ~= nil then
+      return a[z] end end end
+        
 -- Iterator.
 function items(t,    n)
   n=0; return function() if n<#t then n=n+1; return t[n] end end end
 
-function sort(t, fun,     u)
-  if #t==0 then u={}; for _,x in pairs(t) do u[1+#u]=x; end; return sort(u,fun) end
-  table.sort(t,fun); return t end
+local function asList(t,u)
+  u={}; for _,x in pairs(t) do u[1+#u]=x; end; return u end
+
+function sort(t, fun,     u) 
+  u = asList(t); table.sort(u,fun); return u end
 
 function lt(x) return function(a, b) return a[x] < b[x] end end
+function gt(x) return function(a, b) return a[x] > b[x] end end
+
+function shuffle(t)
+  u=asList(t); table.shuffle(u); return u end
 
 -- ### Thing to String
 
@@ -146,9 +177,11 @@ fmt = string.format
 -- Generate a string from a nested structure.
 function o(x,      y,gap, keys, arrays)
   function keys(u)
-    for k, v in pairs(x) do u[1 + #u] = fmt(":%s %s", k, o(v)) end; table.sort(u);return u end
+    for k, v in pairs(x) do u[1 + #u] = fmt(":%s %s", o(k), o(v)) end; table.sort(u)
+    return u end
   function arrays(u)
-    for k, v in pairs(x) do u[k] = o(v) end; return u end
+    for k, v in pairs(x) do u[k] = o(v) end
+    return u end
   if type(x) ~= "table" then return tostring(x) end
   y   = (#x==0 and keys or arrays){}
   gap = #x==0 and " " or ", "
@@ -192,7 +225,7 @@ function cli(t)
         t[k] = coerce(v) end end end
   return t end
 
--- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
 -- ## Examples
 
 local eg = {}
@@ -207,7 +240,7 @@ function eg.one(k,      old)
     print(fmt(" %s %s",eg[k]()==false and "❌ FAIL" or "✅ PASS", k))
     for k1,v1 in pairs(old) do the[k1] = v1 end end
 
-function eg.help() return os.exit(print(help)) end
+function eg.help() return os.exit(print("\n"..help)) end
 
 function eg.the() oo(the) end
 
@@ -223,7 +256,6 @@ function eg.num(      t,num1,mu,sd)
   return 9.9 < mu and mu < 10 and 1.95 < sd and sd < 2 end
 
 function eg.discretize(           max,num1,sym1,mu,sd,t,u,n,y,v,i)
-  the.bins = 10
   t, u, v, num1, sym1 = {}, {},{}, NUM(), SYM()
   max=1000
   for _ = 1, max do t[1+#t]= col(num1, norm(10,2)) end
@@ -239,6 +271,15 @@ function eg.discretize(           max,num1,sym1,mu,sd,t,u,n,y,v,i)
     i=i+1
     print(fmt("%2s %6s%%   %4.1f  %s",y, n/10, v[y], ('*'):rep(n//10))) end end
 
+function eg.inc3(f)
+  f={}
+  for r = 1, 4 do
+    for _,i in pairs{"a","b","c","d"}   do
+      for _,j in pairs{"a","b","c","d"}   do
+        for _,k in pairs{"a","b","c","d"}   do
+           inc3(f, i, j, k) end end end end
+  oo(f); print(f.a.c.b) end 
+  
 function eg.rows()
     for t in rows(the.file) do print(100, o(t)) end
     print ""
@@ -249,8 +290,30 @@ function eg.rows()
         { 8, 350, 180, 3664, 11,     73, 1, 10 } } do print(200, o(t)) end end
 
 function eg.data()
-  for _,row in pairs(DATA(the.file).rows) do oo(row) end end
+    for _, row in pairs(DATA(the.file).rows) do oo(row) end end
+  
+function eg.f()
+    d = DATA('../data/diabetes.csv')
+    oo(d.f) end
 
+function eg.contrast(d, yes, no, R, B, r, b, w)
+  the.bins = 5
+  d = DATA('../data/diabetes.csv')
+  yes = "pos"; B = d.cols.klass.has[yes] + 1E-30
+  no  = "neg"; R = d.cols.klass.has[no]  + 1E-30
+  for col, valcount in pairs(d.f[yes]) do
+    for val, b in pairs(valcount) do
+      r = has3(d.f, no, col, val) or 0
+      b, r = b / B, r / R
+      if b > r then
+        print(fmt("%5.3f  %.3f  %.3f %3s %3s",b^2/r, b,r,
+                  d.cols.names[col],val)) end end end end
+                  
+-- function eg.smooth(    d)
+--   d=DATA("../auto93.csv") 
+--   for _,row in pairs(d) do row.used=0 end
+--   while true:
+--     sort()
 -- return ((col1.has[x] or 0) + the.m*prior)/(col1.n+the.m)
 
   -- function l.likesMost(t,datas,n,h,     most,tmp,out)
