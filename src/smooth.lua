@@ -48,10 +48,13 @@ function col(col1,x,     d)
       col1.sd = col1.n < 2 and 0 or (col1.m2/(col1.n - 1))^.5  end end 
   return x end
 
--- Queries
+-- ### Queries
+
+-- `mid` = middle = central tendency.
 function mid(col1)
   return col1.isSym and mode(col1.has) or col1.mu end
 
+-- `div` = diversity = tendency to avoid the center.
 function div(col1)
   return col1.isSym and ent(col1.has) or col1.sd end
   
@@ -75,7 +78,7 @@ function cols(cols1,row1)
 -- ## Row
 
 -- Create.
-function ROW(t) return {cells=t, cooked={},used=0} end
+function ROW(t) return {cells=t, cooked={}, used=0} end
 
 -- ----------------------------------------------------------------------------
 -- ## DATA = rows + COLS
@@ -112,14 +115,13 @@ function discretize(col1,x,     y)
 
 -- Descrretize row values and, as a side effect, update  a `f` frequency table
 -- `f[klass][{col.at, val}]=count`. 
-function discretizes(data1, row1,      x,y,d,k)
+function discretizes(data1, row1,      x,y,d)
   for _, col1 in pairs(data1.cols.all) do
     x = row1.cells[col1.at]
     y = row1.cells[data1.cols.klass.at]
-    row1.cooked[col1.at] = x
     d = discretize(col1, x)
-    if d ~= "?" then
-      k = { y, col1.at, d }
+    row1.cooked[col1.at] = x
+    if d ~= "?" then 
       inc3(data1.f, y, col1.at, d) end end end
 -- ----------------------------------------------------------------------------
 -- ## Library Routines
@@ -135,9 +137,9 @@ function mode(t,  out,most)
 -- Entropy
 function ent(t,  e,N)
   e,N = 0,0
-  for x,n in pairs(t) do N = N+n end
+  for _,n in pairs(t) do N = N+n end
   for _,n in pairs(t) do e = e - n/N * math.log(n/N,2) end
-  return out end
+  return e end
 
 -- Update nested frequency table.
 function inc3(c,x,y,z,    a,b)
@@ -147,7 +149,7 @@ function inc3(c,x,y,z,    a,b)
   
 -- Lookup nested frequency table.
 function has3(c,x,y,z,     a,b)
-   b = c[x]
+  b = c[x]
   if b ~= nil then
     a = b[y]
     if a ~= nil then
@@ -157,17 +159,21 @@ function has3(c,x,y,z,     a,b)
 function items(t,    n)
   n=0; return function() if n<#t then n=n+1; return t[n] end end end
 
+-- Return a list with indexes 1,2,3...n
 local function asList(t,u)
   u={}; for _,x in pairs(t) do u[1+#u]=x; end; return u end
 
+-- return a (shallow) copy, sorted.
 function sort(t, fun,     u) 
   u = asList(t); table.sort(u,fun); return u end
 
+-- Functions to sort up or down on a field `x`
 function lt(x) return function(a, b) return a[x] < b[x] end end
 function gt(x) return function(a, b) return a[x] > b[x] end end
 
+-- Return a (shallow) copy, randomly shulled.
 function shuffle(t)
-  u=asList(t); table.shuffle(u); return u end
+  u= asList(t); table.shuffle(u); return u end
 
 -- ### Thing to String
 
