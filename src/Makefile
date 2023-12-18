@@ -42,7 +42,7 @@ saved: ## save and push  to main brach
 	git add *;git commit -am save;git push;git status
 
 FILES=$(wildcard *.lua)
-docs: $(addprefix ../docs/, $(FILES:.lua=.html))  ## update docs/*.html
+docs: $(addprefix ../docs/, $(FILES:.lua=.html))  $(addprefix ~/tmp/, $(FILES:.lua=.pdf))  
 
 ../docs/%.html : %.lua ## make doc
 	pycco -d ../docs $^ 
