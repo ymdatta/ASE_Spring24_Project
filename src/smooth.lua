@@ -375,7 +375,8 @@ for k, v in help:gmatch("\n[%s]+[-][%S][%s]+[-][-]([%S]+)[^\n]+= ([%S]+)") do
   the[k] = coerce(v)  end
 
 -- Call an example (after updating the configuration file from the command line).
-eg.one(cli(the).eg)
+the =cli(the)
+eg.one(the.eg)
 
 -- Check for rogue locals.
 for k,_ in pairs(_ENV) do if not b4[k] then print("?",k) end end
