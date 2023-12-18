@@ -187,8 +187,8 @@ function shuffle(t,    u,j)
 -- Generate a string from a nested structure.
 function o(x,      t)
   if type(x) ~= "table" then return tostring(x) end
-  t={}; for k, v in items(x) do
-    t[1 + #t] =  #x==0 and fmt(":%s %s", o(k), o(v)) or o(v) end
+  t={};
+  for k,v in items(x) do v=o(v); t[1+#t]= #x>0 and v or fmt(":%s %s",o(k),v) end
   return "{" .. table.concat(t, #x==0 and " " or ", ") .. "}" end
 
 -- Print a string representing a nested structure. Return that structure.
