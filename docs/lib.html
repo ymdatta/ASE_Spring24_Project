@@ -126,18 +126,19 @@ Cluster data to lower dimensions. Just reason about those clusters.<hr>
       <div class='octowrap'>
         <a class='octothorpe' href='#section-7'>#</a>
       </div>
-      <p>Convert list of numbers to standard deviation. For more on this see
-<a href="http://datagenetics.com/blog/november22017/index.html">here</a>.</p>
+      <p>Convert list of numbers to mean, standard deviation and sample size. For more on this see
+<a href="http://datagenetics.com/blog/november22017/index.html">here</a>.
+This function also returns the mean and sample size of this list </p>
     </div>
     <div class='code'>
-      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">t2stdec</span><span class="p">(</span><span class="n">t</span><span class="p">,</span>    <span class="n">d</span><span class="p">,</span><span class="n">n</span><span class="p">,</span><span class="n">mu</span><span class="p">,</span><span class="n">m2</span><span class="p">)</span>
+      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">t2stats</span><span class="p">(</span><span class="n">t</span><span class="p">,</span>    <span class="n">d</span><span class="p">,</span><span class="n">n</span><span class="p">,</span><span class="n">mu</span><span class="p">,</span><span class="n">m2</span><span class="p">)</span>
 	<span class="n">n</span><span class="p">,</span><span class="n">mu</span><span class="p">,</span><span class="n">m2</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span>
   <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">x</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="kr">do</span>
     <span class="n">n</span>  <span class="o">=</span> <span class="n">n</span><span class="o">+</span><span class="mi">1</span>
     <span class="n">d</span>  <span class="o">=</span> <span class="n">x</span><span class="o">-</span><span class="n">mu</span>
     <span class="n">mu</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">d</span><span class="o">/</span><span class="n">n</span>
     <span class="n">m2</span> <span class="o">=</span> <span class="n">m2</span> <span class="o">+</span> <span class="n">d</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">mu</span><span class="p">)</span> <span class="kr">end</span>
-	<span class="kr">return</span> <span class="n">n</span><span class="o">&lt;</span><span class="mi">2</span> <span class="ow">and</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span><span class="n">m2</span><span class="o">/</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span><span class="o">^</span><span class="mf">.5</span> <span class="kr">end</span></pre></div>
+	<span class="kr">return</span> <span class="n">mu</span><span class="p">,</span> <span class="n">n</span><span class="o">&lt;</span><span class="mi">2</span> <span class="ow">and</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span><span class="n">m2</span><span class="o">/</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span><span class="o">^</span><span class="mf">.5</span><span class="p">,</span> <span class="n">n</span> <span class="kr">end</span></pre></div>
     </div>
   </div>
   <div class='clearall'></div>
@@ -185,7 +186,8 @@ Cluster data to lower dimensions. Just reason about those clusters.<hr>
       <p>Return any <code>n</code> items (there may be repeats).</p>
     </div>
     <div class='code'>
-      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">many</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">n</span><span class="p">,</span>     <span class="n">u</span><span class="p">)</span>
+      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">many</span><span class="p">(</span><span class="n">t</span><span class="p">,</span>  <span class="n">n</span><span class="p">,</span>     <span class="n">u</span><span class="p">)</span>
+  <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="ow">or</span> <span class="o">#</span><span class="n">t</span>
   <span class="n">u</span><span class="o">=</span><span class="p">{};</span> <span class="kr">for</span> <span class="n">_</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span><span class="n">n</span> <span class="kr">do</span> <span class="n">u</span><span class="p">[</span><span class="mi">1</span><span class="o">+#</span><span class="n">u</span><span class="p">]</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">any</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="kr">end</span><span class="p">;</span> <span class="kr">return</span> <span class="n">u</span> <span class="kr">end</span></pre></div>
     </div>
   </div>
@@ -759,10 +761,65 @@ the <code>-k</code> is enough to flip it </p>
       <div class='octowrap'>
         <a class='octothorpe' href='#section-49'>#</a>
       </div>
+      <p>Non-parametric effect-size test
+M.Hess, J.Kromrey. 
+Robust Confidence Intervals for Effect Sizes: 
+A Comparative Study of Cohen&rsquo;s d and Cliff&rsquo;s Delta Under Non-normality and Heterogeneous Variances
+American Educational Research Association, San Diego, April 12 - 16, 2004  <br />
+0.147=  small, 0.33 =  medium, 0.474 = large; med &ndash;&gt; small at .2385</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">cliffsDelta</span><span class="p">(</span><span class="n">ns1</span><span class="p">,</span><span class="n">ns2</span><span class="p">,</span>  <span class="n">cliffs</span><span class="p">)</span> 
+  <span class="kr">if</span> <span class="o">#</span><span class="n">ns1</span> <span class="o">&gt;</span> <span class="mi">256</span>     <span class="kr">then</span> <span class="n">ns1</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">many</span><span class="p">(</span><span class="n">ns1</span><span class="p">,</span><span class="mi">256</span><span class="p">)</span> <span class="kr">end</span>
+  <span class="kr">if</span> <span class="o">#</span><span class="n">ns2</span> <span class="o">&gt;</span> <span class="mi">256</span>     <span class="kr">then</span> <span class="n">ns2</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">many</span><span class="p">(</span><span class="n">ns2</span><span class="p">,</span><span class="mi">256</span><span class="p">)</span> <span class="kr">end</span>
+  <span class="kr">if</span> <span class="o">#</span><span class="n">ns1</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="o">*#</span><span class="n">ns2</span> <span class="kr">then</span> <span class="n">ns1</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">many</span><span class="p">(</span><span class="n">ns1</span><span class="p">,</span><span class="mi">10</span><span class="o">*#</span><span class="n">ns2</span><span class="p">)</span> <span class="kr">end</span>
+  <span class="kr">if</span> <span class="o">#</span><span class="n">ns2</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="o">*#</span><span class="n">ns1</span> <span class="kr">then</span> <span class="n">ns2</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">many</span><span class="p">(</span><span class="n">ns2</span><span class="p">,</span><span class="mi">10</span><span class="o">*#</span><span class="n">ns1</span><span class="p">)</span> <span class="kr">end</span>
+  <span class="kd">local</span> <span class="n">n</span><span class="p">,</span><span class="n">gt</span><span class="p">,</span><span class="n">lt</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span>
+  <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">x</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">ns1</span><span class="p">)</span> <span class="kr">do</span>
+    <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">y</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">ns2</span><span class="p">)</span> <span class="kr">do</span>
+      <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span>
+      <span class="kr">if</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="n">y</span> <span class="kr">then</span> <span class="n">gt</span> <span class="o">=</span> <span class="n">gt</span> <span class="o">+</span> <span class="mi">1</span> <span class="kr">end</span>
+      <span class="kr">if</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">y</span> <span class="kr">then</span> <span class="n">lt</span> <span class="o">=</span> <span class="n">lt</span> <span class="o">+</span> <span class="mi">1</span> <span class="kr">end</span> <span class="kr">end</span> <span class="kr">end</span>
+  <span class="kr">return</span> <span class="nb">math.abs</span><span class="p">(</span><span class="n">lt</span> <span class="o">-</span> <span class="n">gt</span><span class="p">)</span><span class="o">/</span><span class="n">n</span> <span class="o">&gt;</span> <span class="n">cliffs</span> <span class="kr">end</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-50'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-50'>#</a>
+      </div>
+      <p>Non-parametric significant test. From p220 to 223 of theg
+Efron text  &lsquo;introduction to the boostrap&rsquo;.
+https://bit.ly/3iSJz8B Typically, conf=0.05 and bootstraps is 100s to 1000s.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kr">function</span> <span class="nc">l</span><span class="p">.</span><span class="nf">bootstrap</span><span class="p">(</span><span class="n">y0</span><span class="p">,</span><span class="n">z0</span><span class="p">,</span><span class="n">bootstraps</span><span class="p">,</span><span class="n">conf</span><span class="p">,</span>      <span class="n">_</span><span class="p">,</span><span class="n">__</span><span class="p">)</span>
+  <span class="kd">local</span> <span class="kr">function</span> <span class="nf">delta</span><span class="p">(</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">)</span>
+    <span class="kd">local</span> <span class="n">ymu</span><span class="p">,</span><span class="n">ysd</span><span class="p">,</span><span class="n">yn</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">t2stats</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="kd">local</span> <span class="n">zmu</span><span class="p">,</span><span class="n">zsd</span><span class="p">,</span><span class="n">zn</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">t2stats</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+    <span class="kr">return</span> <span class="nb">math.abs</span><span class="p">(</span><span class="n">ymu</span> <span class="o">-</span> <span class="n">zmu</span><span class="p">)</span> <span class="o">/</span> <span class="p">((</span><span class="mf">1E-30</span> <span class="o">+</span> <span class="n">ysd</span><span class="o">^</span><span class="mi">2</span><span class="o">/</span><span class="n">yn</span> <span class="o">+</span> <span class="n">zsd</span><span class="o">^</span><span class="mi">2</span><span class="o">/</span><span class="n">zn</span><span class="p">)</span><span class="o">^</span><span class="mf">.5</span><span class="p">)</span> <span class="kr">end</span>
+  <span class="kd">local</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">yhat</span><span class="p">,</span> <span class="n">zhat</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">copy</span><span class="p">(</span><span class="n">y0</span><span class="p">),</span> <span class="n">l</span><span class="p">.</span><span class="n">copy</span><span class="p">(</span><span class="n">y0</span><span class="p">),</span> <span class="n">l</span><span class="p">.</span><span class="n">copy</span><span class="p">(</span><span class="n">z0</span><span class="p">),</span> <span class="p">{},</span> <span class="p">{}</span>
+  <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">z1</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">z0</span><span class="p">)</span> <span class="kr">do</span> <span class="n">l</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">z1</span><span class="p">)</span> <span class="kr">end</span>
+  <span class="kd">local</span> <span class="n">n</span><span class="p">,</span> <span class="n">tobs</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">delta</span><span class="p">(</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">)</span>
+  <span class="kd">local</span> <span class="n">xmu</span><span class="p">,</span><span class="n">ymu</span><span class="p">,</span><span class="n">zmu</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">t2stats</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">l</span><span class="p">.</span><span class="n">t2stats</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="n">l</span><span class="p">.</span><span class="n">t2stats</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+  <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">y1</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">y0</span><span class="p">)</span> <span class="kr">do</span> <span class="n">l</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">yhat</span><span class="p">,</span> <span class="n">y1</span> <span class="o">-</span> <span class="n">ymu</span> <span class="o">+</span> <span class="n">xmu</span><span class="p">)</span> <span class="kr">end</span>
+  <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">z1</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">z0</span><span class="p">)</span> <span class="kr">do</span> <span class="n">l</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">zhat</span><span class="p">,</span> <span class="n">z1</span> <span class="o">-</span> <span class="n">zmu</span> <span class="o">+</span> <span class="n">xmu</span><span class="p">)</span> <span class="kr">end</span>
+  <span class="kr">for</span> <span class="n">_</span><span class="o">=</span> <span class="mi">1</span><span class="p">,</span><span class="n">bootstraps</span> <span class="kr">do</span>
+    <span class="kr">if</span> <span class="n">delta</span><span class="p">(</span><span class="n">l</span><span class="p">.</span><span class="n">many</span><span class="p">(</span><span class="n">yhat</span><span class="p">),</span> <span class="n">l</span><span class="p">.</span><span class="n">many</span><span class="p">(</span><span class="n">zhat</span><span class="p">))</span> <span class="o">&gt;</span> <span class="n">tobs</span> <span class="kr">then</span> <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span> <span class="kr">end</span> <span class="kr">end</span> 
+  <span class="kr">return</span> <span class="n">n</span> <span class="o">/</span> <span class="n">bootstraps</span> <span class="o">&gt;=</span> <span class="n">conf</span> <span class="kr">end</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-51'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-51'>#</a>
+      </div>
       <h2>Main</h2>
     </div>
     <div class='code'>
-      <div class="highlight"><pre>  <span class="kr">return</span> <span class="n">l</span>
+      <div class="highlight"><pre><span class="kr">return</span> <span class="n">l</span>
 
 </pre></div>
     </div>

@@ -22,18 +22,18 @@ OPTIONS:
 -- `b4` is used at end to lint for rogue globals,
 local b4 = {}; for k, _ in pairs(_ENV) do b4[k] = k end
 -- Class constructors
-local ROW, DATA, NUM, SYM, COL, COLS
+local COL,COLS,DATA,NUM,ROW,SYM
 -- Methods
-local clone, col, cols, data, discretize,discretizes
--- Library utils, defined later.
-local cli, coerce, csv, div, ent, fmt, gt, has3, inc3, items, lt
-local mid, mode, o, oo, R, rows, shuffle, sort
+local clone,col,cols,data,discretize,discretizes,div,mid
+-- Lua is a "batteries not included" langauge. So here are my batteries.
+local cli,coerce,csv,ent,fmt,gt,has3,inc3,items,lt
+local mode,o,oo,R,rnd,rows,shuffle,sort
 
 -- ----------------------------------------------------------------------------
 -- ## One Column
 
 -- Create   columns for `NUM`eric  or `SYM`bolic values.
-function NUM(s,n) return {txt=s or '', at=n or 0, n=0, f={},mu=0, m2=0, sd=0}   end
+function NUM(s,n) return {txt=s or '',at=n or 0,n=0, f={},mu=0, m2=0, sd=0}   end
 function SYM(s,n) return {txt=s or '', at=n or 0, n=0, f={},has={}, isSym=true} end
 function COL(s,n) return (s:find'^[A-Z]' and NUM or SYM)(s,n) end
 
@@ -104,33 +104,43 @@ function clone(data1,  rows,    data2)
   return data2 end
 
 -- ----------------------------------------------------------------------------
--- ## Descretization
+-- ## Discretization
 
 -- Map a column value into a small number of values. Used `m` for the
 -- middle value and  `l,j,etc` for values under middle and 
--- `n,o,p,etc' for values above middle.
+-- `n,o,p,etc` for values above middle.
 function discretize(col1,x,     y)
   if col1.isSym or x == "?" then return x end
   return string.char(109+((the.bins) * (x - col1.mu) / col1.sd / 6 + .5) // 1) end
 
 -- Descrretize row values and, as a side effect, update  a `f` frequency table
--- `f[klass][{col.at, val}]=count`. 
+-- `f[klass][col.at][val]=count`. 
 function discretizes(data1, row1,      x,y,d)
   for _, col1 in pairs(data1.cols.all) do
     x = row1.cells[col1.at]
     y = row1.cells[data1.cols.klass.at]
     d = discretize(col1, x)
-    row1.cooked[col1.at] = x
+    row1.cooked[col1.at] = d
     if d ~= "?" then 
       inc3(data1.f, y, col1.at, d) end end end
 -- ----------------------------------------------------------------------------
 -- ## Library Routines
 
 -- ### Short-cuts
--- Random numbers.
+
+-- Random number genertion.
 R=math.random
 -- Emulate printf
 fmt=string.format
+
+-- ### Numbers
+
+-- Round to `ndecs` decimals.
+function rnd(n, ndecs)
+  if type(n) ~= "number" then return n end
+  if math.floor(n) == n  then return n end
+  local mult = 10^(ndecs or 2)
+  return math.floor(n * mult + 0.5) / mult end
 
 -- ### Lists
 
@@ -158,8 +168,7 @@ function has3(c,x,y,z,     a,b)
   b = c[x]
   if b ~= nil then
     a = b[y]
-    if a ~= nil then
-      return a[z] end end end
+    if a ~= nil then return a[z] end end end
         
 -- return a (shallow) copy, sorted.
 function sort(t, fun,     u)
@@ -181,15 +190,17 @@ function items(t,    n,u,i)
   u={}; for k,v in pairs(t) do u[1+#u] = {k=k,v=v} end
   table.sort(u, lt"k")
   i=0; return function() if i<#u then i=i+1; return u[i].k, u[i].v end end end
-  
+
 -- ### Thing to String
 
--- Generate a string from a nested structure.
-function o(x,      t)
-  if type(x) ~= "table" then return tostring(x) end
-  t={};
-  for k,v in items(x) do v=o(v); t[1+#t]= #x>0 and v or fmt(":%s %s",o(k),v) end
-  return "{" .. table.concat(t, #x==0 and " " or ", ") .. "}" end
+-- Generate a string from a nested structure. Round numbers to `n` decismals.
+function o(x,  n,      t)
+  if type(x) == "number" then return rnd(x, n) end
+  if type(x) ~= "table"  then return tostring(x) end
+  t={}
+  for k,v in items(x) do
+    t[1+#t] = #x>0 and o(v,n) or fmt("%s: %s", o(k,n), o(v,n)) end
+  return "{" .. table.concat(t, ", ") .. "}" end
 
 -- Print a string representing a nested structure. Return that structure.
 function oo(x) print(o(x)); return x end
@@ -203,7 +214,8 @@ function coerce(s1,    fun)
     else return s2=="true" or (s2~="false" and s2) end end
   return math.tointeger(s1) or tonumber(s1) or fun(s1:match'^%s*(.*%S)') end
 
--- Iterate over the rows in either file `src` or list `src`. 
+-- Iterate over the rows
+-- from either file `src` or list `src`. 
 function rows(src,    i)
   if type(src)=="string" then return csv(src) else
     i=0; return function() if i<#src then i=i+1; return src[i] end end end end
@@ -249,6 +261,8 @@ function eg.help() return os.exit(print("\n"..help)) end
 
 function eg.the() oo(the) end
 
+function eg.oo() oo{a="asdas",b=2.2343,c=3,d={10,20,30},e={f=90}} end
+
 local function norm(mu, sd)
   return (mu or 0) + (sd or 1) * math.sqrt(-2 * math.log(R()))
                                * math.cos(2 * math.pi * R()) end
@@ -285,17 +299,21 @@ function eg.inc3(f)
            inc3(f, i, j, k) end end end end
   oo(f); print(f.a.c.b) end 
   
-function eg.rows()
-    for t in rows(the.file) do print(100, o(t)) end
-    print ""
-    for t in rows {
-        { 8, 318, 210, 4382, 13.500, 70, 1, 10 },
-        { 8, 429, 208, 4633, 11,     72, 1, 10 },
-        { 8, 400, 150, 4997, 14,     73, 1, 10 },
-        { 8, 350, 180, 3664, 11,     73, 1, 10 } } do print(200, o(t)) end end
+function eg.rows(    i)
+  i=0
+  for row  in rows(the.file) do 
+    i=i+1
+    if i %80 == 0 then print(o(row)) end end
+  print ""
+  for t in rows {
+      { 8, 318, 210, 4382, 13.500, 70, 1, 10 },
+      { 8, 429, 208, 4633, 11,     72, 1, 10 },
+      { 8, 400, 150, 4997, 14,     73, 1, 10 },
+      { 8, 350, 180, 3664, 11,     73, 1, 10 } } do print(200, o(t)) end end
 
 function eg.data()
-    for _, row in pairs(DATA(the.file).rows) do oo(row) end end
+    for i, row in pairs(DATA(the.file).rows) do 
+      if i % 80 ==0 then oo(row) end end end
   
 function eg.f(     d)
     d = DATA('../data/diabetes.csv')

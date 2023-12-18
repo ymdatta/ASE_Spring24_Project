@@ -42,7 +42,7 @@ saved: ## save and push  to main brach
 	git add *;git commit -am save;git push;git status
 
 FILES=$(wildcard *.lua)
-docs: $(addprefix ../docs/, $(FILES:.lua=.html))  ## update docs/*.html
+docs: $(addprefix ../docs/, $(FILES:.lua=.html))  $(addprefix ~/tmp/, $(FILES:.lua=.pdf))  ## update docs/*.html
 
 ../docs/%.html : %.lua ## make doc
 	pycco -d ../docs $^ 
@@ -54,9 +54,9 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  ## update docs/*.html
 
 ~/tmp/%.pdf: %.lua 
 	mkdir -p ~/tmp
-	echo "pdf-ing $^ ... "
+	echo "a2ps: $^ -> $@" 
 	a2ps                          \
-		-Br                          \
+		-qBr                          \
 		--chars-per-line 90          \
 		--file-align=fill              \
 		--line-numbers=1                \
