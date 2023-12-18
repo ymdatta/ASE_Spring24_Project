@@ -206,9 +206,7 @@ function coerce(s1,    fun)
 -- Iterate over the rows in either file `src` or list `src`. 
 function rows(src,    i)
   if type(src)=="string" then return csv(src) else
-    i=0
-    return function()
-      if i<#src then i=i+1; return src[i] end end end end
+    i=0; return function() if i<#src then i=i+1; return src[i] end end end end
       
 -- Iterator for files.
 function csv(src)
