@@ -114,7 +114,7 @@ function discretize(col1,x,     y)
   return string.char(109+((the.bins) * (x - col1.mu) / col1.sd / 6 + .5) // 1) end
 
 -- Descrretize row values and, as a side effect, update  a `f` frequency table
--- `f[klass][col.at][val]=count`. 
+-- `f[klass][{col.at, val}]=count`. 
 function discretizes(data1, row1,      x,y,d)
   for _, col1 in pairs(data1.cols.all) do
     x = row1.cells[col1.at]
@@ -267,6 +267,13 @@ local function norm(mu, sd)
   return (mu or 0) + (sd or 1) * math.sqrt(-2 * math.log(R()))
                                * math.cos(2 * math.pi * R()) end
 
+function eg.sym(sym1,mode,e)
+  sym1 = SYM()
+  for _, x in pairs { 1, 1, 1, 1, 2, 2, 3 } do col(sym1, x) end
+  mode, e = mid(sym1), div(sym1)
+  print(mode, e)
+  return 1.37 < e and e < 1.38 and mode == 1 end
+                                
 function eg.num(      t,num1,mu,sd)
   t,num1 = {},NUM()
   for _ = 1, 1000 do t[1 + #t] = col(num1, norm(10, 2)) end

@@ -44,6 +44,7 @@ saved: ## save and push  to main brach
 FILES=$(wildcard *.lua)
 docs: $(addprefix ../docs/, $(FILES:.lua=.html))  $(addprefix ~/tmp/, $(FILES:.lua=.pdf))  ## update docs/*.html
 
+
 ../docs/%.html : %.lua ## make doc
 	pycco -d ../docs $^ 
 	gawk -v head="$$header" -v banner="$$banner" \
