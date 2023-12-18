@@ -161,12 +161,6 @@ function has3(c,x,y,z,     a,b)
     if a ~= nil then
       return a[z] end end end
         
--- Iterator. Return items in key order.
-function items(t,    n,u,i)
-  u={}; for k,v in pairs(t) do u[1+#u] = {k=k,v=v} end 
-  table.sort(u, lt"k")
-  i=0; return function() if i<#u then i=i+1; return u[i].k, u[i].v end end end
-
 -- return a (shallow) copy, sorted.
 function sort(t, fun,     u)
   u={}; for _,x in pairs(t) do u[1+#u]=x; end;
@@ -182,6 +176,12 @@ function shuffle(t,    u,j)
   for i = #u,2,-1 do j=R(i); u[i],u[j] = u[j],u[i] end
   return u end
 
+-- Iterator. Return items in key order.
+function items(t,    n,u,i)
+  u={}; for k,v in pairs(t) do u[1+#u] = {k=k,v=v} end
+  table.sort(u, lt"k")
+  i=0; return function() if i<#u then i=i+1; return u[i].k, u[i].v end end end
+  
 -- ### Thing to String
 
 -- Generate a string from a nested structure.
