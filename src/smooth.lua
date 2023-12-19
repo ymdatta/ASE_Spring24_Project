@@ -19,8 +19,8 @@ OPTIONS:
 -- ----------------------------------------------------------------------------
 -- ## Preliminaries
 
--- `b4` is used at end to lint for rogue globals,
-local b4 = {}; for k, _ in pairs(_ENV) do b4[k] = k end
+-- `b4` is used at end to lint for rogue globals.
+local b4={}; for k, _ in pairs(_ENV) do b4[k]=k end
 -- Class constructors
 local COL,COLS,DATA,NUM,ROW,SYM
 -- Methods
