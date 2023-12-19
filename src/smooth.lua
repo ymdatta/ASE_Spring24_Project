@@ -7,7 +7,7 @@ USAGE:
   lua smooth.lua [OPTIONS] [eg ACTION]
 
 OPTIONS:
-  -b --bins    number of bins                    = 10
+  -b --bins   number of bins                    = 10
   -c --cohen  small effect size sd*cohen        = .35
   -e --eg     start up action                   = help
   -f --file   csv data file name                = ../data/diabetes.csv
@@ -28,7 +28,6 @@ local clone,col,cols,data,discretize,discretizes,div,mid
 -- Lua is a "batteries not included" langauge. So here are my batteries.
 local cli,coerce,csv,ent,fmt,gt,has3,inc3,items,lt
 local mode,o,oo,R,rnd,rows,shuffle,sort
-
 -- ----------------------------------------------------------------------------
 -- ## One Column
 
@@ -57,7 +56,6 @@ function mid(col1)
 -- `div` = diversity = tendency to avoid the center.
 function div(col1)
   return col1.isSym and ent(col1.has) or col1.sd end
-  
 -- ----------------------------------------------------------------------------
 -- ## Sets of columns
 
@@ -73,13 +71,11 @@ function COLS(t,     all,klass)
 function cols(cols1,row1)
   for _, col1 in pairs(cols1.all) do col(col1, row1.cells[col1.at]) end
   return row1 end
-
 -- ----------------------------------------------------------------------------
 -- ## Row
 
 -- Create.
 function ROW(t) return {cells=t, cooked={}, used=0} end
-
 -- ----------------------------------------------------------------------------
 -- ## DATA = rows + COLS
 
@@ -102,7 +98,6 @@ function clone(data1,  rows,    data2)
   data2 = DATA{ data1.cols.names }
   for row1 in rows(rows or {}) do data(data2, row1) end
   return data2 end
-
 -- ----------------------------------------------------------------------------
 -- ## Discretization
 
@@ -123,6 +118,9 @@ function discretizes(data1, row1,      x,y,d)
     row1.cooked[col1.at] = d
     if d ~= "?" then 
       inc3(data1.f, y, col1.at, d) end end end
+
+function like(f,klass,c,x,prior)
+  return (has3(f,klass,c,x) + the.m*prior)/(col1.n+the.m) end
 -- ----------------------------------------------------------------------------
 -- ## Library Routines
 
@@ -241,14 +239,13 @@ function cli(t)
         v = v=="true" and "false" or v=="false" and "true" or arg[argv + 1]
         t[k] = coerce(v) end end end
   return t end
-
 -- ----------------------------------------------------------------------------
 -- ## Examples
 
 local eg = {}
 
 -- Run all examples
-function eg.all() for k, _ in pairs(eg) do if k ~= "all" then eg.one(k) end end end
+function eg.all() for k, _ in items(eg) do if k ~= "all" then eg.one(k) end end end
 
 -- Run one example, resetting the random seed and control settings beforehand.
 function eg.one(k,      old)
@@ -366,12 +363,11 @@ function eg.contrast(d, yes, no, R, B, r, b, w)
   --       inc = l.like(col1,v,prior)
   --       out = out + math.log(inc) end end
   --   return out end
-
 -- ----------------------------------------------------------------------------
 -- ## Start up
 
 -- Convert help string to configuration settings.
-for k, v in help:gmatch("\n[%s]+[-][%S][%s]+[-][-]([%S]+)[^\n]+= ([%S]+)") do
+for k,v in help:gmatch("\n[%s]+[-][%S][%s]+[-][-]([%S]+)[^\n]+= ([%S]+)") do
   the[k] = coerce(v)  end
 
 -- Call an example (after updating the configuration file from the command line).
