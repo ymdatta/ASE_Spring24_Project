@@ -119,8 +119,16 @@ function discretizes(data1, row1,      x,y,d)
     if d ~= "?" then 
       inc3(data1.f, y, col1.at, d) end end end
 
-function like(f,klass,c,x,prior)
-  return (has3(f,klass,c,x) + the.m*prior)/(col1.n+the.m) end
+function like(f,x, klass,n,c,prior)
+  return (has3(f,klass,c,x) + the.m*prior)/(n+the.m) end
+
+function likes(f,row,klass,nh,n,nall)
+  prior = (n+the.k) / (nall + the.k * nh)
+  out   = math.log(prior)
+  for c,x in pairs(t) do
+    x = row.cells[c]
+    if x
+
 -- ----------------------------------------------------------------------------
 -- ## Library Routines
 
