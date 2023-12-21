@@ -24,10 +24,10 @@ local b4={}; for k, _ in pairs(_ENV) do b4[k]=k end
 -- Class constructors
 local COL,COLS,DATA,NUM,ROW,SYM
 -- Methods
-local clone,col,cols,data,discretize,discretizes,div,mid
+local clone,col,cols,data,div,like,likes,likesMost, mid
 -- Lua is a "batteries not included" langauge. So here are my batteries.
-local cli,coerce,csv,ent,fmt,gt,has3,inc3,items,lt
-local mode,o,oo,R,rnd,rows,shuffle,sort
+local cli,coerce,csv,ent,fmt,gt,items,lt
+local mode,o,oo,R,report,rnd,rows,shuffle,sort,stats
 -- ----------------------------------------------------------------------------
 -- ## One Column
 
@@ -60,12 +60,13 @@ function div(col1)
 -- ## Sets of columns
 
 -- Create  a list of column names into columns.
-function COLS(t,     all,klass)
-  all, klass = {},nil
+function COLS(t,     all,klass,col1,x)
+  x, all, klass = {}, {},nil
   for k,v in pairs(t) do
-    all[1+#all] = COL(v,k)
-    if v:find'!$' then klass = all[#all] end end
-  return {all=all, names=t, klass=klass, f={}} end
+    col1 = COL(v,k)
+    all[1+#all] = col1
+    if v:find'!$' then klass = col1 else x[1+#x] = col1 end end
+  return {x=x, all=all, names=t, klass=klass} end
 
 -- Update.
 function cols(cols1,row1)
@@ -75,15 +76,14 @@ function cols(cols1,row1)
 -- ## Row
 
 -- Create.
-function ROW(t) return {cells=t, cooked={}, used=0} end
+function ROW(t) return {cells=t} end
 -- ----------------------------------------------------------------------------
 -- ## DATA = rows + COLS
 
 -- Create.
 function DATA(src,    data1)
-  data1 = {rows = {}, cols = nil,  f={}}
-  for   row1 in rows(src) do data(data1, row1) end
-  for _,row1 in pairs(data1.rows) do discretizes(data1, row1) end
+  data1 = {rows = {}, cols = nil}
+  for _,row1 in rows(src) do data(data1, row1) end
   return data1 end
 
 -- Update.
@@ -94,47 +94,65 @@ function data(data1, xs, row1)
   else data1.cols = COLS(row1.cells) end end
 
 -- Duplicate the structure of a `DATA`.
-function clone(data1,  rows,    data2)
-  data2 = DATA{ data1.cols.names }
-  for row1 in rows(rows or {}) do data(data2, row1) end
+function clone(data1,  rows1,    data2)
+  data2 = DATA { data1.cols.names } 
+  for _,row1 in rows(rows1 or {}) do data(data2, row1) end
   return data2 end
+
+-- data2stats
+function stats(data1,   fun,ndecs,    t)
+  t = {[".N"]=#data1.rows}
+  for _,col1 in pairs(data1.cols.x) do
+    t[col1.txt] = rnd( (fun or mid)(col1), ndecs) end
+  return t end
+
+function DATAS(src,  fun,     new,all,want)
+  fun= fun or function(...) return true end
+  new = {datas={},all=nil}
+  for i,t  in rows(src) do 
+    if   i==1 
+    then new.all = DATA{t}
+    else want = t[new.all.cols.klass.at]
+         fun(new.datas, i, want, t)
+         new.datas[want] = new.datas[want] or clone(new.all)
+         data(new.datas[want],t)
+         data(new.all,t) end end
+  return new end
 -- ----------------------------------------------------------------------------
--- ## Discretization
-
--- Map a column value into a small number of values. Used `m` for the
--- middle value and  `l,j,etc` for values under middle and 
--- `n,o,p,etc` for values above middle.
-function discretize(col1,x,     y)
-  if col1.isSym or x == "?" then return x end
-  return string.char(109+((the.bins) * (x - col1.mu) / col1.sd / 6 + .5) // 1) end
-
--- Descrretize row values and, as a side effect, update  a `f` frequency table
--- `f[klass][{col.at, val}]=count`. 
-function discretizes(data1, row1,      x,y,d)
-  for _, col1 in pairs(data1.cols.all) do
-    x = row1.cells[col1.at]
-    y = row1.cells[data1.cols.klass.at]
-    d = discretize(col1, x)
-    row1.cooked[col1.at] = d
-    if d ~= "?" then 
-      inc3(data1.f, y, col1.at, d) end end end
-
-function like(col1,x,prior,     mid,sd)
-  if col1.isSym then return ((col1.has[x] or 0) + the.m*prior)/(col1.n +the,m) else
-    mid,sd = l.mid(col1),l.div(col1)
-    nom   = math.exp(-.5*((x - mid)/sd)^2)
-    denom = (sd*((2*math.pi)^0.5))
+-- ## Like
+function like(col1,x,prior,     mu,sd,nom,denom) 
+  if   col1.isSym 
+  then return ((col1.has[x] or 0) + the.m*prior)/(col1.n +the.m) 
+  else mu,sd = mid(col1), div(col1)
+       nom    = math.exp(-.5*((x - mu)/sd)^2)
+       denom  = (sd*((2*math.pi)^0.5))
        return nom/(denom  + 1E-30) end end
-
-function like(f,x, klass,n,c,prior)
-  return (has3(f,klass,c,x) + the.m*prior)/(n+the.m) end
-
-function likes(f,row,klass,nh,n,nall)
-  prior = (n+the.k) / (nall + the.k * nh)
+ 
+-- Likes of one row `t` in one `data`.           
+-- _P(H|E) = P(E|H) P(H)/P(E)_      
+-- or with our crrrent data structures:           
+-- _P(data|t) = P(t|data) P(data) / P(t)_      
+function likes(t,data1,n,nHypotheses,       prior,out,col1,inc)
+  prior = (#data1.rows + the.k) / (n + the.k * nHypotheses)
   out   = math.log(prior)
-  for c,x in pairs(t) do
-    x = row.cells[c]
-    if x
+  for at,v in pairs(t) do
+    col1 = data1.cols.x[at]
+    if col1 and col1.at ~= data1.cols.klass.at and v ~= "?" then
+      inc = like(col1,v,prior)
+      out = out + math.log(inc) end end
+  return out end
+
+-- Max like of one row `t` across many  `datas`
+-- (and here, `data` == `H`).     
+-- _argmax(i)  P(H<sub>i</sub>|E)_      
+function likesMost(t, datas,      n,nHypotheses,most,tmp,out)
+  n, nHypotheses, most = 0, 0, -1E3
+  for _,data1 in pairs(datas) do n=n+#data1.rows; nHypotheses=nHypotheses+1 end
+  for k,data1 in pairs(datas) do
+    tmp = likes(t,data1,n,nHypotheses)
+    if tmp > most then out,most = k,tmp end end
+  return out,most end
+
 
 -- ----------------------------------------------------------------------------
 -- ## Library Routines
@@ -170,18 +188,6 @@ function ent(t,  e,N)
   for _,n in pairs(t) do e = e - n/N * math.log(n/N,2) end
   return e end
 
--- Update nested frequency table.
-function inc3(c,x,y,z,    a,b)
-  b = c[x] if b==nil then b={} c[x] = b end
-  a = b[y] if a==nil then a={} b[y] = a end
-  a[z] = (a[z] or 0) + 1 end
-  
--- Lookup nested frequency table.
-function has3(c,x,y,z,     a,b)
-  b = c[x]
-  if b ~= nil then
-    a = b[y]
-    if a ~= nil then return a[z] end end end
         
 -- return a (shallow) copy, sorted.
 function sort(t, fun,     u)
@@ -218,6 +224,14 @@ function o(x,  n,      t)
 -- Print a string representing a nested structure. Return that structure.
 function oo(x) print(o(x)); return x end
 
+function report(ts, nWidth,    say)
+  function say(x,    s) return io.write(fmt("%"..(nWidth or 8) .."s", x)) end
+  for _,t0 in pairs(ts) do
+    say(""); for k,_ in items(t0) do io.write(", "); say(k) end; print"";
+    for k,t in pairs(ts) do 
+      say(k); for _,x in items(t) do io.write(", "); say(x) end; print"" end
+    return nil end end
+
 -- ### String to Thing
 
 -- String to int or float or nil or bool.
@@ -230,16 +244,19 @@ function coerce(s1,    fun)
 -- Iterate over the rows
 -- from either file `src` or list `src`. 
 function rows(src,    i)
-  if type(src)=="string" then return csv(src) else
-    i=0; return function() if i<#src then i=i+1; return src[i] end end end end
+  if   type(src)=="string"
+  then return csv(src)
+  else i=0; return function() if i<#src then i=i+1; return i,src[i] end end end end
       
 -- Iterator for files.
-function csv(src)
-  src = src=="-" and io.stdin or io.input(src)
+function csv(src,    i)
+  i,src = 0,src=="-" and io.stdin or io.input(src)
+  i=0
   return function(      s,t)
     s = io.read()
-    if s then
-      t={}; for s1 in s:gmatch("([^,]+)") do t[1+#t] = coerce(s1) end; return ROW(t)
+    if s then 
+      i=i+1
+      t={}; for s1 in s:gmatch("([^,]+)") do t[1+#t] = coerce(s1) end; return i,t
     else
       io.close(src) end end end
 
@@ -263,7 +280,8 @@ local eg = {}
 function eg.all() for k, _ in items(eg) do if k ~= "all" then eg.one(k) end end end
 
 -- Run one example, resetting the random seed and control settings beforehand.
-function eg.one(k,      old)
+function eg.one(k, old,fun)
+    if not eg[k] then return print("E: unknown:",k) end
     old = {}; for k0,v0 in pairs(the) do old[k0] = v0 end
     math.randomseed(the.seed)
     print(fmt(" %s %s",eg[k]()==false and "❌ FAIL" or "✅ PASS", k))
@@ -293,36 +311,11 @@ function eg.num(      t,num1,mu,sd)
   print(mu, sd)
   return 9.9 < mu and mu < 10 and 1.95 < sd and sd < 2 end
 
-function eg.discretize(           max,num1,sym1,mu,sd,t,u,n,y,v,i)
-  t, u, v, num1, sym1 = {}, {},{}, NUM(), SYM()
-  max=1000
-  for _ = 1, max do t[1+#t]= col(num1, norm(10,2)) end
-  table.sort(t)
-  for _,x in pairs(t) do
-    y = discretize(num1, x)
-    col(sym1,y)
-    u[y] = y
-    v[y] =x  end
+function eg.rows(    i) 
   i=0
-  for _, y in pairs(sort(u)) do
-    n = sym1.has[y]
+  for i,row1  in rows(the.file) do
     i=i+1
-    print(fmt("%2s %6s%%   %4.1f  %s",y, n/10, v[y], ('*'):rep(n//10))) end end
-
-function eg.inc3(f)
-  f={}
-  for r = 1, 4 do
-    for _,i in pairs{"a","b","c","d"}   do
-      for _,j in pairs{"a","b","c","d"}   do
-        for _,k in pairs{"a","b","c","d"}   do
-           inc3(f, i, j, k) end end end end
-  oo(f); print(f.a.c.b) end 
-  
-function eg.rows(    i)
-  i=0
-  for row  in rows(the.file) do 
-    i=i+1
-    if i %80 == 0 then print(o(row)) end end
+    if i %80 == 0 then print(o(row1)) end end
   print ""
   for t in rows {
       { 8, 318, 210, 4382, 13.500, 70, 1, 10 },
@@ -331,26 +324,26 @@ function eg.rows(    i)
       { 8, 350, 180, 3664, 11,     73, 1, 10 } } do print(200, o(t)) end end
 
 function eg.data()
-    for i, row in pairs(DATA(the.file).rows) do 
+    for i, row in pairs(DATA(the.file).rows) do
       if i % 80 ==0 then oo(row) end end end
-  
-function eg.f(     d)
-    d = DATA('../data/diabetes.csv')
-    oo(d.f) end
 
-function eg.contrast(d, yes, no, R, B, r, b, w)
-  the.bins = 5
-  d = DATA('../data/diabetes.csv')
-  yes = "pos"; B = d.cols.klass.has[yes] + 1E-30
-  no  = "neg"; R = d.cols.klass.has[no]  + 1E-30
-  for col, valcount in pairs(d.f[yes]) do
-    for val, b in pairs(valcount) do
-      r = has3(d.f, no, col, val) or 0
-      b, r = b / B, r / R
-      if b > r then
-        print(fmt("%5.3f  %.3f  %.3f %3s %3s",b^2/r, b,r,
-                  d.cols.names[col],val)) end end end end
-                  
+function eg.datas(      acc,fun,datas1,wait)
+  for k=0,3,1 do
+    for m=0,3,1 do 
+      the.k=k
+      the.m=m
+      acc=0
+      wait=5
+      function fun(datas1,i,want,t)
+        if i> wait and want==likesMost(t,datas1) then acc=acc+1 end end
+      datas1 = DATAS(the.file, fun)
+      print(m,k,fmt("%.2f",acc/(#(datas1.all.rows) -wait))) end end end
+  -- for _,fun in pairs{mid,div} do
+  --    print""
+  --    report1={}
+  --    for k,data1 in pairs(datas) do report1[k] = stats(data1,fun) end
+  --    report(report1) end 
+ 
 -- function eg.smooth(    d)
 --   d=DATA("../auto93.csv") 
 --   for _,row in pairs(d) do row.used=0 end
