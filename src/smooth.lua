@@ -119,6 +119,13 @@ function discretizes(data1, row1,      x,y,d)
     if d ~= "?" then 
       inc3(data1.f, y, col1.at, d) end end end
 
+function like(col1,x,prior,     mid,sd)
+  if col1.isSym then return ((col1.has[x] or 0) + the.m*prior)/(col1.n +the,m) else
+    mid,sd = l.mid(col1),l.div(col1)
+    nom   = math.exp(-.5*((x - mid)/sd)^2)
+    denom = (sd*((2*math.pi)^0.5))
+       return nom/(denom  + 1E-30) end end
+
 function like(f,x, klass,n,c,prior)
   return (has3(f,klass,c,x) + the.m*prior)/(n+the.m) end
 

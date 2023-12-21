@@ -3,12 +3,12 @@ local l   = {}
 local lib = require"lib"
 local the,help = {},[[
 
-golo: for ez SSL MOEA and XAI, lo is less, less is more. So go lo.
+mylo: for ez SSL MOEA and XAI, lo is less, less is more. So go lo.
 (c) 2023, Tim Menzies, BSD-2
 
 USAGE:
-  cat x.csv | lua golo.lua [OPTIONS]
-  lua golo.lua -f x.csv [OPTIONS]
+  cat x.csv | lua myo.lua [OPTIONS]
+  lua mlyo.lua -f x.csv [OPTIONS]
  
 OPTIONS:
   -f --file   csv data file name                = -
