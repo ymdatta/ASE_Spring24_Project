@@ -12,8 +12,8 @@ OPTIONS:
   -e --eg     start up action                   = help
   -f --file   csv data file name                = ../data/diabetes.csv
   -h --help   show help                         = false
-  -k --k      handle low class frequencies      = 1
-  -m --m      handle low attribute frequencies  = 2
+  -k --k      low class frequency kludge        = 1  
+  -m --m      low attribute frequency kludge    = 2
   -s --seed   random number seed                = 1234567891
   -w --wait   wait before classifications       = 20]]
 -- ----------------------------------------------------------------------------
@@ -22,9 +22,9 @@ OPTIONS:
 -- `b4` is used at end to lint for rogue globals.
 local b4={}; for k, _ in pairs(_ENV) do b4[k]=k end
 -- Class constructors
-local COL,COLS,DATA,NUM,ROW,SYM
+local COL,COLS,DATA,DATAS,NUM,ROW,SMOOTH,SYM
 -- Methods
-local clone,col,cols,data,div,like,likes,likesMost, mid
+local clone,col,cols,d2h,data,div,like,likes,likesMost, mid,norm,same
 -- Lua is a "batteries not included" langauge. So here are my batteries.
 local cli,coerce,csv,ent,fmt,gt,items,lt
 local mode,o,oo,R,report,rnd,rows,shuffle,sort,stats
@@ -32,7 +32,8 @@ local mode,o,oo,R,report,rnd,rows,shuffle,sort,stats
 -- ## One Column
 
 -- Create   columns for `NUM`eric  or `SYM`bolic values.
-function NUM(s,n) return {txt=s or '',at=n or 0,n=0, f={},mu=0, m2=0, sd=0}   end
+function NUM(s,n) return {heaven = s:find"-$" and 0 or 1,
+                          txt=s or '',at=n or 0,n=0, f={},mu=0, m2=0, sd=0}   end
 function SYM(s,n) return {txt=s or '', at=n or 0, n=0, f={},has={}, isSym=true} end
 function COL(s,n) return (s:find'^[A-Z]' and NUM or SYM)(s,n) end
 
@@ -56,16 +57,26 @@ function mid(col1)
 -- `div` = diversity = tendency to avoid the center.
 function div(col1)
   return col1.isSym and ent(col1.has) or col1.sd end
+
+-- norm 
+function norm(num1,x) return (x-num1.lo) / (num1.hi - num.lo) end
+
+-- same
+function same(num1,num2) 
+  return the.cohen > ((num1.n-1)*div(num1)^2 + (num2.n-1)*div(num2)^2 /
+                      (num1.n + num2.n - 2))^.5   end
 -- ----------------------------------------------------------------------------
 -- ## Sets of columns
 
 -- Create  a list of column names into columns.
-function COLS(t,     all,klass,col1,x)
-  x, all, klass = {}, {},nil
+function COLS(t,     all,klass,col1,x,y)
+  x, y, all, klass = {}, {}, {},nil
   for k,v in pairs(t) do
     col1 = COL(v,k)
     all[1+#all] = col1
-    if v:find'!$' then klass = col1 else x[1+#x] = col1 end end
+    if not v:find"X$" then
+      if v:find'!$' then klass = col1 end
+      table.insert(v:find"[+-!]" and y or x,col1) end end
   return {x=x, all=all, names=t, klass=klass} end
 
 -- Update.
@@ -77,6 +88,14 @@ function cols(cols1,row1)
 
 -- Create.
 function ROW(t) return {cells=t} end
+
+function d2h(row1,data1)
+  n,d=0,0
+  for _,col1 in pairs(data1.cols.y) do
+    n=n+1
+    d = d + (col1.heaven - norm(col1, row1.cells[col1.at]))^2 end
+  return d^.5 / n^.5 end
+
 -- ----------------------------------------------------------------------------
 -- ## DATA = rows + COLS
 
@@ -100,9 +119,9 @@ function clone(data1,  rows1,    data2)
   return data2 end
 
 -- data2stats
-function stats(data1,   fun,ndecs,    t)
+function stats(data1,   fun,ndecs,cols,    t)
   t = {[".N"]=#data1.rows}
-  for _,col1 in pairs(data1.cols.x) do
+  for _,col1 in pairs(data1.cols[cols or "x"]) do
     t[col1.txt] = rnd( (fun or mid)(col1), ndecs) end
   return t end
 
@@ -118,6 +137,7 @@ function DATAS(src,  fun,     new,all,want)
          data(new.datas[want],t)
          data(new.all,t) end end
   return new end
+
 -- ----------------------------------------------------------------------------
 -- ## Like
 function like(col1,x,prior,     mu,sd,nom,denom) 
@@ -153,7 +173,31 @@ function likesMost(t, datas,      n,nHypotheses,most,tmp,out)
     if tmp > most then out,most = k,tmp end end
   return out,most end
 
+-- ----------------------------------------------------------------------------
+-- ## Smooth
 
+function SMOOTH(src,     data1,rows1,out,seen,b,r,now,most,at)
+  data1 = DATA(src)
+  rows1 = shuffle(data1.rows)
+  out={}
+  seen={}
+  for i=1,4 do seen[1+#seen]= table.remove(rows1,i) end
+  for j=1,10 do
+    seen = sort(seen, function(a,b) return d2h(a,data1) < d2h(b,data1) end)
+    best,rest = clone(data1), clone(data1)
+    for i,row1 in pairs(seen) do
+      data( i <= (#seen)^.5 and best or rest, row1) end
+    out[1+#out] = stats(best,mid,2,"y")
+    if j > 1 and same(out[#out], out[#out-1]) then
+      break end
+    for i,row1 in pairs(rows1) do
+      b,r = likes(best,row1,#t,2), like(rest,row1,#t,2)
+      now = (b+r)/math.abs(b - r + 1E-30)
+      if now > most then most,at = now,i end end
+    table.insert(seen, table.remove(rows1,at)) end
+  return out end
+
+  
 -- ----------------------------------------------------------------------------
 -- ## Library Routines
 
@@ -338,11 +382,15 @@ function eg.datas(      acc,fun,datas1,wait)
         if i> wait and want==likesMost(t,datas1) then acc=acc+1 end end
       datas1 = DATAS(the.file, fun)
       print(m,k,fmt("%.2f",acc/(#(datas1.all.rows) -wait))) end end end
+
+function eg.smooth()
+  report(SMOOTH(the.file)) end
+
   -- for _,fun in pairs{mid,div} do
   --    print""
-  --    report1={}
-  --    for k,data1 in pairs(datas) do report1[k] = stats(data1,fun) end
-  --    report(report1) end 
+  --    out={}
+  --    for k,data1 in pairs(datas) do out[k] = stats(data1,fun) end
+  --    report(out) end 
  
 -- function eg.smooth(    d)
 --   d=DATA("../auto93.csv") 
