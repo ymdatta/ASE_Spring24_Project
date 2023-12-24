@@ -57,8 +57,7 @@ function SYM:add(x)
 function SYM:mid() return self.mode end
 
 function SYM:div(    e) 
-  e=0
-  for _,v in pairs(self.has) do e=e - v/self.n*math.log(v/self.n,2) end
+  e=0; for _,v in pairs(self.has) do e=e - v/self.n*math.log(v/self.n,2) end
   return e end
 
 function SYM:like(x, prior)
@@ -171,7 +170,7 @@ function DATA:bestRest(rows,want,      best,rest)
 -- -----------------------------------------------------------------------------
 -- ## Objects
 function l.objects(t)
-  for name,kl in pairs(t) do l.obj(name,kl) end end
+  for name,kl in pairs(t) do l.obj(name,kl) end; return t end
 
 function l.obj(s,  t)
   t = t or {}
@@ -255,17 +254,21 @@ function l.o(t,  n,      u)
 -- -----------------------------------------------------------------------------
 local eg={}
 
-local function run1(k,   ooops,b4) 
+local function run(k,   oops,b4, setUp,tearDown) 
+  function setUp()
+    b4 = l.copy(the)
+    math.randomseed(the.seed) end
+  function tearDown()
+    for k,v in pairs(b4) do the[k]=v end end
   if not eg[k] then return print("E> unknown:",k) end
-  b4 = l.copy(the)
-  math.randomseed(the.seed)
-  oops = eg[the.todo]()==false
+  setUp()
+  oops = eg[the.todo]() == false
   print(oops and "❌ FAIL" or "✅ PASS",k)
-  for k,v in pairs(b4) do the[k]=v end
+  tearDown()
   return oops end
 
 function eg.all()
-  for _,k in pairs(l.keys(eg)) do print(k); if k ~= "all" then run1(k) end end end
+  for _,k in pairs(l.keys(eg)) do print(k); if k ~= "all" then run(k) end end end
 
 function eg.egs() 
   for _,k in pairs(l.keys(eg)) do print(l.fmt("lua gate.lua -t %s",k)) end end
@@ -320,8 +323,8 @@ function eg.bayes(     acc,datas,learn,d)
       print(l.fmt("%5.2f\t%s\t%s",acc/#d.rows,k,m)) end end end
 
 -- -----------------------------------------------------------------------------
-l.objects{COLS=COLS,DATA=DATA,NUM=NUM,SYM=SYM}
-
-the = l.cli(l.settings(help))
-run1(the.todo)
-l.rogues()
+local gate=l.objects{COLS=COLS,DATA=DATA,NUM=NUM,SYM=SYM}
+the =  l.settings(help)
+if not pcall(debug.getlocal,4,1) then run(l.cli(the).todo) end
+l.rogues() 
+return gate
