@@ -33,7 +33,7 @@ function NUM:add(x,     d)
     self.hi = math.max(x, self.hi) end end
 
 function NUM:mid() return self.mu end
-function NUM:div() return (self.m2/(self.n - 1))^.5 end
+function NUM:div() return self.n < 2 and 0 or (self.m2/(self.n - 1))^.5 end
 
 function NUM:like(x,_)
   local mu, sd =  self:mid(), self:div()
@@ -106,7 +106,7 @@ function DATA:like(t,n,nHypotheses,       prior,out,col1,inc)
       out = out + math.log(inc) end end 
   return out end
 
-local function likes(t,datas,n,nHypotheses,     most,tmp,out)
+local function likes(t,datas,       n,nHypotheses,most,tmp,out)
   n,nHypotheses = 0,0
   for k,data in pairs(datas) do
     n = n + #data.rows
@@ -199,7 +199,7 @@ function l.rnd(n, ndecs)
 -- -----------------------------------------------------------------------------
 -- ## Lists
 function l.keys(t,    u)
-  u={}; for k,v in pairs(t) do u[1+#u]=k end; table.sort(u); return u end
+  u={}; for k,_ in pairs(t) do u[1+#u]=k end; table.sort(u); return u end
 
 function l.copy(t,    u)
   if type(t) ~= "table" then return t end
@@ -257,17 +257,20 @@ function l.o(t,  n,      u)
 local eg={}
 
 local function run(k,   oops,b4) 
-  if not eg[k] then return print("E> unknown:",k) end
   b4 = l.copy(the) -- set up
   math.randomseed(the.seed) -- set up
-  oops = eg[the.todo]()==false
+  oops = eg[k]()==false
   io.stderr:write(l.fmt("# %s %s\n",oops and "❌ FAIL" or "✅ PASS",k))
   for k,v in pairs(b4) do the[k]=v end -- tear down
   return oops end
 
-function eg.all()
-  print(1)
-  for _,k in pairs(l.keys(eg)) do if k ~= "all" then print(k); run(k) end end end
+function eg.all(     bad)
+  bad=0
+  for _,k in pairs(l.keys(eg)) do 
+    if k ~= "all" then 
+      if run(k) then bad=bad+1 end end end
+  io.stderr:write(l.fmt("# %s %s fail(s)\n",bad>0 and "❌ FAIL" or "✅ PASS",bad))
+  os.exit(bad) end
 
 function eg.egs() 
   for _,k in pairs(l.keys(eg)) do print(l.fmt("lua gate.lua -t %s",k)) end end
@@ -310,14 +313,14 @@ function eg.data(     d)
 local function learn(data,t,  my,kl)
   my.n = my.n + 1
   kl   = t[data.cols.klass.at]
-  if kl == likes(t, my.datas, #data.rows, 2) then my.acc=my.acc+1 end
+  if kl == likes(t, my.datas) then my.acc=my.acc+1 end
   my.datas[kl] = my.datas[kl] or DATA{data.cols.names}
   my.datas[kl]:add(t) end
 
 function eg.bayes(     wme)
   print(l.fmt("#%4s\t%s\t%s","acc","k","m"))
   for k=0,3 do
-    for m=0,3 do    
+    for m=0,3 do 
       the.k = k
       the.m = m
       wme   = {acc=0,datas={},n=0}
