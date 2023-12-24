@@ -311,7 +311,8 @@ function l.bootstrap(y0,z0,bootstraps,conf,      _,__)
   local function delta(y,z)
     local ymu,ysd,yn = l.t2stats(y)
     local zmu,zsd,zn = l.t2stats(z)
-    return math.abs(ymu - zmu) / ((1E-30 + ysd^2/yn + zsd^2/zn)^.5) end
+    return math.abs(ymu - zmu) / ((1E-30 + ysd^2/yn + zsd^2/zn)^.5)
+  end ------------------------------------------------------------ 
   local x, y, z, yhat, zhat = l.copy(y0), l.copy(y0), l.copy(z0), {}, {}
   for _,z1 in pairs(z0) do l.push(x,z1) end
   local n, tobs = 0, delta(y,z)
