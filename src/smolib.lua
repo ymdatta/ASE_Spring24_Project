@@ -15,7 +15,7 @@ function l.obj(s,    t)
 -- -----------------------------------------------------------------------------
 -- ## Linting
 function l.rogues()
-  for k,v in pairs(_ENV) do if not b4[k] then print("E:",k,type(k)) end end 
+  for k,v in pairs(_ENV) do if not b4[k] then print("E:",k,type(k)) end end end
 
 -- -----------------------------------------------------------------------------
 -- ## Nums
@@ -45,6 +45,7 @@ function l.coerce(s1,    fun)
 function l.settings(s,    t,pat)
   t,pat = {}, "\n[%s]+[-][%S][%s]+[-][-]([%S]+)[^\n]+= ([%S]+)"
   for k, s1 in s:gmatch(pat) do t[k] = l.coerce(s1) end
+  t._help = s
   return t end
 
 function l.words(s,   t)
@@ -63,6 +64,7 @@ function l.cli(t)
       if s=="-"..(k:sub(1,1)) or s=="--"..k then
         v = v=="true" and "false" or v=="false" and "true" or arg[argv + 1]
         t[k] = l.coerce(v) end end end
+  if t.help then os.exit(print("\n"..t._help)) end
   return t end
 
 -- -----------------------------------------------------------------------------
@@ -76,7 +78,7 @@ function l.o(t,  n,      u)
   if type(t) ~= "table"  then return tostring(t) end
   u={}
   for _,k in pairs(l.keys(t)) do
-    u[1+#t]= #x>0 and l.o(t[k],n) or l.fmt("%s: %s", l.o(k,n), l.o(t[k],n)) end
+    u[1+#t]= #t>0 and l.o(t[k],n) or l.fmt("%s: %s", l.o(k,n), l.o(t[k],n)) end
   return "{" .. table.concat(u, ", ") .. "}" end
 
 -- -----------------------------------------------------------------------------

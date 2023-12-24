@@ -1,11 +1,11 @@
 -- vim: set et sts=2 sw=2 ts=2 
-local l = require"lolib"
-local help = {},[[
-smooth: simple Bayesian sequential model optimization
+local l = require"smolib"
+local help = [[
+smo: simple Bayesian sequential model optimization
 (c) 2023, Tim Menzies, BSD-2
 
 USAGE:
-  lua smooth.lua [OPTIONS] [eg ACTION]
+  lua smoeg.lua [OPTIONS] 
 
 OPTIONS:
   -a --acquire acqusition function              = acquite
@@ -16,26 +16,26 @@ OPTIONS:
   -s --seed   random number seed                = 1234567891]]
   
 local the = l.settings(help)
-local o,obj,oo = l.o, l.obj, l.oo
+local o, obj, oo = l.o, l.obj, l.oo
 local l, COLS,DATA,NUM,SYM = {}, obj"COLS",obj"DATA",obj"NUM",obj"SYM"
 
 -- -----------------------------------------------------------------------------
-function NUM:new(s, n) 
+function NUM:new(s, n)
   return {txt=s or " ", at=n or 0, n=0,
-          mu=0,m2=0,n=0, hi=-1E30, lo=1E30,
+          mu=0, m2=0, hi=-1E30, lo=1E30,
           heaven = (self.at):find"-$" and 0 or 1} end
 
-function NUM:add(x)
+function NUM:add(x,     d)
   if x ~="?" then
     self.n  = self.n+1
     d       = x - self.mu
     self.mu = self.mu + d/n
-    self.m2 = self.m2 + d*(x - self.mu) 
+    self.m2 = self.m2 + d*(x - self.mu)
     self.lo = math.min(x, self.lo)
-    self.hi = math.max(x, self.hi) end 
+    self.hi = math.max(x, self.hi) end end
 
 function NUM:mid() return self.mu end
-function NUM:div() return (m2/(n - 1))^.5 end 
+function NUM:div() return (self.m2/(n - 1))^.5 end
 
 function NUM:like(x,_)
   local mu, sd =  self:mid(), self:div()
@@ -45,8 +45,8 @@ function NUM:norm(x)
   return x=="?" and x or (x - self.lo) / (self.hi - self.lo + 1E-30) end
 
 -- -----------------------------------------------------------------------------
-function SYM:new(s, ) 
-  return {txt=s or " ", at=at or 0, n=0,
+function SYM:new(s,n)
+  return {txt=s or " ", at=n or 0, n=0,
           has={}, mode=nil, most=0} end
 
 function SYM:add(x)
@@ -54,8 +54,7 @@ function SYM:add(x)
     self.n = self.n + 1
     self.has[x] = 1 + (self.has[x] or 0)
     if self.has[x] > self.most then 
-      self.most,self.mode = self.has[x], x end end end 
-
+      self.most,self.mode = self.has[x], x end end end
 function SYM:mid() return self.mode end
 
 function SYM:div(    e) 
@@ -68,14 +67,17 @@ function SYM:like(x, prior)
 
 -- -----------------------------------------------------------------------------
 function COLS:new(t)
-  local x,y,all,klass = {},{},{},nil
+  local x,y,all = {},{},{}
+  local klass,col
   for at,txt in pairs(t) do
     col = (txt:find"^[A-Z]" and NUM or SYM)(txt,at)
     all[1+#all] = col
     if not txt:find"X$" then
       if txt:find"!$" then klass=col end
-      (txt:find"[!+-]$" and y or x)[at] = col end end end
-  return {x=x, y=y, all=all, klass=klass, names=t} end 
+      (txt:find"[!+-]$" and y or x)[at] = col
+    end
+  end
+  return {x=x, y=y, all=all, klass=klass, names=t} end
 
 function COLS:add(t)
   for _,cols in pairs{self.x, self.y} do
@@ -87,7 +89,7 @@ function COLS:add(t)
 function DATA:new(src)
   self.rows, self.cols = {},nil
   if   type(src) == "string"
-  then for _,x in l.csv(fileName)  do self:add(x) end
+  then for _,x in l.csv(src)       do self:add(x) end
   else for _,x in pairs(src or {}) do self:add(x) end end end
 
 function DATA:add(t)
@@ -120,15 +122,15 @@ function DATA:bestRest(rows,want,      best,rest)
 
 -- -----------------------------------------------------------------------------
 local acquire={}
-function acquire.stress(b,r)  return (b+r)/maths.abs(b-r) end
+function acquire.stress(b,r)  return (b+r)/math.abs(b-r) end
 function acquire.xplore(b,r)  return 1/(b+r) end
 function acquire.xploit(b,r)  return b+r end
 function acquire.plan(b,r)    return b end
 function acquire.watch(b,r)   return r end
 
-function DATA:smooth()
+function DATA:smooth(       dark,lite,best,rest,todo)
   dark,lite = {},{}
-  tables.sort(self.rows, function(_,__) return math.random() <= .5 end)
+  table.sort(self.rows, function(_,__) return math.random() <= .5 end)
   for i,row in pairs(self.rows) do
     if i<=4 then lite[1+#lite]=row else dark[1+#dark]=row end end
   local best,rest
