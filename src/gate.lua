@@ -57,7 +57,8 @@ function SYM:add(x)
 function SYM:mid() return self.mode end
 
 function SYM:div(    e) 
-  e=0; for _,v in pairs(self.has) do e=e - v/self.n*math.log(v/self.n,2) end
+  e=0
+  for _,v in pairs(self.has) do e=e - v/self.n*math.log(v/self.n,2) end
   return e end
 
 function SYM:like(x, prior)
@@ -84,15 +85,15 @@ function COLS:add(t)
 
 -- -----------------------------------------------------------------------------
 local DATA={}
-function DATA:new(src,  b4fun)
+function DATA:new(src,  fun)
   self.rows, self.cols = {},nil
   if   type(src) == "string"
-  then for _,x in l.csv(src)       do self:add(x, b4fun) end
-  else for _,x in pairs(src or {}) do self:add(x, b4fun) end end end
+  then for _,x in l.csv(src)       do self:add(x, fun) end
+  else for _,x in pairs(src or {}) do self:add(x, fun) end end end
 
-function DATA:add(t,  b4fun)
+function DATA:add(t,  fun)
   if   self.cols
-  then if b4fun then b4fun(self,t) end
+  then if fun then fun(self,t) end
        self.rows[1 + #self.rows] = self.cols:add(t)
   else self.cols = COLS(t) end end
  
@@ -170,7 +171,8 @@ function DATA:bestRest(rows,want,      best,rest)
 -- -----------------------------------------------------------------------------
 -- ## Objects
 function l.objects(t)
-  for name,kl in pairs(t) do l.obj(name,kl) end; return t end
+  for name,kl in pairs(t) do l.obj(name,kl) end 
+  return t end
 
 function l.obj(s,  t)
   t = t or {}
@@ -254,21 +256,18 @@ function l.o(t,  n,      u)
 -- -----------------------------------------------------------------------------
 local eg={}
 
-local function run(k,   oops,b4, setUp,tearDown) 
-  function setUp()
-    b4 = l.copy(the)
-    math.randomseed(the.seed) end
-  function tearDown()
-    for k,v in pairs(b4) do the[k]=v end end
+local function run(k,   oops,b4) 
   if not eg[k] then return print("E> unknown:",k) end
-  setUp()
-  oops = eg[the.todo]() == false
-  print(oops and "❌ FAIL" or "✅ PASS",k)
-  tearDown()
+  b4 = l.copy(the) -- set up
+  math.randomseed(the.seed) -- set up
+  oops = eg[the.todo]()==false
+  io.stderr:write(l.fmt("# %s %s\n",oops and "❌ FAIL" or "✅ PASS",k))
+  for k,v in pairs(b4) do the[k]=v end -- tear down
   return oops end
 
 function eg.all()
-  for _,k in pairs(l.keys(eg)) do print(k); if k ~= "all" then run(k) end end end
+  print(1)
+  for _,k in pairs(l.keys(eg)) do if k ~= "all" then print(k); run(k) end end end
 
 function eg.egs() 
   for _,k in pairs(l.keys(eg)) do print(l.fmt("lua gate.lua -t %s",k)) end end
@@ -308,23 +307,26 @@ function eg.data(     d)
     if i % 100 ==0 then l.oo(t) end end 
   l.oo(d.cols.x[1]) end
 
-function eg.bayes(     acc,datas,learn,d)
+local function learn(data,t,  my,kl)
+  my.n = my.n + 1
+  kl   = t[data.cols.klass.at]
+  if kl == likes(t, my.datas, #data.rows, 2) then my.acc=my.acc+1 end
+  my.datas[kl] = my.datas[kl] or DATA{data.cols.names}
+  my.datas[kl]:add(t) end
+
+function eg.bayes(     wme)
+  print(l.fmt("#%4s\t%s\t%s","acc","k","m"))
   for k=0,3 do
-    the.k = k
-    for m=0,3 do
+    for m=0,3 do    
+      the.k = k
       the.m = m
-      acc,datas = 0,{}
-      -- function learn(data,t)
-      --   kl = t[data.cols.klass.at]
-      --   if kl == likes(t, datas, #data.rows, 2) then acc=acc+1 end
-      --   datas[kl] = datas[kl] or DATA{data.cols.names}
-      --   datas[kl]:add(row) end
-      d = DATA(the.file, learn)
-      print(l.fmt("%5.2f\t%s\t%s",acc/#d.rows,k,m)) end end end
+      wme   = {acc=0,datas={},n=0}
+      DATA(the.file, function(data,t) learn(data,t,wme) end) 
+      print(l.fmt("%5.2f\t%s\t%s",wme.acc/wme.n, k,m)) end end end
 
 -- -----------------------------------------------------------------------------
 local gate=l.objects{COLS=COLS,DATA=DATA,NUM=NUM,SYM=SYM}
 the =  l.settings(help)
 if not pcall(debug.getlocal,4,1) then run(l.cli(the).todo) end
-l.rogues() 
+l.rogues()
 return gate
