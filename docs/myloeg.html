@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>myloeg.lua</title>
+  <link rel="stylesheet" href="pycco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div class='section'>
+    <div class='docs'><h1>myloeg.lua</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span></span><span class="kd">local</span> <span class="n">lib</span> <span class="o">=</span> <span class="nb">require</span><span class="s2">&quot;Lib&quot;</span>
+<span class="kd">local</span> <span class="n">l</span>   <span class="o">=</span> <span class="nb">require</span><span class="s2">&quot;mylo&quot;</span>
+<span class="kd">local</span> <span class="n">eg</span>  <span class="o">=</span> <span class="p">{}</span>
+
+<span class="kr">function</span> <span class="nc">eg</span><span class="p">.</span><span class="nf">sym</span><span class="p">(</span>     <span class="n">sym1</span><span class="p">,</span><span class="n">md</span><span class="p">,</span><span class="n">div</span><span class="p">)</span>
+  <span class="n">sym1</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">SYM</span><span class="p">()</span>
+  <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">x</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">}</span> <span class="kr">do</span> <span class="n">l</span><span class="p">.</span><span class="n">col</span><span class="p">(</span><span class="n">sym1</span><span class="p">,</span><span class="n">x</span><span class="p">)</span>  <span class="kr">end</span>
+  <span class="n">md</span><span class="p">,</span><span class="n">div</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">mid</span><span class="p">(</span><span class="n">sym1</span><span class="p">),</span> <span class="n">l</span><span class="p">.</span><span class="n">div</span><span class="p">(</span><span class="n">sym1</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">md</span><span class="p">,</span><span class="n">div</span><span class="p">)</span>
+  <span class="kr">return</span> <span class="mf">1.37</span> <span class="o">&lt;</span> <span class="n">div</span> <span class="ow">and</span> <span class="n">div</span> <span class="o">&lt;</span><span class="mf">1.38</span> <span class="ow">and</span>  <span class="n">md</span><span class="o">==</span><span class="mi">1</span>  <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">eg</span><span class="p">.</span><span class="nf">num</span><span class="p">(</span>     <span class="n">num1</span><span class="p">,</span><span class="n">md</span><span class="p">,</span><span class="n">div</span><span class="p">)</span>
+  <span class="n">num1</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">NUM</span><span class="p">()</span> 
+  <span class="kr">for</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="mi">100</span> <span class="kr">do</span> <span class="n">l</span><span class="p">.</span><span class="n">col</span><span class="p">(</span><span class="n">num1</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="kr">end</span>
+  <span class="n">md</span><span class="p">,</span><span class="n">div</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">mid</span><span class="p">(</span><span class="n">num1</span><span class="p">),</span> <span class="n">l</span><span class="p">.</span><span class="n">div</span><span class="p">(</span><span class="n">num1</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">md</span><span class="p">,</span><span class="n">div</span><span class="p">)</span>
+  <span class="kr">return</span> <span class="mi">50</span> <span class="o">==</span> <span class="n">md</span> <span class="ow">and</span> <span class="n">md</span> <span class="o">&lt;</span> <span class="mi">51</span> <span class="ow">and</span> <span class="mi">31</span> <span class="o">&lt;</span> <span class="n">div</span> <span class="ow">and</span> <span class="n">div</span> <span class="o">&lt;</span> <span class="mi">32</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">eg</span><span class="p">.</span><span class="nf">col</span><span class="p">(</span>      <span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)</span>
+  <span class="n">a</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">COL</span><span class="p">(</span><span class="s2">&quot;Age&quot;</span><span class="p">)</span>
+  <span class="n">b</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">COL</span><span class="p">(</span><span class="s2">&quot;job&quot;</span><span class="p">)</span>
+  <span class="kr">return</span> <span class="ow">not</span> <span class="n">a</span><span class="p">.</span><span class="n">isSym</span> <span class="ow">and</span> <span class="n">b</span><span class="p">.</span><span class="n">isSym</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">eg</span><span class="p">.</span><span class="nf">cols</span><span class="p">(</span>      <span class="n">cols1</span><span class="p">,</span><span class="n">a</span><span class="p">)</span>
+  <span class="n">cols1</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">COLS</span><span class="p">{</span><span class="s2">&quot;Age&quot;</span><span class="p">,</span><span class="s2">&quot;job&quot;</span><span class="p">,</span><span class="s2">&quot;Salary+&quot;</span><span class="p">}</span>
+  <span class="n">a</span><span class="o">=</span><span class="n">cols1</span><span class="p">.</span><span class="n">all</span>
+  <span class="kr">return</span> <span class="n">cols1</span><span class="p">.</span><span class="n">x</span> <span class="ow">and</span> <span class="n">cols1</span><span class="p">.</span><span class="n">y</span> <span class="ow">and</span> <span class="n">cols1</span><span class="p">.</span><span class="n">klass</span> <span class="ow">and</span>
+         <span class="ow">not</span> <span class="n">cols1</span><span class="p">.</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">isSym</span> <span class="ow">and</span>
+         <span class="o">#</span><span class="n">a</span><span class="o">==</span><span class="mi">3</span> <span class="ow">and</span> <span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">].</span><span class="n">isSym</span> <span class="ow">and</span>
+         <span class="n">a</span><span class="p">[</span><span class="mi">3</span><span class="p">].</span><span class="n">heaven</span><span class="o">==</span><span class="mi">1</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">eg</span><span class="p">.</span><span class="nf">csv</span><span class="p">(</span>       <span class="n">n</span><span class="p">)</span>
+  <span class="n">n</span><span class="o">=</span><span class="mi">0</span>
+  <span class="kr">for</span> <span class="n">t</span> <span class="kr">in</span> <span class="n">lib</span><span class="p">.</span><span class="n">csv</span><span class="p">(</span><span class="s2">&quot;../data/auto93.csv&quot;</span><span class="p">)</span> <span class="kr">do</span> <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="o">#</span><span class="n">t</span> <span class="kr">end</span>
+  <span class="kr">return</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">3192</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">eg</span><span class="p">.</span><span class="nf">stats</span><span class="p">(</span>   <span class="n">s</span><span class="p">)</span>
+  <span class="n">s</span> <span class="o">=</span> <span class="n">l</span><span class="p">.</span><span class="n">stats</span><span class="p">(</span><span class="n">l</span><span class="p">.</span><span class="n">DATA</span><span class="p">(</span><span class="s2">&quot;../data/diabetes.csv&quot;</span><span class="p">))</span>
+  <span class="kr">return</span> <span class="n">s</span><span class="p">.</span><span class="n">Plas</span> <span class="o">==</span> <span class="mi">117</span> <span class="kr">end</span>
+
+<span class="n">lib</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">l</span><span class="p">.</span><span class="n">the</span><span class="p">,</span><span class="n">eg</span><span class="p">)</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>
