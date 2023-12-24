@@ -78,7 +78,8 @@ function l.o(t,  n,      u)
   if type(t) ~= "table"  then return tostring(t) end
   u={}
   for _,k in pairs(l.keys(t)) do
-    u[1+#t]= #t>0 and l.o(t[k],n) or l.fmt("%s: %s", l.o(k,n), l.o(t[k],n)) end
+    if tostring(k):sub(1,1) ~= "_" then
+      u[1+#u]= #t>0 and l.o(t[k],n) or l.fmt("%s: %s", l.o(k,n), l.o(t[k],n)) end end
   return "{" .. table.concat(u, ", ") .. "}" end
 
 -- -----------------------------------------------------------------------------
