@@ -75,9 +75,7 @@ function COLS:new(t)
     all[1+#all] = col
     if not txt:find"X$" then
       if txt:find"!$" then klass=col end
-      (txt:find"[!+-]$" and y or x)[at] = col
-    end
-  end
+      (txt:find"[!+-]$" and y or x)[at] = col end end
   return {x=x, y=y, all=all, klass=klass, names=t} end
 
 function COLS:add(t)
