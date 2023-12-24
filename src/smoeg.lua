@@ -39,7 +39,7 @@ function eg.data(     d)
     if i % 100 ==0 then oo(t) end end 
   oo(d.cols.x[1]) end
 
-function eg.bayes(     k,d,datas,acc)
+function eg.bayes(     kl,d,datas,acc)
   for k=0,3 do
     the.k = k
     for m=0,3 do
