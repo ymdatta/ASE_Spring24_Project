@@ -57,13 +57,13 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  $(addprefix ~/tmp/, $(FILES:.l
 	mkdir -p ~/tmp
 	echo "a2ps: $^ -> $@" 
 	a2ps                          \
-		-qBR                          \
+		-qBr                          \
 		--chars-per-line 90          \
 		--file-align=fill              \
 		--line-numbers=1                \
 		--borders=no                     \
 		--pro=color                       \
-		--columns  2                       \
+		--columns  3                       \
 		-M letter                           \
 		--pretty-print="../etc/lua.ssh"   \
 		-o ~/tmp/$^.ps $^ ;               \

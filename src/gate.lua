@@ -133,15 +133,15 @@ function acquire.watch(b,r)   return r end
 
 function DATA:gate(       dark,lite,best,rest,todo)
   dark,lite = {},{}
-  self.rows = l.shuffle(self.rows)
-  for i,row in pairs(self.rows) do
+  for i,row in pairs(l.shuffle(self.rows)) do
     if i<=4 then lite[1+#lite]=row else dark[1+#dark]=row end end
   print(#lite, #dark)
   local best,rest
-  l.oo(self:stats())
+  print("all ",l.o(self:stats()))
   for i=1,6 do
     best,rest = self:bestRest(lite, (#lite)^.5)
-    l.oo(best:stats())  
+    print("best", l.o(best:stats()))
+    print("rest", l.o(rest:stats()))
     todo = self:acquisitionFunction(best,rest,lite,dark)  end
   --   lite[1+#lite] = table.remove(dark,todo) end 
   return best end 
@@ -179,7 +179,7 @@ function l.objects(t)
 function l.obj(s,  t)
   t = t or {}
   t.a = s
-  t.__index = t
+  t.__index = t  --
   return setmetatable(t, {
     __call=function(_,...)
              local self = setmetatable({},t)
@@ -326,7 +326,7 @@ local function learn(data,t,  my,kl)
 function eg.bayes()
   print(l.fmt("#%4s\t%s\t%s","acc","k","m"))
   for k=0,3 do
-    for m=0,3 do 
+    for m=0,3 do
       the.k = k
       the.m = m
       local wme = {acc=0,datas={},n=0}
