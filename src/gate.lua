@@ -33,10 +33,11 @@ function NUM:add(x,     d)
     self.hi = math.max(x, self.hi) end end
 
 function NUM:mid() return self.mu end
-function NUM:div() return self.n < 3 and 0 or (self.m2/(self.n - 1))^.5 end
+function NUM:div() return self.n < 2 and 0 or (self.m2/(self.n - 1))^.5 end
 
 function NUM:like(x,_,      nom,denom)
   local mu, sd =  self:mid(), (self:div() + 1E-30)
+  if math.abs(x-mu) > 3 then return 1E-30 end
   nom   = 2.718^(-.5*(x - mu)^2/(sd^2))
   denom = (sd*2.5 + 1E-30)
   return  nom/denom end
@@ -117,7 +118,6 @@ local function likes(t,datas,       n,nHypotheses,most,tmp,out)
     nHypotheses = 1 + nHypotheses end
   for k,data in pairs(datas) do
     tmp = data:like(t,n,nHypotheses)
-    print(tmp)
     if most==nil or tmp > most then most,out = tmp,k end end
   return out,most end
 
@@ -129,33 +129,36 @@ function DATA:stats(cols,fun,ndivs,    u)
 
 -- -----------------------------------------------------------------------------
 local acquire={}
-function acquire.stress(b,r)  return (b+r)/(1E-30 + math.abs(b-r)) end
 function acquire.xplore(b,r)  return 1/(b+r + 1E-30) end
 function acquire.xploit(b,r)  return b+r end
 function acquire.plan(b,r)    return b end
 function acquire.watch(b,r)   return r end
+function acquire.stress(b,r)  
+  return b>r and (b+r)/(1E-30 + math.abs(b-r)) or -300 end
 
-function DATA:gate(       dark,lite,best,rest,todo)
+function DATA:gate(       dark,lite,best,rest,todo,data0)
+  print(0,"all ",l.o(self:stats()))
   dark,lite = {},{}
   for i,row in pairs(l.shuffle(self.rows)) do
     if i<=4 then lite[1+#lite]=row else dark[1+#dark]=row end end
-  local best,rest
-  print("all ",l.o(self:stats()))
   for i=1,10 do
-    best,rest = self:bestRest(lite, (#lite)^.5)  
-    print("best", l.o(best:stats())) 
+    best,rest = self:bestRest(lite, (#lite)^.75)  
+    print(i+4,"best", l.o(best:stats())) 
     todo = self:acquisitionFunction(best,rest,lite,dark)  
     lite[1+#lite] = table.remove(dark,todo) end 
+  table.sort(self.rows, function(a,b) return self:d2h(a) < self:d2h(b) end)
+  data0=DATA{self.cols.names}
+  for i,row in pairs(self.rows) do if i<15 then data0:add(row) else break end end
+  print(#self.rows,"base", l.o(data0:stats()))
   return best end 
 
 function DATA:acquisitionFunction(best,rest,lite,dark) 
   local max,b,r,tmp,what 
-  max = 0
+  max = -10^6
   for i,row in pairs(dark) do
     b = best:like(row, #lite, 2)
     r = rest:like(row, #lite, 2)
     tmp = acquire[the.acquire](b,r)
-    print(b,r,tmp)
     if tmp > max then what,max = i,tmp end end
   return what end
 
