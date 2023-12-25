@@ -1,4 +1,4 @@
--- vim: set et sts=2 sw=2 ts=2 
+-- .
 local b4={}; for k, _ in pairs(_ENV) do b4[k]=k end
 local l,the,help = {},{},[[
 gate: guess, assess, try, expand
@@ -16,13 +16,39 @@ OPTIONS:
   -s --seed   random number seed                = 1234567891
   -t --todo   start up action                   = help]]
 
--- -----------------------------------------------------------------------------
-local NUM={}
+
+-- ## Search control
+
+-- Assumes access to `b,r`; i.e. the probability of belonging to best or rest.
+local acquire={}
+
+-- Go where you have not gone before
+function acquire.xplore(b,r) return 1/(b+r + 1E-30) end
+
+-- Only go where you have got beore
+function acquire.xploit(b,r) return b+r end
+
+-- Go to where its best
+function acquire.plan(b,r) return b end
+
+-- Go to where its worst.
+function acquire.watch(b,r) return r end
+
+-- Go to where we are most confused.
+function acquire.stress(b,r)  
+  return b>r and (b+r)/(1E-30 + math.abs(b-r)) or -300 end
+
+-- ## Classes
+-- ### Numerics
+
+-- Create
+local NUM={}  
 function NUM:new(s, n)
   return {txt=s or " ", at=n or 0, n=0,
           mu=0, m2=0, hi=-1E30, lo=1E30,
           heaven = (s or ""):find"-$" and 0 or 1} end
 
+-- Update
 function NUM:add(x,     d)
   if x ~="?" then
     self.n  = self.n+1
@@ -32,9 +58,15 @@ function NUM:add(x,     d)
     self.lo = math.min(x, self.lo)
     self.hi = math.max(x, self.hi) end end
 
+-- Query
 function NUM:mid() return self.mu end
+
 function NUM:div() return self.n < 2 and 0 or (self.m2/(self.n - 1))^.5 end
 
+function NUM:norm(x)
+  return x=="?" and x or (x - self.lo) / (self.hi - self.lo + 1E-30) end
+
+-- Likelihood
 function NUM:like(x,_,      nom,denom)
   local mu, sd =  self:mid(), (self:div() + 1E-30)
   if math.abs(x-mu) > 3 then return 1E-30 end
@@ -42,21 +74,23 @@ function NUM:like(x,_,      nom,denom)
   denom = (sd*2.5 + 1E-30)
   return  nom/denom end
 
-function NUM:norm(x)
-  return x=="?" and x or (x - self.lo) / (self.hi - self.lo + 1E-30) end
+-- ### Symbols
 
--- -----------------------------------------------------------------------------
+-- Create
 local SYM={}
 function SYM:new(s,n)
   return {txt=s or " ", at=n or 0, n=0,
           has={}, mode=nil, most=0} end
 
+-- Update
 function SYM:add(x)
   if x ~= "?" then 
     self.n = self.n + 1
     self.has[x] = 1 + (self.has[x] or 0)
     if self.has[x] > self.most then 
       self.most,self.mode = self.has[x], x end end end
+
+-- Query
 function SYM:mid() return self.mode end
 
 function SYM:div(    e) 
@@ -64,10 +98,14 @@ function SYM:div(    e)
   for _,v in pairs(self.has) do e=e - v/self.n*math.log(v/self.n,2) end
   return e end
 
+-- Likelihood
 function SYM:like(x, prior)
   return ((self.has[x] or 0) + the.m*prior)/(self.n +the.m) end
 
--- -----------------------------------------------------------------------------
+-- ### Columns
+-- A contrainer storing multiple `NUM`s and `SYM`s.
+
+-- Create
 local COLS={}
 function COLS:new(t)
   local x,y,all = {},{},{}
@@ -80,13 +118,17 @@ function COLS:new(t)
       (txt:find"[!+-]$" and y or x)[at] = col end end
   return {x=x, y=y, all=all, klass=klass, names=t} end
 
+-- Update
 function COLS:add(t)
   for _,cols in pairs{self.x, self.y} do
     for _,col in pairs(cols) do
       col:add(t[col.at]) end end 
   return t end 
 
--- -----------------------------------------------------------------------------
+-- ### Data
+-- Store `rows`, summarized in `COL`umns.
+
+-- Create from either a file name or a list of rows
 local DATA={}
 function DATA:new(src,  fun)
   self.rows, self.cols = {},nil
@@ -94,12 +136,39 @@ function DATA:new(src,  fun)
   then for _,x in l.csv(src)       do self:add(x, fun) end
   else for _,x in pairs(src or {}) do self:add(x, fun) end end end
 
+-- Update. First time through, assume the row defines the columns.
+-- Otherwise, update the columns then store the rows. If `fun` is
+-- defined, call it before updating anything.
 function DATA:add(t,  fun)
   if   self.cols
   then if fun then fun(self,t) end
        self.rows[1 + #self.rows] = self.cols:add(t)
   else self.cols = COLS(t) end end
- 
+
+-- Query
+function DATA:stats(cols,fun,ndivs,    u)
+  u = {[".N"] = #self.rows}
+  for _,col in pairs(self.cols[cols or "y"]) do
+    u[col.txt] = l.rnd(getmetatable(col)[fun or "mid"](col), ndivs) end
+  return u end
+
+function DATA:d2h(t,     d,n)
+  d,n=0,0
+  for _,col in pairs(self.cols.y) do
+    n = n + 1
+    d = d + math.abs(col.heaven - col:norm(t[col.at]))^2 end
+  return d^.5/n^.5 end
+
+-- Sort on distance to heaven, split off the first `want` items to return
+-- a `best` and `rest` data.
+function DATA:bestRest(rows,want,      best,rest) 
+  table.sort(rows, function(a,b) return self:d2h(a) < self:d2h(b) end)
+  best, rest = {self.cols.names}, {self.cols.names}
+  for i,row in pairs(rows) do
+    if i <= want then best[1+#best]=row else rest[1+#rest]=row end end
+  return DATA(best), DATA(rest) end
+
+-- Likelihood. Using logs since these numbers are going to get very small.
 function DATA:like(t,n,nHypotheses,       prior,out,col,inc)
   prior = (#self.rows + the.k) / (n + the.k * nHypotheses)
   out   = math.log(prior)
@@ -107,10 +176,10 @@ function DATA:like(t,n,nHypotheses,       prior,out,col,inc)
     if v ~= "?" and self.cols.x[at]  then
       col=self.cols.x[at]
       inc = col:like(v,prior)
-      --l.oo{prior=prior,inc=inc,v=v,a=col.a}
       out = out + math.log(inc) end end 
   return out end
 
+-- Find best likelihood  over multiple datas.
 local function likes(t,datas,       n,nHypotheses,most,tmp,out)
   n,nHypotheses = 0,0
   for k,data in pairs(datas) do
@@ -121,37 +190,24 @@ local function likes(t,datas,       n,nHypotheses,most,tmp,out)
     if most==nil or tmp > most then most,out = tmp,k end end
   return out,most end
 
-function DATA:stats(cols,fun,ndivs,    u)
-  u = {[".N"] = #self.rows}
-  for _,col in pairs(self.cols[cols or "y"]) do
-    u[col.txt] = l.rnd(getmetatable(col)[fun or "mid"](col), ndivs) end
-  return u end
-
--- -----------------------------------------------------------------------------
-local acquire={}
-function acquire.xplore(b,r)  return 1/(b+r + 1E-30) end
-function acquire.xploit(b,r)  return b+r end
-function acquire.plan(b,r)    return b end
-function acquire.watch(b,r)   return r end
-function acquire.stress(b,r)  
-  return b>r and (b+r)/(1E-30 + math.abs(b-r)) or -300 end
-
+-- Gate.
 function DATA:gate(       dark,lite,best,rest,todo,data0)
   print(0,"all ",l.o(self:stats()))
   dark,lite = {},{}
   for i,row in pairs(l.shuffle(self.rows)) do
     if i<=4 then lite[1+#lite]=row else dark[1+#dark]=row end end
   for i=1,10 do
-    best,rest = self:bestRest(lite, (#lite)^.75)  
+    best,rest = self:bestRest(lite, (#lite)^.75)  -- assess
     print(i+4,"best", l.o(best:stats())) 
-    todo = self:acquisitionFunction(best,rest,lite,dark)  
-    lite[1+#lite] = table.remove(dark,todo) end 
+    todo = self:acquisitionFunction(best,rest,lite,dark)  -- guess
+    lite[1+#lite] = table.remove(dark,todo) end  -- try, extend
   table.sort(self.rows, function(a,b) return self:d2h(a) < self:d2h(b) end)
   data0=DATA{self.cols.names}
   for i,row in pairs(self.rows) do if i<15 then data0:add(row) else break end end
   print(#self.rows,"base", l.o(data0:stats()))
   return best end 
 
+-- Find the row scoring based on our acquite function.
 function DATA:acquisitionFunction(best,rest,lite,dark) 
   local max,b,r,tmp,what 
   max = -10^6
@@ -162,22 +218,9 @@ function DATA:acquisitionFunction(best,rest,lite,dark)
     if tmp > max then what,max = i,tmp end end
   return what end
 
-function DATA:d2h(t,     d,n)
-  d,n=0,0
-  for _,col in pairs(self.cols.y) do
-    n = n + 1
-    d = d + math.abs(col.heaven - col:norm(t[col.at]))^2 end
-  return d^.5/n^.5 end
+-- ## Library Functions    
+-- ### Objects
 
-function DATA:bestRest(rows,want,      best,rest) 
-  table.sort(rows, function(a,b) return self:d2h(a) < self:d2h(b) end)
-  best, rest = {self.cols.names}, {self.cols.names}
-  for i,row in pairs(rows) do
-    if i <= want then best[1+#best]=row else rest[1+#rest]=row end end
-  return DATA(best), DATA(rest) end
-
--- -----------------------------------------------------------------------------
--- ## Objects
 function l.objects(t)
   for name,kl in pairs(t) do l.obj(name,kl) end 
   return t end
@@ -191,55 +234,62 @@ function l.obj(s,  t)
              local self = setmetatable({},t)
              return setmetatable(t.new(self,...) or self,t) end}) end
 
--- -----------------------------------------------------------------------------
--- ## Linting
+-- ### Linting
 function l.rogues()
   for k,v in pairs(_ENV) do if not b4[k] then print("E:",k,type(k)) end end end
 
--- -----------------------------------------------------------------------------
--- ## Nums
+-- ### Numbers
 function l.rnd(n, ndecs)
   if type(n) ~= "number" then return n end
   if math.floor(n) == n  then return n end
   local mult = 10^(ndecs or 3)
   return math.floor(n * mult + 0.5) / mult end
 
--- -----------------------------------------------------------------------------
--- ## Lists
+-- ### Lists
+
+-- Sorted keys
 function l.keys(t,    u)
   u={}; for k,_ in pairs(t) do u[1+#u]=k end; table.sort(u); return u end
 
+-- Deep copy
 function l.copy(t,    u)
   if type(t) ~= "table" then return t end
   u={}; for k,v in pairs(t) do u[l.copy(k)] = l.copy(v) end
   return u end 
 
+-- Return a new table, with old items sorted randomly.
 function l.shuffle(t,    u,j)
   u={}; for _,x in pairs(t) do u[1+#u]=x; end;
   for i = #u,2,-1 do j=math.random(i); u[i],u[j] = u[j],u[i] end
   return u end
--- -----------------------------------------------------------------------------
--- ## String to Things
+
+-- ### String to Things
+
+-- Coerce string to intm float, nil, true, false, or (it all else fails), a strong.
 function l.coerce(s1,    fun) 
   function fun(s2)
     if s2=="nil" then return nil else return s2=="true" or (s2~="false" and s2) end end
   return math.tointeger(s1) or tonumber(s1) or fun(s1:match'^%s*(.*%S)') end
 
+-- Parse help string to infer the settings.
 function l.settings(s,    t,pat)
   t,pat = {}, "\n[%s]+[-][%S][%s]+[-][-]([%S]+)[^\n]+= ([%S]+)"
   for k, s1 in s:gmatch(pat) do t[k] = l.coerce(s1) end
   t._help = s
   return t end
 
-function l.words(s,   t)
+-- Return a list of comma seperated values (coerced to things)
+function l.cells(s,   t)
   t={}; for s1 in s:gmatch("([^,]+)") do t[1+#t]=l.coerce(s1) end; return t end
 
+-- Return rows of a csv file.
 function l.csv(src,    i)
   i,src = 0,src=="-" and io.stdin or io.input(src)
   return function(      s)
     s=io.read()
-    if s then i=i+1; return i,l.words(s) else io.close(src) end end end
+    if s then i=i+1; return i,l.cells(s) else io.close(src) end end end
 
+-- Update a table of settings using command-line settings.
 function l.cli(t)
   for k, v in pairs(t) do
     v = tostring(v)
@@ -250,12 +300,15 @@ function l.cli(t)
   if t.help then os.exit(print("\n"..t._help)) end
   return t end
 
--- -----------------------------------------------------------------------------
--- Things to Strings
+-- ### Things to Strings
+
+-- Emulate sprintf
 l.fmt = string.format
 
+-- Print a string of a nested structure.
 function l.oo(x) print(l.o(x)); return x end
 
+-- Rerun a string for a nested structure.
 function l.o(t,  n,      u)
   if type(t) == "number" then return tostring(l.rnd(t, n)) end
   if type(t) ~= "table"  then return tostring(t) end
@@ -265,7 +318,8 @@ function l.o(t,  n,      u)
       u[1+#u]= #t>0 and l.o(t[k],n) or l.fmt("%s: %s", l.o(k,n), l.o(t[k],n)) end end
   return "{" .. table.concat(u, ", ") .. "}" end
 
--- -----------------------------------------------------------------------------
+-- ## Examples                                                           
+-- ### Examples support code
 local eg={}
 
 local function run(k,   oops,b4) 
@@ -276,6 +330,7 @@ local function run(k,   oops,b4)
   for k,v in pairs(b4) do the[k]=v end -- tear down
   return oops end
 
+-- Run all examples
 function eg.all(     bad)
   bad=0
   for _,k in pairs(l.keys(eg)) do 
@@ -284,9 +339,11 @@ function eg.all(     bad)
   io.stderr:write(l.fmt("# %s %s fail(s)\n",bad>0 and "❌ FAIL" or "✅ PASS",bad))
   os.exit(bad) end
 
+-- List all example names
 function eg.egs() 
   for _,k in pairs(l.keys(eg)) do print(l.fmt("lua gate.lua -t %s",k)) end end
 
+-- ### The actual examples
 function eg.oo()   l.oo{a=1,b=2,c=3,d={e=3,f=4}} end
 
 function eg.the() l.oo(the) end 
@@ -357,7 +414,9 @@ function eg.sorted(   d)
   
 function eg.gate()
   DATA("../data/auto93.csv"):gate() end
--- -----------------------------------------------------------------------------
+
+-- ## Start-up
+
 local gate=l.objects{COLS=COLS,DATA=DATA,NUM=NUM,SYM=SYM}
 the =  l.settings(help)
 if not pcall(debug.getlocal,4,1) then run(l.cli(the).todo) end

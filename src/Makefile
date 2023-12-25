@@ -3,12 +3,10 @@ MAKEFLAGS += --warn-undefined-variables
 .SILENT: 
 
 define css
-p,h2,h3   { text-align: right;}
-hr        { background-color: #DDD !important;
-            color: #DDD !important
-						border: 0;
-            border-top: solid  1px #DDD !important;
-            height: 1px !important; }
+p         { text-align: right;}
+h2        { border-top: solid  1px #DDD !important;}
+h3        { padding: 3px; color: #3E3B39;
+						background-image: linear-gradient(to right, #CCC , white 75%); }
 .docs pre {font-size: 8pt; }
 endef
 export css
