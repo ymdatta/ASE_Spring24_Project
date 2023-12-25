@@ -8,7 +8,7 @@ USAGE:
   lua gate.lua [OPTIONS] 
 
 OPTIONS:
-  -a --acquire acqusition function              = acquite
+  -a --acquire acqusition function              = stress
   -f --file   csv data file name                = ../data/diabetes.csv
   -h --help   show help                         = false
   -k --k      low class frequency kludge        = 1
@@ -33,11 +33,13 @@ function NUM:add(x,     d)
     self.hi = math.max(x, self.hi) end end
 
 function NUM:mid() return self.mu end
-function NUM:div() return self.n < 2 and 0 or (self.m2/(self.n - 1))^.5 end
+function NUM:div() return self.n < 3 and 0 or (self.m2/(self.n - 1))^.5 end
 
-function NUM:like(x,_)
-  local mu, sd =  self:mid(), self:div()
-  return 2.718^(-.5*(x - mu)^2/(sd^2)) / (sd*2.5 + 1E-30) end
+function NUM:like(x,_,      nom,denom)
+  local mu, sd =  self:mid(), (self:div() + 1E-30)
+  nom   = 2.718^(-.5*(x - mu)^2/(sd^2))
+  denom = (sd*2.5 + 1E-30)
+  return  nom/denom end
 
 function NUM:norm(x)
   return x=="?" and x or (x - self.lo) / (self.hi - self.lo + 1E-30) end
@@ -97,12 +99,14 @@ function DATA:add(t,  fun)
        self.rows[1 + #self.rows] = self.cols:add(t)
   else self.cols = COLS(t) end end
  
-function DATA:like(t,n,nHypotheses,       prior,out,col1,inc)
+function DATA:like(t,n,nHypotheses,       prior,out,col,inc)
   prior = (#self.rows + the.k) / (n + the.k * nHypotheses)
   out   = math.log(prior)
   for at,v in pairs(t) do
-    if v ~= "?" and self.cols.x[at] and at ~= self.cols.klass.at then
-      inc = self.cols.x[at]:like(v,prior)
+    if v ~= "?" and self.cols.x[at]  then
+      col=self.cols.x[at]
+      inc = col:like(v,prior)
+      --l.oo{prior=prior,inc=inc,v=v,a=col.a}
       out = out + math.log(inc) end end 
   return out end
 
@@ -111,10 +115,10 @@ local function likes(t,datas,       n,nHypotheses,most,tmp,out)
   for k,data in pairs(datas) do
     n = n + #data.rows
     nHypotheses = 1 + nHypotheses end
-  most = -1E30
   for k,data in pairs(datas) do
     tmp = data:like(t,n,nHypotheses)
-    if tmp > most then most,out = tmp,k end end
+    print(tmp)
+    if most==nil or tmp > most then most,out = tmp,k end end
   return out,most end
 
 function DATA:stats(cols,fun,ndivs,    u)
@@ -125,8 +129,8 @@ function DATA:stats(cols,fun,ndivs,    u)
 
 -- -----------------------------------------------------------------------------
 local acquire={}
-function acquire.stress(b,r)  return (b+r)/math.abs(b-r) end
-function acquire.xplore(b,r)  return 1/(b+r) end
+function acquire.stress(b,r)  return (b+r)/(1E-30 + math.abs(b-r)) end
+function acquire.xplore(b,r)  return 1/(b+r + 1E-30) end
 function acquire.xploit(b,r)  return b+r end
 function acquire.plan(b,r)    return b end
 function acquire.watch(b,r)   return r end
@@ -135,24 +139,23 @@ function DATA:gate(       dark,lite,best,rest,todo)
   dark,lite = {},{}
   for i,row in pairs(l.shuffle(self.rows)) do
     if i<=4 then lite[1+#lite]=row else dark[1+#dark]=row end end
-  print(#lite, #dark)
   local best,rest
   print("all ",l.o(self:stats()))
-  for i=1,6 do
-    best,rest = self:bestRest(lite, (#lite)^.5)
-    print("best", l.o(best:stats()))
-    print("rest", l.o(rest:stats()))
-    todo = self:acquisitionFunction(best,rest,lite,dark)  end
-  --   lite[1+#lite] = table.remove(dark,todo) end 
+  for i=1,10 do
+    best,rest = self:bestRest(lite, (#lite)^.5)  
+    print("best", l.o(best:stats())) 
+    todo = self:acquisitionFunction(best,rest,lite,dark)  
+    lite[1+#lite] = table.remove(dark,todo) end 
   return best end 
 
-function DATA:acquisitionFunction(best,rest,lite,dark)     
+function DATA:acquisitionFunction(best,rest,lite,dark) 
   local max,b,r,tmp,what 
   max = 0
   for i,row in pairs(dark) do
     b = best:like(row, #lite, 2)
     r = rest:like(row, #lite, 2)
     tmp = acquire[the.acquire](b,r)
+    print(b,r,tmp)
     if tmp > max then what,max = i,tmp end end
   return what end
 
@@ -318,12 +321,18 @@ function eg.data(     d)
 
 local function learn(data,t,  my,kl)
   my.n = my.n + 1
-  kl   = t[data.cols.klass.at]
-  if kl == likes(t, my.datas) then my.acc=my.acc+1 end
-  my.datas[kl] = my.datas[kl] or DATA{data.cols.names}
-  my.datas[kl]:add(t) end
+  if my.n > 5 then
+    kl   = t[data.cols.klass.at]
+    if kl == likes(t, my.datas) then my.acc=my.acc+1 end
+    my.datas[kl] = my.datas[kl] or DATA{data.cols.names}
+    my.datas[kl]:add(t) end end
 
 function eg.bayes()
+  local wme = {acc=0,datas={},n=0}
+  DATA("../data/diabetes.csv", function(data,t) learn(data,t,wme) end) 
+   print(wme.acc/wme.n)end  
+
+function eg.km()
   print(l.fmt("#%4s\t%s\t%s","acc","k","m"))
   for k=0,3 do
     for m=0,3 do
@@ -336,8 +345,15 @@ function eg.bayes()
 function eg.stats()
   l.oo(DATA(the.file):stats()) end
 
+function eg.sorted(   d)
+  d=DATA("../data/auto93.csv")
+  table.sort(d.rows, function(a,b) return d:d2h(a) < d:d2h(b) end)
+  print("",l.o(d.cols.names))
+  for i, row in pairs(d.rows) do
+    if i < 5  or i> #d.rows - 5 then print(i, l.o(row)) end end end 
+  
 function eg.gate()
-  DATA(the.file):gate() end
+  DATA("../data/auto93.csv"):gate() end
 -- -----------------------------------------------------------------------------
 local gate=l.objects{COLS=COLS,DATA=DATA,NUM=NUM,SYM=SYM}
 the =  l.settings(help)
