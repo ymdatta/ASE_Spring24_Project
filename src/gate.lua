@@ -120,7 +120,7 @@ local function likes(t,datas,       n,nHypotheses,most,tmp,out)
 function DATA:stats(cols,fun,ndivs,    u)
   u = {[".N"] = #self.rows}
   for _,col in pairs(self.cols[cols or "y"]) do
-    u[col.txt] = l.rnd(getmetatable(col)[fun or "mid"](), ndivs) end
+    u[col.txt] = l.rnd(getmetatable(col)[fun or "mid"](col), ndivs) end
   return u end
 
 -- -----------------------------------------------------------------------------
@@ -131,25 +131,27 @@ function acquire.xploit(b,r)  return b+r end
 function acquire.plan(b,r)    return b end
 function acquire.watch(b,r)   return r end
 
-function DATA:smooth(       dark,lite,best,rest,todo)
+function DATA:gate(       dark,lite,best,rest,todo)
   dark,lite = {},{}
-  table.sort(self.rows, function(_,__) return math.random() <= .5 end)
+  self.rows = l.shuffle(self.rows)
   for i,row in pairs(self.rows) do
     if i<=4 then lite[1+#lite]=row else dark[1+#dark]=row end end
+  print(#lite, #dark)
   local best,rest
-  for i=1,10 do
+  l.oo(self:stats())
+  for i=1,6 do
     best,rest = self:bestRest(lite, (#lite)^.5)
-    l.oo(i,lite:stats())
-    todo = self:acqisitionFunction(best,rest,lite,dark) 
-    lite[1+#lite] = table.remove(dark,todo) end 
+    l.oo(best:stats())  
+    todo = self:acquisitionFunction(best,rest,lite,dark)  end
+  --   lite[1+#lite] = table.remove(dark,todo) end 
   return best end 
 
 function DATA:acquisitionFunction(best,rest,lite,dark)     
-  local max,b,r,tmp,what     
+  local max,b,r,tmp,what 
   max = 0
   for i,row in pairs(dark) do
-    b = best:like(row, #lite.rows, 2)
-    r = rest:like(row, #lite.rows, 2)
+    b = best:like(row, #lite, 2)
+    r = rest:like(row, #lite, 2)
     tmp = acquire[the.acquire](b,r)
     if tmp > max then what,max = i,tmp end end
   return what end
@@ -206,6 +208,10 @@ function l.copy(t,    u)
   u={}; for k,v in pairs(t) do u[l.copy(k)] = l.copy(v) end
   return u end 
 
+function l.shuffle(t,    u,j)
+  u={}; for _,x in pairs(t) do u[1+#u]=x; end;
+  for i = #u,2,-1 do j=math.random(i); u[i],u[j] = u[j],u[i] end
+  return u end
 -- -----------------------------------------------------------------------------
 -- ## String to Things
 function l.coerce(s1,    fun) 
@@ -317,16 +323,21 @@ local function learn(data,t,  my,kl)
   my.datas[kl] = my.datas[kl] or DATA{data.cols.names}
   my.datas[kl]:add(t) end
 
-function eg.bayes(     wme)
+function eg.bayes()
   print(l.fmt("#%4s\t%s\t%s","acc","k","m"))
   for k=0,3 do
     for m=0,3 do 
       the.k = k
       the.m = m
-      wme   = {acc=0,datas={},n=0}
+      local wme = {acc=0,datas={},n=0}
       DATA(the.file, function(data,t) learn(data,t,wme) end) 
       print(l.fmt("%5.2f\t%s\t%s",wme.acc/wme.n, k,m)) end end end
 
+function eg.stats()
+  l.oo(DATA(the.file):stats()) end
+
+function eg.gate()
+  DATA(the.file):gate() end
 -- -----------------------------------------------------------------------------
 local gate=l.objects{COLS=COLS,DATA=DATA,NUM=NUM,SYM=SYM}
 the =  l.settings(help)
