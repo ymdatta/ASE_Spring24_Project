@@ -3,6 +3,7 @@ local b4={}; for k, _ in pairs(_ENV) do b4[k]=k end
 local l,the,help = {},{},[[
 gate: guess, assess, try, expand
 (c) 2023, Tim Menzies, BSD-2
+Learn a little, guess a lot, try the strangest guess, learn a little more, repeat
 
 USAGE:
   lua gate.lua [OPTIONS] 
@@ -191,19 +192,20 @@ local function likes(t,datas,       n,nHypotheses,most,tmp,out)
   return out,most end
 
 -- Gate.
-function DATA:gate(       dark,lite,best,rest,todo,data0)
+function DATA:gate(  n1,n2,       dark,lite,best,rest,todo,data0)
+  n1,n2=n1 or 5, n2 or 10
   print(0,"all ",l.o(self:stats()))
   dark,lite = {},{}
   for i,row in pairs(l.shuffle(self.rows)) do
-    if i<=4 then lite[1+#lite]=row else dark[1+#dark]=row end end
-  for i=1,10 do
-    best,rest = self:bestRest(lite, (#lite)^.75)  -- assess
-    print(i+4,"best", l.o(best:stats())) 
+    if i<=n1 then lite[1+#lite]=row else dark[1+#dark]=row end end
+  for i=1,n2 do
+    best,rest = self:bestRest(lite, (#lite)^.5)  -- assess
+    print(i+n1,"best", l.o(best:stats())) 
     todo = self:acquisitionFunction(best,rest,lite,dark)  -- guess
     lite[1+#lite] = table.remove(dark,todo) end  -- try, extend
   table.sort(self.rows, function(a,b) return self:d2h(a) < self:d2h(b) end)
   data0=DATA{self.cols.names}
-  for i,row in pairs(self.rows) do if i<15 then data0:add(row) else break end end
+  for i,row in pairs(self.rows) do if i<n1+n2+1 then data0:add(row) else break end end
   print(#self.rows,"base", l.o(data0:stats()))
   return best end 
 
