@@ -4,7 +4,7 @@ MAKEFLAGS += --warn-undefined-variables
 
 define css
 p         { text-align: right;}
-h2        { border-top: solid  1px #DDD !important;}
+xh2       { border-top: solid  1px #DDD !important;}
 h3        { padding: 3px; color: #3E3B39;
 						background-image: linear-gradient(to right, #CCC , white 75%); }
 .docs pre {font-size: 8pt; }

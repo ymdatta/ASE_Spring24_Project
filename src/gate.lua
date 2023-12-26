@@ -17,7 +17,7 @@ OPTIONS:
   -s --seed   random number seed                = 1234567891
   -t --todo   start up action                   = help]]
 
-
+-- ----------------------------------------------------------------------------
 -- ## Search control
 
 -- Assumes access to `b,r`; i.e. the probability of belonging to best or rest.
@@ -39,6 +39,7 @@ function acquire.watch(b,r) return r end
 function acquire.stress(b,r)  
   return b>r and (b+r)/(1E-30 + math.abs(b-r)) or -300 end
 
+-- ----------------------------------------------------------------------------
 -- ## Classes
 -- ### Numerics
 
@@ -70,7 +71,7 @@ function NUM:norm(x)
 -- Likelihood
 function NUM:like(x,_,      nom,denom)
   local mu, sd =  self:mid(), (self:div() + 1E-30)
-  if math.abs(x-mu) > 3 then return 1E-30 end
+  --if math.abs(x-mu) > 3 then return 0 end
   nom   = 2.718^(-.5*(x - mu)^2/(sd^2))
   denom = (sd*2.5 + 1E-30)
   return  nom/denom end
@@ -216,10 +217,11 @@ function DATA:acquisitionFunction(best,rest,lite,dark)
   for i,row in pairs(dark) do
     b = best:like(row, #lite, 2)
     r = rest:like(row, #lite, 2)
-    tmp = acquire[the.acquire](b,r)
+    tmp = acquire[the.acquire](b,r) 
     if tmp > max then what,max = i,tmp end end
   return what end
 
+-- ----------------------------------------------------------------------------
 -- ## Library Functions    
 -- ### Objects
 
@@ -320,6 +322,7 @@ function l.o(t,  n,      u)
       u[1+#u]= #t>0 and l.o(t[k],n) or l.fmt("%s: %s", l.o(k,n), l.o(t[k],n)) end end
   return "{" .. table.concat(u, ", ") .. "}" end
 
+-- ----------------------------------------------------------------------------
 -- ## Examples                                                           
 -- ### Examples support code
 local eg={}
@@ -342,13 +345,14 @@ function eg.all(     bad)
   os.exit(bad) end
 
 -- List all example names
-function eg.egs() 
+function eg.egs()
   for _,k in pairs(l.keys(eg)) do print(l.fmt("lua gate.lua -t %s",k)) end end
 
 -- ### The actual examples
-function eg.oo()   l.oo{a=1,b=2,c=3,d={e=3,f=4}} end
+function eg.oo()
+  return l.o{a=1,b=2,c=3,d={e=3,f=4}}  == "{a: 1, b: 2, c: 3, d: {e: 3, f: 4}}" end
 
-function eg.the() l.oo(the) end 
+function eg.the() l.oo(the); return the.help ~= nil and the.seed and the.m and the.k  end 
 
 function eg.help() print("\n"..the._help) end
 
@@ -371,15 +375,19 @@ function eg.num(      e,mu,sd)
   print(l.rnd(mu,3), l.rnd(sd,3))
   return 9.9 < mu and mu < 10 and 1.95 < sd and sd < 2 end
 
-function eg.csv()
+function eg.csv(      n)
+  n=0
   for i,t in l.csv(the.file) do
-    if i%100 == 0 then print(i, l.o(t)) end end end
+    if i%100 == 0 then  n = n + #t; print(i, l.o(t)) end end 
+  return n == 63 end
 
-function eg.data(     d)
+function eg.data(     d,n)
+  n=0
   d = DATA(the.file)
   for i, t in pairs(d.rows) do
-    if i % 100 ==0 then l.oo(t) end end 
-  l.oo(d.cols.x[1]) end
+    if i % 100 ==0 then n = n + #t; l.oo(t) end end
+  l.oo(d.cols.x[1])
+  return n == 63 end
 
 local function learn(data,t,  my,kl)
   my.n = my.n + 1
@@ -391,8 +399,9 @@ local function learn(data,t,  my,kl)
 
 function eg.bayes()
   local wme = {acc=0,datas={},n=0}
-  DATA("../data/diabetes.csv", function(data,t) learn(data,t,wme) end) 
-   print(wme.acc/wme.n)end  
+   DATA("../data/diabetes.csv", function(data,t) learn(data,t,wme) end) 
+   print(wme.acc/(wme.n - 5))
+   return wme.acc/(wme.n - 5) > .72 end
 
 function eg.km()
   print(l.fmt("#%4s\t%s\t%s","acc","k","m"))
@@ -401,11 +410,12 @@ function eg.km()
       the.k = k
       the.m = m
       local wme = {acc=0,datas={},n=0}
-      DATA(the.file, function(data,t) learn(data,t,wme) end) 
+      DATA("../data/soybean.csv", function(data,t) learn(data,t,wme) end) 
       print(l.fmt("%5.2f\t%s\t%s",wme.acc/wme.n, k,m)) end end end
 
 function eg.stats()
-  l.oo(DATA(the.file):stats()) end
+  return l.o(DATA("../data/auto93.csv"):stats()) == 
+     "{.N: 398, Acc+: 15.568, Lbs-: 2970.425, Mpg+: 23.844}" end
 
 function eg.sorted(   d)
   d=DATA("../data/auto93.csv")
@@ -417,6 +427,7 @@ function eg.sorted(   d)
 function eg.gate()
   DATA("../data/auto93.csv"):gate() end
 
+-- ----------------------------------------------------------------------------
 -- ## Start-up
 
 local gate=l.objects{COLS=COLS,DATA=DATA,NUM=NUM,SYM=SYM}

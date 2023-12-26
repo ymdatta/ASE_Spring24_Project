@@ -189,7 +189,7 @@ body .vg { color: #19469D }                     /* Name.Variable.Global */
 body .vi { color: #19469D }                     /* Name.Variable.Instance */
 body .il { color: #666666 }                     /* Literal.Number.Integer.Long */
 p         { text-align: right;}
-h2        { border-top: solid  1px #DDD !important;}
+xh2       { border-top: solid  1px #DDD !important;}
 h3        { padding: 3px; color: #3E3B39;
 						background-image: linear-gradient(to right, #CCC , white 75%); }
 .docs pre {font-size: 8pt; }
