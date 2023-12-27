@@ -66,11 +66,13 @@ function NUM:mid() return self.mu end
 
 function NUM:div() return self.n < 2 and 0 or (self.m2/(self.n - 1))^.5 end
 
+function NUM:small() return the.cohen*self:div() end
+
 function NUM:norm(x)
   return x=="?" and x or (x - self.lo) / (self.hi - self.lo + 1E-30) end
 
 function NUM:pooled(other)
-  n1,n2,m1,m2,s1,s2 = self.n, other.n, self:mid(), other:mid(), self:div(), other:div()
+  local n1,n2,m1,m2,s1,s2 = self.n, other.n, self:mid(), other:mid(), self:div(), other:div()
   return ( ((n1-1)*s1^2 + (n2-1)*s2^2) / (n1+n2-2) )^.5 end
 
 -- Likelihood
@@ -104,6 +106,8 @@ function SYM:div(    e)
   e=0
   for _,v in pairs(self.has) do e=e - v/self.n*math.log(v/self.n,2) end
   return e end
+
+function SYM:small() return 0 end
 
 -- Likelihood
 function SYM:like(x, prior)
@@ -152,7 +156,16 @@ function DATA:add(t,  fun)
        self.rows[1 + #self.rows] = self.cols:add(t)
   else self.cols = COLS(t) end end
 
+
 -- Query
+function DATA:mid(cols,    u)
+  u={}; for _,col in pairs(self.cols.all) do u[1+#u]=col:mid() end
+  return u end
+
+function DATA:div(cols,    u)
+  u={}; for _,col in pairs(self.cols.all) do u[1+#u]=col:div() end
+  return u end
+
 function DATA:stats(cols,fun,ndivs,    u)
   u = {[".N"] = #self.rows}
   for _,col in pairs(self.cols[cols or "y"]) do
@@ -198,22 +211,34 @@ local function likes(t,datas,       n,nHypotheses,most,tmp,out)
   return out,most end
 
 -- Gate.
-function DATA:gate(  n1,n2,       dark,lite,best,rest,todo,data0)
-  n1,n2=n1 or 5, n2 or 10
-  print(0,"all ",l.o(self:stats()))
+function DATA:gate(report,  n1,n2,       dark,lite,best,rest,todo,data0)
+  n1,n2 = n1 or 5, n2 or 10
+  if report then
+    print(l.o(self.cols.names))
+    print(l.o(self:mid()),"mid")
+    print(l.o(self:div()),"div")
+    local tmp={}
+    for k,col in pairs(self.cols.all) do tmp[k]=col:small() end
+    print(l.o(tmp),"small") 
+    print"#"
+  end
   dark,lite = {},{}
   for i,row in pairs(l.shuffle(self.rows)) do
     if i<=n1 then lite[1+#lite]=row else dark[1+#dark]=row end end
+  local d2h,x=1E30,nil
   for i=1,n2 do
     best,rest = self:bestRest(lite, (#lite)^.5)  -- assess
-    print(i+n1,"best", l.o(best:stats())) 
     todo = self:acquisitionFunction(best,rest,lite,dark)  -- guess
+    x = self:d2h(dark[todo])
+    if x < d2h then
+      d2h = x
+      if report then print(l.o(dark[todo]),i, l.rnd(self:d2h(dark[todo]))) end end
     lite[1+#lite] = table.remove(dark,todo) end  -- try, extend
-  table.sort(self.rows, function(a,b) return self:d2h(a) < self:d2h(b) end)
-  data0=DATA{self.cols.names}
-  for i,row in pairs(self.rows) do if i<n1+n2+1 then data0:add(row) else break end end
-  print(#self.rows,"base", l.o(data0:stats()))
-  return best end 
+  if report then 
+    print"#"
+    table.sort(self.rows, function(a,b) return self:d2h(a) < self:d2h(b) end)
+    print(l.o(self.rows[1]),#self.rows,l.rnd(self:d2h(self.rows[1]))) end
+  return best end
 
 -- Find the row scoring based on our acquite function.
 function DATA:acquisitionFunction(best,rest,lite,dark) 
@@ -251,7 +276,7 @@ function l.rogues()
 function l.rnd(n, ndecs)
   if type(n) ~= "number" then return n end
   if math.floor(n) == n  then return n end
-  local mult = 10^(ndecs or 3)
+  local mult = 10^(ndecs or 2)
   return math.floor(n * mult + 0.5) / mult end
 
 -- ### Lists
@@ -430,8 +455,8 @@ function eg.sorted(   d)
   for i, row in pairs(d.rows) do
     if i < 5  or i> #d.rows - 5 then print(i, l.o(row)) end end end 
   
-function eg.gate()
-  DATA("../data/auto93.csv"):gate() end
+function eg.gate1()
+  DATA("../data/auto93.csv"):gate(true,4,10) end
 
 -- ----------------------------------------------------------------------------
 -- ## Start-up
