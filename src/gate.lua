@@ -9,13 +9,14 @@ USAGE:
   lua gate.lua [OPTIONS] 
 
 OPTIONS:
-  -a --acquire acqusition function              = stress
-  -f --file   csv data file name                = ../data/diabetes.csv
-  -h --help   show help                         = false
-  -k --k      low class frequency kludge        = 1
-  -m --m      low attribute frequency kludge    = 2
-  -s --seed   random number seed                = 1234567891
-  -t --todo   start up action                   = help]]
+  -a --acquire  acqusition function             = stress
+  -c --cohen    small effect size               = .35
+  -f --file     csv data file name              = ../data/diabetes.csv
+  -h --help     show help                       = false
+  -k --k        low class frequency kludge      = 1
+  -m --m        low attribute frequency kludge  = 2
+  -s --seed     random number seed              = 1234567891
+  -t --todo     start up action                 = help]]
 
 -- ----------------------------------------------------------------------------
 -- ## Search control
@@ -67,6 +68,10 @@ function NUM:div() return self.n < 2 and 0 or (self.m2/(self.n - 1))^.5 end
 
 function NUM:norm(x)
   return x=="?" and x or (x - self.lo) / (self.hi - self.lo + 1E-30) end
+
+function NUM:pooled(other)
+  n1,n2,m1,m2,s1,s2 = self.n, other.n, self:mid(), other:mid(), self:div(), other:div()
+  return ( ((n1-1)*s1^2 + (n2-1)*s2^2) / (n1+n2-2) )^.5 end
 
 -- Likelihood
 function NUM:like(x,_,      nom,denom)
@@ -277,7 +282,8 @@ function l.coerce(s1,    fun)
 
 -- Parse help string to infer the settings.
 function l.settings(s,    t,pat)
-  t,pat = {}, "\n[%s]+[-][%S][%s]+[-][-]([%S]+)[^\n]+= ([%S]+)"
+  t,pat = {}, "[-][-]([%S]+)[^=]+= ([%S]+)"
+  --t,pat = {}, "\n[%s]+[-][%S][%s]+[-][-]([%S]+)[^\n]+= ([%S]+)"
   for k, s1 in s:gmatch(pat) do t[k] = l.coerce(s1) end
   t._help = s
   return t end
