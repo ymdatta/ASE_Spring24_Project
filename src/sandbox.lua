@@ -1,3 +1,25 @@
+-- ## Search control
+
+-- Assumes access to `b,r`; i.e. the probability of belonging to best or rest.
+local acquire={}
+
+-- Go where you have not gone before
+function acquire.xplore(b,r) return 1/(b+r + 1E-30) end
+
+-- Only go where you have got beore
+function acquire.xploit(b,r) return b+r end
+
+-- Go to where its best
+function acquire.plan(b,r) return b end
+
+-- Go to where its worst.
+function acquire.watch(b,r) return r end
+
+-- Go to where we are most confused.
+function acquire.stress(b,r)  
+  return b>r and (b+r)/(1E-30 + math.abs(b-r)) or -300 end
+
+
 
 function eg.discretize(           max,num1,sym1,mu,sd,t,u,n,y,v,i)
   t, u, v, num1, sym1 = {}, {},{}, NUM(), SYM()
