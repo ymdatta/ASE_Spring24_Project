@@ -83,3 +83,9 @@ count2:  ## simple count from standard input
 
 counts: ## simple count from cli file
 	cat ../data/diabetes.csv | lua counts.lua 
+
+eggate:
+	lua gate.lua -t gate |column -t
+
+eggate20:
+	lua gate.lua -s $$RANDOM -t gate20 | sort -n 

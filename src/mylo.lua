@@ -1,396 +1,480 @@
--- [counts](counts.html) &rightarrow;  bayes
-local l   = {}
-local lib = require"lib"
-local the,help = {},[[
-
-mylo: for ez SSL MOEA and XAI, lo is less, less is more. So go lo.
+-- .
+local b4={}; for k, _ in pairs(_ENV) do b4[k]=k end
+local l,the,help = {},{},[[
+mylo: lo is less. less is more. go lo. 
 (c) 2023, Tim Menzies, BSD-2
+Recursive bi-clustering via random projections. 
 
 USAGE:
-  cat x.csv | lua myo.lua [OPTIONS]
-  lua mlyo.lua -f x.csv [OPTIONS]
- 
+  lua gate.lua [OPTIONS] 
+
 OPTIONS:
-  -f --file   csv data file name                = -
-  -h --help   show help                         = false 
-  -k --k      handle low class frequencies      = 1
-  -m --m      handle low attribute frequencies  = 2
-  -p --p      distance coeffecient              = 2
-  -w --wait   wait before classifications       = 20]]
--- --------- --------- --------- --------- --------- --------- -------- ----------
--- ##  One Column
+  -c --cohen    small effect size               = .35
+  -f --file     csv data file name              = ../data/diabetes.csv
+  -h --help     show help                       = false 
+  -p --p        weights for distance            = 2
+  -s --seed     random number seed              = 31210
+  -t --todo     start up action                 = help
 
--- Create one NUM
-function l.NUM(txt,at) 
-  return {at=at, txt=txt, n=0, has={},
-          isSorted=true,
-          heaven= (txt or ""):find"-$" and 0 or 1} end
+Classification, regression = means of leaf clusters
+Data generation, anamoaly detection = sampling within each leaf
+Optimization = pruning branches of the cluster tree.
+Semi-supervised learning = only query the remote projection points.
+Explanation = deltas between clusters]]
+-- ----------------------------------------------------------------------------
+-- ## Classes
+local function isa(x,y) return setmetatable(y,x) end
+local function is(s,    t) t={a=s}; t.__index=t; return t end
 
--- Create one SYM
-function l.SYM(txt,at) 
-  return {at=at, txt=txt, n=0, has={},
-          mode=nil, most=0, isSym=true} end
+-- ## Columns
+-- ### Numerics
 
--- Create one COL
-function l.COL(txt,at)
-  return ((txt or ""):find"^[A-Z]" and l.NUM or l.SYM)(txt,at) end
+-- Create
+local NUM=is"NUM"
+function NUM.new(s, n)
+  return isa({txt=s or " ", at=n or 0, n=0, mu=0, m2=0, hi=-1E30, lo=1E30,
+              heaven = (s or ""):find"-$" and 0 or 1},
+              NUM) end
 
---  Update one column
-function l.col(col1,x)
-  return (col1.isSym  and l.sym or l.num)(col1,x) end
+-- Update
+function NUM:add(x,     d)
+  if x ~="?" then
+    self.n  = self.n+1
+    d       = x - self.mu
+    self.mu = self.mu + d/self.n
+    self.m2 = self.m2 + d*(x - self.mu)
+    self.lo = math.min(x, self.lo)
+    self.hi = math.max(x, self.hi) end end
 
--- Update a SYM column. The default is to add one to
--- `sym1` (and that can be customized).
-function l.sym(sym1,x,  n)
-  if x~="?" then
-    sym1.n      = (n or 1) + sym1.n
-    sym1.has[x] = (n or 1) + (sym1.has[x] or 0)
-    if sym1.has[x] > sym1.most then
-      sym1.most, sym1.mode = sym1.has[x],x end end end
+-- Query
+function NUM:mid() return self.mu end
 
--- Update a NUM column
-function l.num(num1,x)
-  if x~="?" then
-    num1.n = num1.n + 1
-    lib.push(num1.has,x)
-    num1.isSorted=false end end
+function NUM:div() return self.n < 2 and 0 or (self.m2/(self.n - 1))^.5 end
 
--- Query one column
-function l.has(col1)
-  if not (col1.isSym or col1.isSorted) then
-    table.sort(col1.has); col1.isSorted=true end
-  return col1.has end
+function NUM:small() return the.cohen*self:div() end
 
--- Middle value of a column distribution
-function l.mid(col1)
-  return  col1.isSym and col1.mode or lib.median(l.has(col1)) end
+function NUM:norm(x)
+  return x=="?" and x or (x - self.lo) / (self.hi - self.lo + 1E-30) end
 
--- Diversity of values in a column distribution
-function l.div(col1)
-  return (col1.isSym and lib.ent or lib.stdev)(l.has(col1)) end
+-- Distance
+function NUM:dist(x,y)
+  if x=="?" and y=="?" then return 1 end
+  x,y = self:norm(x), self:norm(y)
+  if x=="?" then x=y<.5 and 1 or 0 end
+  if y=="?" then y=x<.5 and 1 or 0 end
+  return math.abs(x-y) end
 
--- --------- --------- --------- --------- --------- --------- --------- ---------
--- ## COLS= multiple colums
+-- ### Symbols
 
--- Create one column
-function l.COLS(t, -- e.g. {"Age","job","Salary+"}  
-                x,y,all,klass,col1)
-  x, y, all = {}, {}, {}
-  for at, txt in pairs(t) do
-    col1 =  l.COL(at,txt)
-    lib.push(all, col1)
+-- Create
+local SYM=is"SYM"
+function SYM.new(s,n)
+  return isa({txt=s or " ", at=n or 0, n=0, has={}, mode=nil, most=0},
+             SYM) end
+ 
+-- Update
+function SYM:add(x)
+  if x ~= "?" then 
+    self.n = self.n + 1
+    self.has[x] = 1 + (self.has[x] or 0)
+    if self.has[x] > self.most then 
+      self.most,self.mode = self.has[x], x end end end
+
+-- Query
+function SYM:mid() return self.mode end
+
+function SYM:div(    e) 
+  e=0; for _,v in pairs(self.has) do e=e-v/self.n*math.log(v/self.n,2) end; return e end
+
+function SYM:small() return 0 end
+
+function SYM:dist(x,y)
+  return  (x=="?" and y=="?" and 1) or (x==y and 0 or 1) end
+  
+-- ### Columns
+-- A contrainer storing multiple `NUM`s and `SYM`s.
+
+-- Create a set of columns from a set of strings. If uppercase
+-- then `NUM`, else `SYM`. `Klass`es end in `!`. Numeric goals to
+-- minimize of maximize end in `-`,`+`. Keep all cols in `all`.
+-- Also add dependent columns to `y` (anthing ending in `-`,`+`,`!`) and
+-- independent columns in `x` (skipping over anyhing ending in `X`).
+local COLS=is"COLS"
+function COLS.new(row)
+  local x,y,all = {},{},{}
+  local klass,col
+  for at,txt in pairs(row.cells) do
+    col = (txt:find"^[A-Z]" and NUM or SYM).new(txt,at)
+    all[1+#all] = col
     if not txt:find"X$" then
-      if txt:find"!$" then klass=col1 end
-      (txt:find "[-!+]$" and y or x)[at]=col1 end end
-  return {klass=klass, names=t, x=x, y=y, all=all} end
+      if txt:find"!$" then klass=col end
+      (txt:find"[!+-]$" and y or x)[at] = col end end
+  return isa({x=x, y=y, all=all, klass=klass, names=row.cells},
+             COLS) end
 
--- update a COLS
-function l.cols(cols1, t)
-  for _, col1 in pairs(cols1.all) do l.col(col1, t[col1.at]) end end
+-- Update
+function COLS:add(row)
+  for _,cols in pairs{self.x, self.y} do
+    for _,col in pairs(cols) do
+      col:add(row.cells[col.at]) end end 
+  return row end 
 
--- --------- --------- --------- --------- --------- --------- --------- ---------
--- ##  ROW 
+-- ### ROW
 
--- store one row of data
-function l.ROW(t) return {cells=t} end
+-- Store cells.
+local ROW=is"ROW"
+function ROW.new(t) return isa({ cells = t }, ROW) end
 
--- --------- --------- --------- --------- --------- --------- --------- ---------
--- ##  DATA = rows + COLS
+-- Distance to best values (and _lower_ is _better_).
+function ROW:d2h(data, d, n)
+  d, n = 0, 0
+  for _, col in pairs(data.cols.y) do
+      n = n + 1
+      d = d + math.abs(col.heaven - col:norm(self.cells[col.at])) ^ 2 end
+  return (d/n)^.5) end
 
--- Create a DATA from a string (assumed to be a file name) or a list of rows.   
-function l.DATA(src,    data1)
-  data1 = {rows={}, cols=nil}
-  if   type(src)=="string"
-  then for   t in lib.csv(src) do l.data(data1,t) end
-  else for _,t in   pairs(src) do l.data(data1,t) end end
-  return data1 end
-
--- Create a new DATA, using the same structure as an older one.  
-function l.clone(data1,  rows,      data2)
-  data2 = l.DATA{data1.cols.names}
-  for _,t in pairs(rows or {}) do l.data(data2,t) end
-  return data2 end
-
--- Update DATA
-function l.data(data1,xs)
-  xs = xs.cells and xs or l.ROW(xs)
-  if    data1.cols
-  then  l.cols(data1.cols, xs.cells)
-        lib.push(data1.rows, xs)
-  else  data1.cols= l.COLS(xs.cells) end end
-
--- data2stats
-function l.stats(data1, my,     t,fun)
-  my  = lib.defaults(my,{cols="x",ndecs=2,report=the.report})
-  fun = l[my.report]
-  t   = {[".N"]=#data1.rows}
-  for _,col1 in pairs(data1.cols[my.cols]) do
-    t[col1.txt] = lib.rnd( fun(col1), my.ndecs) end
-  return t end
-
--- --------- --------- --------- --------- --------- --------- --------- ---------
--- ## Naivve Bayes Classifier
-
--- Make new classifier (same creation pattern as `DATA`
-function l.NB(src,    nb1)
-  nb1 = {h=0, all=nil, datas={}, wait=the.wait, log=lib.ABCD()}
-  if   type(src)=="string"
-  then for   t in lib.csv(src) do l.nb(nb1,t) end
-  else for _,t in   pairs(src) do l.nb(nb1,t) end end
-  return nb1 end
-
--- Update NB
-function l.nb(nb1,xs,     want)
-  xs = xs.cells and xs or ROW(xs)
-  if    nb1.all
-  then  want = l.nbHas(nb1, xs)
-        l.nbTest(nb1, xs,want)
-        l.nbTrain(nb1, xs, want)
-  else  nb1.all = l.DATA{xs} end end
-
--- Ensure we have a place to store data for this klass. 
-function l.nbHas(nb1, row,       want)
-  want = row.has[nb1.all.cols.klass.at]
-  if not nb1.klasses[want] then
-    nb1.h = nb1.h + 1
-    nb1.klasses[want] = l.clone(nb1, nb1.all) end
-  return nb1.klasses[want] end
-
--- If we've waited enough, try classifying something.
-function l.nbTest(nb1 ,row,want,       got)
-  if   nb1.wait > 1  
-  then nb1.wait = nb1.wait - 1
-  else got = l.likesMost(row.cells, nb1.datas,
-                          #nb1.all.rows, nb1.h)
-       l.abcd(nb1.abcd, want, got) end end
-
--- Update our distributions.
-function l.nbTrain(nb1,row,want)
-  l.data(nb1.datas[want], row)
-  l.data(nb1.all,         row) end
-
--- Max like of one row `t` across many  `datas`
--- (and here, `data` == `H`).     
--- _argmax(i)  P(H<sub>i</sub>|E)_      
-function l.likesMost(t,datas,n,h,     most,tmp,out)
-  most = -1E30
-  for k,data in pairs(datas) do
-    tmp = l.likes(t,data,n,h)
-    if tmp > most then out,most = k,tmp end end
-  return out,most end
-
--- Likes of one row `t` in one `data`.           
--- _P(H|E) = P(E|H) P(H)/P(E)_      
--- or with our crrrent data structures:           
--- _P(data|t) = P(t|data) P(data) / P(t)_      
-function l.likes(t,data,n,h,       prior,out,col1,inc)
-  prior = (#data.rows + the.k) / (n + the.k * h)
-  out   = math.log(prior)
-  for at,v in pairs(t) do
-    col1 = data.cols.x[at]
-    if col1 and v ~= "?" then
-      inc = l.like(col1,v,prior)
-      out = out + math.log(inc) end end
-  return out end
-
--- How much does a column like one value `x`?       
-function l.like(col1,x,prior,    nom,denom)
-  if   col1.isSym
-  then return ((col1.has[x] or 0) + the.m*prior)/(col1.n+the.m)
-  else local mid,sd = l.mid(col1),l.div(col1)
-       if x > mid + 4*sd then return 0 end
-       if x < mid - 4*sd then return 0 end
-       nom   = math.exp(-.5*((x - mid)/sd)^2)
-       denom = (sd*((2*math.pi)^0.5))
-       return nom/(denom  + 1E-30) end end
-
--- --------- --------- --------- --------- --------- --------- --------- ---------
--- ## Clustering 
-
--- Normalize `x` 0..1 min..max (for NUMs), else return `x`.
-function l.norm(col1,x,    a)
-  a = l.has(col1)
-  return (x=="?" or col1.isSym) and x or
-         (x - a[1]) / (a[#a] - a[1] + 1E-30) end
-
--- Distance between two values in one column.
-function l.dist(col1,x,y)
-  if     x=="?" and y=="?" then return 1
-  elseif col1.isSym
-  then   return x==y and 0 or 1
-  else   x,y = l.norm(col1,x), l.norm(col1,y)
-         if x=="?" then x = y<.5 and 1 or 0 end
-         if y=="?" then y = x<.5 and 1 or 0 end
-         return math.abs(x - y) end end
-
--- Distance between two rows.
-function l.dists(data1,row1,row2,      n,d,t1,t2)
-  n,d,t1,t2   = 0, 0, row1.cells, row2.cells
-  for _,col1 in pairs(data1.cols.y) do
-    n = n +1
-    d = d + l.dist(col1, t1[col1.at],t2[col1.at])^the.p end
-  return (d/n) ^ (1/the.p) end
+function ROW:dist(other)
+  d, n = 0, 0
+  for _, col in pairs(data.cols.x) do
+      n = n + 1
+      d = d + col:dist(self.cells[col.at], other.cells[col.at]) ^ the.p end
+  return (d/n)^(1/the.p) end
 
 -- All neighbors in `rows`, sorted by dustance to `row1`,
-function l.neighbors(data1,row1,rows,     fun)
+function ROW:neighbors(data,ows,     fun)
   fun = function(row2) return l.dists(data1,row1,row2) end
-  return l.keysort(rows or data1.rows, fun) end
+  return l.keysort(rows or data.rows, fun) end
 
--- Distance to heaven (using goal values).
-function l.d2h(data1,row1,       n,d)
-  n,d = 0,0
-  for _,col1 in pairs(data1.cols.y) do
-    n= n + 1
-    d= d + (col1.heaven - l.norm(data1,row1.cells[col1.at]))^2 end
-  return (d/n) ^ (1/the.p) end
 
--- Return two distance points, and the distance between them.
-function l.twoFarPoints(data1,rows,  sortp,a,    b,far)
-  far = (#rows*the.Far)//1
-  a   = a or l.neighbors(data1, l.any(rows), rows)[far]
-  b   = l.neighbors(data1, a, rows)[far]
-  if sortp and l.d2h(data1,b) < l.d2h(data1,a) then a,b=b,a end
-  return a, b, l.dists(data1,a,b) end
+-- ### Data
+-- Store `rows`, summarized in `COL`umns.
 
--- Divide `rows` into two halves, based on distance to two far points.
-function l.half(data1,rows,sortp,before)
-  local some,a,b,d,C,project,as,bs
-  some  = l.many(rows, math.min(the.Half,#rows))
-  a,b,C = l.twoFarPoints(data1, some, sortp, before)
-  function d(row1,row2) return l.dists(data1,row1,row2) end
-  function project(r)   return (d(r,a)^2 + C^2 -d(r,b)^2)/(2*C) end
-  as,bs= {},{}
-  for n,row1 in pairs(l.keysort(rows,project)) do
-    l.push(n <=(#rows)//2 and as or bs, row1) end
-  return as, bs, a, b, C, d(a, bs[1])  end
+-- Create from either a file name or a list of rows
+local DATA=is"DATA"
+function DATA.new(src,  fun,     self)
+  self = isa({rows={}, cols=nil},DATA)
+  if   type(src) == "string"
+  then for _,x in l.csv(src)       do self:add(x, fun) end
+  else for _,x in pairs(src or {}) do self:add(x, fun) end end
+  return self end
 
--- Show a tree. 
-function l.tree(data1,sortp,      _tree)
-  function _tree(data2,above,     lefts,rights,node)
-    node = {here=data2}
-    if   #data2.rows > 2*(#data1.rows)^.5
-    then lefts, rights, node.left, node.right, node.C, node.cut =
-                            l.half(data1,data2.rows,sortp,above)
-          node.lefts  = _tree(l.clone(data1, lefts),  node.left)
-          node.rights = _tree(l.clone(data1, rights), node.right) end
-    return node end
-  return _tree(data1) end
+-- Update. First time through, assume the row defines the columns.
+-- Otherwise, update the columns then store the rows. If `fun` is
+-- defined, call it before updating anything.
+function DATA:add(t,  fun,row)
+  row = t.cells and t or ROW.new(t)
+  if   self.cols
+  then if fun then fun(self,row) end
+       self.rows[1 + #self.rows] = self.cols:add(row)
+  else self.cols = COLS.new(row) end end
 
-function l.climb(node, fun, depth)
-  if node then
-    depth = depth or 0
-    fun(node, depth, not (node.lefts or node.rights))
-    l.climb(node.lefts,  fun, depth+1)
-    l.climb(node.rights, fun, depth+1) end end
+-- Query
+function DATA:mid(cols,   u) 
+  u = {}; for _, col in pairs(cols or self.cols.all) do u[1 + #u] = col:mid() end
+  return ROW.new(u) end
 
-function l.tshow(node1,     _show,depth1)
-  depth1 = 0
-  function _show(node2,depth,leafp,     post)
-    post = leafp and l.o(l.stats(node2.here)) or ""
-    depth1  = depth
-    print(('|.. '):rep(depth), post) end
-  l.climb(node1, _show); print""
-  print( ("    "):rep(depth1), l.o(l.stats(node1.here))) end
+function DATA:div(cols,    u) 
+  u = {}; for _, col in pairs(cols or self.cols.all) do u[1 + #u] = col:div() end;
+  return ROW.new(u) end
 
--- --------- --------- --------- --------- --------- --------- --------- ---------
---- ## Semi-supervised Multi-objective optimization
+function DATA:small(    u)
+  u = {}; for _, col in pairs(self.cols.all) do u[1 + #u] = col:small(); end
+  return ROW.new(u) end 
 
--- Return a small group of `best` rows, and all the `rest`.
-function l.branch(data1,  sortp,      _,rest,_branch)
-  rest = {}
-  function _branch(data2,  above,    left,lefts,rights)
-    if #data2.rows > 2*(#data1.rows)^.5
-    then lefts,rights,left = l.half(data1,data2.rows,sortp,above)
-         for _,row1 in pairs(rights) do l.push(rest,row1) end
-         return _branch(l.clone(data1,lefts),left)
-    else return data2.rows, rest end end
-  return _branch(data1) end
+function DATA:stats(cols,fun,ndivs,    u)
+  u = {[".N"] = #self.rows}
+  for _,col in pairs(self.cols[cols or "y"]) do
+    u[col.txt] = l.rnd(getmetatable(col)[fun or "mid"](col), ndivs) end
+  return u end
 
--- --------- --------- --------- --------- --------- --------- --------- ---------
---- ## Discretization
+ -- Gate.
+function DATA:gate(budget0,budget,some)
+  local rows,lite,dark
+  local stats,bests = {},{}
+  rows = l.shuffle(self.rows)
+  lite = l.slice(rows,1,budget0)
+  dark = l.slice(rows, budget0+1)
+  for i=1,budget do
+    local best, rest     = self:bestRest(lite, (#lite)^some)  -- assess
+    local todo, selected = self:split(best,rest,lite,dark)
+    stats[i] = selected:mid()
+    bests[i] = best.rows[1]
+    table.insert(lite, table.remove(dark,todo)) end 
+  return stats,bests end
 
--- Create a RANGE  that tracks the y dependent values seen in 
--- the range `lo` to `hi` some independent variable in column number `at` whose name is `txt`. 
--- Note that the way this is used (in the `bins` function, below)
--- for  symbolic columns, `lo` is always the same as `hi`.
-function l.RANGE(at,txt,lo,hi)
-  return {n=0,at=at,txt=txt,lo=lo,hi=lo or hi or lo,y=l.SYM()} end
+-- Find the row scoring based on our acquite function.
+function DATA:split(best,rest,lite,dark)
+  local selected,max,out
+  selected = DATA.new{self.cols.names}
+  max = 1E30
+  out = 1
+  for i,row in pairs(dark) do
+    local b,r,tmp
+    b = row:like(best, #lite, 2)
+    r = row:like(rest, #lite, 2)
+    if b>r then selected:add(row) end
+    tmp = math.abs(b+r) / math.abs(b-r+1E-300)
+    --print(b,r,tmp) 
+    if tmp > max then out,max = i,tmp end end  
+  return out,selected end
 
--- Update a RANGE to cover `x` and `y`
-function l.range(range1,n,s)
-  range1.lo = math.min(n, range1.lo)
-  range1.hi = math.max(n, range1.hi)
-  range1.n  = range1.n + 1
-  l.sym(range1.y, s) end
+-- Sort on distance to heaven, split off the first `want` items to return
+-- a `best` and `rest` data.
+function DATA:bestRest(rows, want, best, rest, top)
+    table.sort(rows, function(a, b) return a:d2h(self) < b:d2h(self) end)
+    best, rest = { self.cols.names }, { self.cols.names }
+    for i, row in pairs(rows) do
+        if i <= want then best[1 + #best] = row else rest[1 + #rest] = row end
+    end
+    return DATA.new(best), DATA.new(rest)
+end
+  
+-- ----------------------------------------------------------------------------
+-- ## Library Functions    
+ 
 
-function l.merge(range1,range2,     range3)
-  range3   = l.RANGE(range1.at, range1.txt, range1.lo, range2.hi)
-  range3.n = range1.n + range2.n
-  for _,t in pairs{range1.y,range2.y} do
-    for k,v in pairs(t) do 
-      l.sym(range3,k,v) end end
-  return range3 end
+-- ### Linting
+function l.rogues()
+  for k,v in pairs(_ENV) do if not b4[k] then print("E:",k,type(k)) end end end
 
-function l.merged(range1,range2,few,   range3,e1,e2,e3,n1,n2,n3) 
-  range3 = l.merge(range1, range2)
-  e1, e2, e3 = lib.ent(range1.y), lib.ent(range2.y), lib.ent(range3.y)
-  n1, n2, n3 = range1.n, range2.n, range3.n 
-  if n1 <= few or  n2 <= few or e3 <= (e1*n1 + e2*n2) / n3 then
-    return range3 end end
+-- ### Numbers
+function l.rnd(n, ndecs)
+  if type(n) ~= "number" then return n end
+  if math.floor(n) == n  then return n end
+  local mult = 10^(ndecs or 2)
+  return math.floor(n * mult + 0.5) / mult end
 
--- Map `x` into a small number of bins. `SYM`s just get mapped
--- to themselves but `NUM`s get mapped to one of `is.bins` values.
-function l.bin(col1,x,      gap,t,lo,hi)
-  if x=="?" or col1.isSym then return x end
-  t     = l.has(col1)
-  lo,hi = t[1], t[#t]
-  gap   = (hi - lo) / (the.bins - 1)
-  return hi == lo and 1 or math.floor(x/gap + .5)*gap end
+-- ### Lists
 
--- Return RANGEs that distinguish sets of rows (stored in `rowss`).
--- To reduce the search space,
--- values in `col` are mapped to small number of `bin`s.
--- For NUMs, that number is `the.bins=16` (say) (and after dividing
--- the column into, say, 16 bins, then we call `merges` to see
--- how many of them can be combined with their neighboring bin).
-function l.discretize(rowss,cols,   t,tmp,n)
-  t={}
-  for k,col1 in pairs(cols) do
-    tmp,n = l.bins(rowss, col1)
-    t[k]  = col1.isSym and tmp or l.noGaps(l.merges(tmp, n^the.min)) end
+-- Sorted keys
+function l.keys(t,    u)
+  u={}; for k,_ in pairs(t) do u[1+#u]=k end; table.sort(u); return u end
+
+-- Deep copy
+function l.copy(t,    u)
+  if type(t) ~= "table" then return t end
+  u={}; for k,v in pairs(t) do u[l.copy(k)] = l.copy(v) end
+  return u end 
+
+-- Return a new table, with old items sorted randomly.
+function l.shuffle(t,    u,j)
+  u={}; for _,x in pairs(t) do u[1+#u]=x; end;
+  for i = #u,2,-1 do j=math.random(i); u[i],u[j] = u[j],u[i] end
+  return u end
+
+-- Return `t` skipping `go` to `stop` in steps of `inc`.
+function l.slice(t, go, stop, inc,    u) 
+  if go   and go   < 0 then go=#t+go     end
+  if stop and stop < 0 then stop=#t+stop end
+  u={}
+  for j=(go or 1)//1,(stop or #t)//1,(inc or 1)//1 do u[1+#u]=t[j] end
+  return u end
+
+-- Schwartzian transform:  decorate, sort, undecorate
+function l.keysort(t,fun,      u,v)
+  u={}; for _,x in pairs(t) do u[1+#u]={x=x, y=fun(x)} end --decorate
+  table.sort(y, function(a,b) return a.y < b.y end) -- sort
+  v={}; for _,xy in pairs(u) do v[1+#v] = xy.x end -- undecoreate
+  return v end
+
+-- ### String to Things
+
+-- Coerce string to intm float, nil, true, false, or (it all else fails), a strong.
+function l.coerce(s1,    fun) 
+  function fun(s2)
+    if s2=="nil" then return nil else return s2=="true" or (s2~="false" and s2) end end
+  return math.tointeger(s1) or tonumber(s1) or fun(s1:match'^%s*(.*%S)') end
+
+-- Parse help string to infer the settings.
+function l.settings(s,    t,pat)
+  t,pat = {}, "[-][-]([%S]+)[^=]+= ([%S]+)"
+  for k, s1 in s:gmatch(pat) do t[k] = l.coerce(s1) end
+  t._help = s
   return t end
 
-function l.bins(rowss,col1,   t,c,x,k,n)
-  t = {}
-  n = 0
-  for y,rows in pairs(rowss) do
-    for _,row1 in pairs(rows) do
-      x = row1.cells[col1.at]
-      if x ~= "?" then
-        n    = n + 1
-        k    = l.bin(col1,x)
-        t[k] = t[k] or l.RANGE(col1.at, col1.txt, x)
-        l.range(t[k],x,y) end end end
-  return lib.sort(lib.map(t, lib.self), lib.lt"lo"),n end
+-- Return a list of comma seperated values (coerced to things)
+function l.cells(s,   t)
+  t={}; for s1 in s:gmatch("([^,]+)") do t[1+#t]=l.coerce(s1) end; return t end
 
-function l.noGaps(t)
-  for j = 2,#t do t[j].lo = t[j-1].hi end
-  t[1].lo  = -math.huge
-  t[#t].hi =  math.huge
+-- Return rows of a csv file.
+function l.csv(src,    i)
+  i,src = 0,src=="-" and io.stdin or io.input(src)
+  return function(      s)
+    s=io.read()
+    if s then i=i+1; return i,l.cells(s) else io.close(src) end end end
+
+-- Update a table of settings using command-line settings.
+function l.cli(t)
+  for k, v in pairs(t) do
+    v = tostring(v)
+    for argv,s in pairs(arg) do
+      if s=="-"..(k:sub(1,1)) or s=="--"..k then
+        v = v=="true" and "false" or v=="false" and "true" or arg[argv + 1]
+        t[k] = l.coerce(v) end end end
+  if t.help then os.exit(print("\n"..t._help)) end
   return t end
 
-function l.merges(ranges,few,    tmp,i,a,b)
-  tmp,i = {},1
-  while i <= #ranges do
-    a = ranges[i]
-    if i < #ranges then
-      b = l.merged(a, ranges[i+1], few)
-      if b then
-        a = b
-        i = i + 1 end end
-    lib.push(tmp, a)
-    i = i + 1 end
-  return #tmp == #ranges and ranges or l.merges(tmp,few) end
+-- ### Things to Strings
 
--- --------- --------- --------- --------- --------- --------- -------- ----------
--- ##  Explanation (rule generation)
+-- Emulate sprintf
+l.fmt = string.format
+
+-- Print a string of a nested structure.
+function l.oo(x) print(l.o(x)); return x end
+
+-- Rerun a string for a nested structure.
+function l.o(t,  n,      u)
+  if type(t) == "number" then return tostring(l.rnd(t, n)) end
+  if type(t) ~= "table"  then return tostring(t) end
+  u={}
+  for _,k in pairs(l.keys(t)) do
+    if tostring(k):sub(1,1) ~= "_" then
+      u[1+#u]= #t>0 and l.o(t[k],n) or l.fmt("%s: %s", l.o(k,n), l.o(t[k],n)) end end
+  return "{" .. table.concat(u, ", ") .. "}" end
+
+-- ----------------------------------------------------------------------------
+-- ## Examples                                                           
+
+-- ### Examples support code
+
+-- Where to store examples
+local eg={}
+
+local function run(k,   oops,b4) 
+  b4 = l.copy(the) -- set up
+  math.randomseed(the.seed) -- set up
+  oops = eg[k]()==false
+  io.stderr:write(l.fmt("# %s %s\n",oops and "❌ FAIL" or "✅ PASS",k))
+  for k,v in pairs(b4) do the[k]=v end -- tear down
+  return oops end
+
+-- Run all examples
+function eg.all(     bad)
+  bad=0
+  for _,k in pairs(l.keys(eg)) do 
+    if k ~= "all" then 
+      if run(k) then bad=bad+1 end end end
+  io.stderr:write(l.fmt("# %s %s fail(s)\n",bad>0 and "❌ FAIL" or "✅ PASS",bad))
+  os.exit(bad) end
+
+-- List all example names
+function eg.egs()
+  for _,k in pairs(l.keys(eg)) do print(l.fmt("lua gate.lua -t %s",k)) end end
+
+-- ### The actual examples
+function eg.oo()
+  return l.o{a=1,b=2,c=3,d={e=3,f=4}}  == "{a: 1, b: 2, c: 3, d: {e: 3, f: 4}}" end
+
+function eg.the() l.oo(the); return the.help ~= nil and the.seed and the.m and the.k  end 
+
+function eg.help() print("\n"..the._help) end
+
+function eg.sym(      s,mode,e)
+  s = SYM.new()
+  for _, x in pairs{1,1,1,1,2,2,3} do s:add(x) end
+  mode, e = s:mid(), s:div()
+  print(mode, e)
+  return 1.37 < e and e < 1.38 and mode == 1 end
+
+local function norm(mu,sd,    R)
+  R=math.random
+  return (mu or 0) + (sd or 1) * math.sqrt(-2 * math.log(R()))
+                               * math.cos(2 * math.pi * R()) end
+
+function eg.num(      e,mu,sd)
+  e = NUM.new()
+  for _ = 1,1000 do e:add(norm(10, 2)) end
+  mu, sd = e:mid(), e:div()
+  print(l.rnd(mu,3), l.rnd(sd,3))
+  return 10 < mu and mu < 10.1 and 2 < sd and sd < 2.05 end
+
+function eg.csv(      n)
+  n=0
+  for i,t in l.csv(the.file) do
+    if i%100 == 0 then  n = n + #t; print(i, l.o(t)) end end 
+  return n == 63 end
+
+function eg.data(     d,n)
+  n=0
+  d = DATA.new(the.file)
+  for i, row in pairs(d.rows) do
+    if i % 100 ==0 then n = n + #row.cells; l.oo(row.cells) end end
+  l.oo(d.cols.x[1].cells)
+  return n == 63 end
+
+local function learn(data,row,  my,kl)
+  my.n = my.n + 1
+  kl   = row.cells[data.cols.klass.at]
+  if my.n > 10 then
+    my.tries = my.tries + 1
+    my.acc   = my.acc + (kl == row:likes(my.datas) and 1 or 0) end
+  my.datas[kl] = my.datas[kl] or DATA.new{data.cols.names}
+  my.datas[kl]:add(row) end 
+
+function eg.bayes()
+  local wme = {acc=0,datas={},tries=0,n=0}
+   DATA.new("../data/diabetes.csv", function(data,t) learn(data,t,wme) end) 
+   print(wme.acc/(wme.tries))
+   return wme.acc/(wme.tries) > .72 end
+
+function eg.km()
+  print(l.fmt("#%4s\t%s\t%s","acc","k","m"))
+  for k=0,3,1 do
+    for m=0,3,1 do
+      the.k = k
+      the.m = m
+      local wme = {acc=0,datas={},tries=0,n=0}
+      DATA.new("../data/soybean.csv", function(data,t) learn(data,t,wme) end) 
+      print(l.fmt("%5.2f\t%s\t%s",wme.acc/wme.tries, k,m)) end end end
+
+function eg.stats()
+  return  l.o(DATA.new("../data/auto93.csv"):stats())  == 
+             "{.N: 398, Acc+: 15.57, Lbs-: 2970.42, Mpg+: 23.84}" end
+
+function eg.sorted(   d)
+  d=DATA.new("../data/auto93.csv")
+  table.sort(d.rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
+  print("",l.o(d.cols.names))
+  for i, row in pairs(d.rows) do
+    if i < 5  or i> #d.rows - 5 then print(i, l.o(row)) end end end 
+
+function eg.gate(stats, bests, d, say,sayd)
+  local budget0,budget,some = 4,10,.5
+  print(the.seed) 
+  d = DATA.new("../data/auto93.csv")
+  function sayd(row, txt) print(l.o(row.cells), txt, l.rnd(row:d2h(d))) end
+  function say( row,txt)  print(l.o(row.cells), txt) end
+  print(l.o(d.cols.names),"about","d2h")
+  print"#overall" -------------------------------------
+  sayd(d:mid(), "mid")
+  say(d:div() , "div")
+  say(d:small(),"small=div*"..the.cohen)
+  print"#generality" ----------------------------------
+  stats,bests = d:gate(budget0, budget, some)
+  for i,stat in pairs(stats) do sayd(stat,i+budget0) end
+  print"#specifically" ----------------------------------------------------------
+  for i,best in pairs(bests) do sayd(best,i+budget0) end
+  print"#optimum" ------------------------------------------------------
+  table.sort(d.rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
+  sayd(d.rows[1], #d.rows)
+  print"#random" ------------------------------------------------------
+  local rows=l.shuffle(d.rows)
+  rows = l.slice(rows,1,math.log(.05)/math.log(1-the.cohen/6))
+  table.sort(rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
+  sayd(rows[1]) end
+
+function eg.gate20(    d,stats,bests,stat,best)
+  print("#best, mid")
+  for i=1,20 do
+    d=DATA.new("../data/auto93.csv")
+    stats,bests = d:gate(4, 16, .5)
+    stat,best = stats[#stats], bests[#bests]
+    print(l.rnd(best:d2h(d)), l.rnd(stat:d2h(d))) end end
+
+-- ----------------------------------------------------------------------------
+-- ## Start-up
+
+the =  l.settings(help)
+if not pcall(debug.getlocal,4,1) then run(l.cli(the).todo) end
+l.rogues()
+return {the=the, COLS=COLS, DATA=DATA, NUM=NUM, ROW=ROW, SYM=SYM}

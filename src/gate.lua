@@ -19,17 +19,17 @@ OPTIONS:
 
 -- ----------------------------------------------------------------------------
 -- ## Classes
-local  isa = setmetatable
+local function isa(x,y) return setmetatable(y,x) end
 local function is(s,    t) t={a=s}; t.__index=t; return t end
 
+-- ## Columns
 -- ### Numerics
 
 -- Create
 local NUM=is"NUM"
 function NUM.new(s, n)
-  return isa({txt=s or " ", at=n or 0, n=0, mu=0, m2=0, hi=-1E30, lo=1E30,
-              heaven = (s or ""):find"-$" and 0 or 1},
-              NUM) end
+  return isa(NUM, {txt=s or " ", at=n or 0, n=0, mu=0, m2=0, hi=-1E30, lo=1E30,
+              heaven = (s or ""):find"-$" and 0 or 1}) end
 
 -- Update
 function NUM:add(x,     d)
@@ -51,10 +51,6 @@ function NUM:small() return the.cohen*self:div() end
 function NUM:norm(x)
   return x=="?" and x or (x - self.lo) / (self.hi - self.lo + 1E-30) end
 
-function NUM:pooled(other)
-  local n1,n2,m1,m2,s1,s2 = self.n, other.n, self:mid(), other:mid(), self:div(), other:div()
-  return ( ((n1-1)*s1^2 + (n2-1)*s2^2) / (n1+n2-2) )^.5 end
-
 -- Likelihood
 function NUM:like(x,_,      nom,denom)
   local mu, sd =  self:mid(), (self:div() + 1E-30) 
@@ -67,8 +63,7 @@ function NUM:like(x,_,      nom,denom)
 -- Create
 local SYM=is"SYM"
 function SYM.new(s,n)
-  return isa({txt=s or " ", at=n or 0, n=0, has={}, mode=nil, most=0},
-             SYM) end
+  return isa(SYM,{txt=s or " ", at=n or 0, n=0, has={}, mode=nil, most=0}) end
  
 -- Update
 function SYM:add(x)
@@ -93,26 +88,66 @@ function SYM:like(x, prior)
 -- ### Columns
 -- A contrainer storing multiple `NUM`s and `SYM`s.
 
--- Create
+-- Create a set of columns from a set of strings. If uppercase
+-- then `NUM`, else `SYM`. `Klass`es end in `!`. Numeric goals to
+-- minimize of maximize end in `-`,`+`. Keep all cols in `all`.
+-- Also add dependent columns to `y` (anthing ending in `-`,`+`,`!`) and
+-- independent columns in `x` (skipping over anyhing ending in `X`).
 local COLS=is"COLS"
-function COLS.new(t)
+function COLS.new(row)
   local x,y,all = {},{},{}
   local klass,col
-  for at,txt in pairs(t) do
+  for at,txt in pairs(row.cells) do
     col = (txt:find"^[A-Z]" and NUM or SYM).new(txt,at)
     all[1+#all] = col
     if not txt:find"X$" then
       if txt:find"!$" then klass=col end
       (txt:find"[!+-]$" and y or x)[at] = col end end
-  return isa({x=x, y=y, all=all, klass=klass, names=t},
-             COLS) end
+  return isa(COLS,{x=x, y=y, all=all, klass=klass, names=row.cells}) end
 
 -- Update
-function COLS:add(t)
+function COLS:add(row)
   for _,cols in pairs{self.x, self.y} do
     for _,col in pairs(cols) do
-      col:add(t[col.at]) end end 
-  return t end 
+      col:add(row.cells[col.at]) end end 
+  return row end 
+
+-- ### ROW
+
+-- Store cells.
+local ROW=is"ROW"
+function ROW.new(t) return isa(ROW, { cells = t }) end
+
+-- Distance to best values (and _lower_ is _better_).
+function ROW:d2h(data, d, n)
+  d, n = 0, 0
+  for _, col in pairs(data.cols.y) do
+      n = n + 1
+      d = d + math.abs(col.heaven - col:norm(self.cells[col.at])) ^ 2 end
+  return d ^ .5 / n ^ .5 end
+
+-- Return the `data` (from `datas`) that I like the best
+function ROW:likes(datas,       n,nHypotheses,most,tmp,out)
+  n,nHypotheses = 0,0
+  for k,data in pairs(datas) do
+    n = n + #data.rows
+    nHypotheses = 1 + nHypotheses end
+  for k,data in pairs(datas) do
+    tmp = self:like(data,n,nHypotheses)
+    if most==nil or tmp > most then most,out = tmp,k end end
+  return out,most end
+
+-- How much does ROW like `self`. Using logs since these 
+-- numbers are going to get very small.
+function ROW:like(data,n,nHypotheses,       prior,out,v,inc)
+  prior = (#data.rows + the.k) / (n + the.k * nHypotheses)
+  out   = math.log(prior)
+  for _,col in pairs(data.cols.x) do
+    v= self.cells[col.at]
+    if v ~= "?" then 
+      inc = col:like(v,prior)
+      out = out + math.log(inc) end end 
+  return math.exp(1)^out end
 
 -- ### Data
 -- Store `rows`, summarized in `COL`umns.
@@ -120,7 +155,7 @@ function COLS:add(t)
 -- Create from either a file name or a list of rows
 local DATA=is"DATA"
 function DATA.new(src,  fun,     self)
-  self = isa({rows={}, cols=nil},DATA)
+  self = isa(DATA,{rows={}, cols=nil})
   if   type(src) == "string"
   then for _,x in l.csv(src)       do self:add(x, fun) end
   else for _,x in pairs(src or {}) do self:add(x, fun) end end
@@ -129,22 +164,25 @@ function DATA.new(src,  fun,     self)
 -- Update. First time through, assume the row defines the columns.
 -- Otherwise, update the columns then store the rows. If `fun` is
 -- defined, call it before updating anything.
-function DATA:add(t,  fun)
+function DATA:add(t,  fun,row)
+  row = t.cells and t or ROW.new(t)
   if   self.cols
-  then if fun then fun(self,t) end
-       self.rows[1 + #self.rows] = self.cols:add(t)
-  else self.cols = COLS.new(t) end end
-
+  then if fun then fun(self,row) end
+       self.rows[1 + #self.rows] = self.cols:add(row)
+  else self.cols = COLS.new(row) end end
 
 -- Query
 function DATA:mid(cols,   u) 
-  u={}; for _,col in pairs(cols or self.cols.all) do u[1+#u]=col:mid() end; return u end
+  u = {}; for _, col in pairs(cols or self.cols.all) do u[1 + #u] = col:mid() end
+  return ROW.new(u) end
 
 function DATA:div(cols,    u) 
-  u={}; for _,col in pairs(cols or self.cols.all) do u[1+#u]=col:div() end; return u end
+  u = {}; for _, col in pairs(cols or self.cols.all) do u[1 + #u] = col:div() end;
+  return ROW.new(u) end
 
 function DATA:small(    u)
-  u={}; for _,col in pairs(self.cols.all) do u[1+#u] = col:small(); end return u end 
+  u = {}; for _, col in pairs(self.cols.all) do u[1 + #u] = col:small(); end
+  return ROW.new(u) end 
 
 function DATA:stats(cols,fun,ndivs,    u)
   u = {[".N"] = #self.rows}
@@ -152,46 +190,8 @@ function DATA:stats(cols,fun,ndivs,    u)
     u[col.txt] = l.rnd(getmetatable(col)[fun or "mid"](col), ndivs) end
   return u end
 
-function DATA:d2h(t,     d,n)
-  d,n=0,0
-  for _,col in pairs(self.cols.y) do
-    n = n + 1
-    d = d + math.abs(col.heaven - col:norm(t[col.at]))^2 end
-  return d^.5/n^.5 end
-
--- Sort on distance to heaven, split off the first `want` items to return
--- a `best` and `rest` data.
-function DATA:bestRest(rows,want,      best,rest,top) 
-  table.sort(rows, function(a,b) return self:d2h(a) < self:d2h(b) end)
-  best, rest = {self.cols.names}, {self.cols.names}
-  for i,row in pairs(rows) do
-    if i <= want then best[1+#best]=row else rest[1+#rest]=row end end
-  return DATA.new(best), DATA.new(rest)  end
-
--- Likelihood. Using logs since these numbers are going to get very small.
-function DATA:like(t,n,nHypotheses,       prior,out,v,inc)
-  prior = (#self.rows + the.k) / (n + the.k * nHypotheses)
-  out   = math.log(prior)
-  for _,col in pairs(self.cols.x) do
-    v= t[col.at]
-    if v ~= "?" then 
-      inc = col:like(v,prior)
-      out = out + math.log(inc) end end 
-  return math.exp(1)^out end
-
--- Find best likelihood  over multiple datas.
-local function likes(t,datas,       n,nHypotheses,most,tmp,out)
-  n,nHypotheses = 0,0
-  for k,data in pairs(datas) do
-    n = n + #data.rows
-    nHypotheses = 1 + nHypotheses end
-  for k,data in pairs(datas) do
-    tmp = data:like(t,n,nHypotheses)
-    if most==nil or tmp > most then most,out = tmp,k end end
-  return out,most end
-
--- Gate.
-function DATA:soar(budget0,budget,some)
+ -- Gate.
+function DATA:gate(budget0,budget,some)
   local rows,lite,dark
   local stats,bests = {},{}
   rows = l.shuffle(self.rows)
@@ -213,30 +213,28 @@ function DATA:split(best,rest,lite,dark)
   out = 1
   for i,row in pairs(dark) do
     local b,r,tmp
-    b = best:like(row, #lite, 2)
-    r = rest:like(row, #lite, 2)
+    b = row:like(best, #lite, 2)
+    r = row:like(rest, #lite, 2)
     if b>r then selected:add(row) end
     tmp = math.abs(b+r) / math.abs(b-r+1E-300)
     --print(b,r,tmp) 
     if tmp > max then out,max = i,tmp end end  
   return out,selected end
 
--- ----------------------------------------------------------------------------
+-- Sort on distance to heaven, split off the first `want` items to return
+-- a `best` and `rest` data.
+function DATA:bestRest(rows, want, best, rest, top)
+    table.sort(rows, function(a, b) return a:d2h(self) < b:d2h(self) end)
+    best, rest = { self.cols.names }, { self.cols.names }
+    for i, row in pairs(rows) do
+        if i <= want then best[1 + #best] = row else rest[1 + #rest] = row end
+    end
+    return DATA.new(best), DATA.new(rest)
+end
+  
+-- ----------------------------------------------------------------------------
 -- ## Library Functions    
--- ### Objects
-
--- function l.objects(t)
---   for name,kl in pairs(t) do l.obj(name,kl) end 
---   return t end
-
-function l.obj(s,  t)
-  t = t or {}
-  t.a = s
-  t.__index = t  --
-  return setmetatable(t, {
-    __call=function(_,...)
-             local self = setmetatable({},t)
-             return setmetatable(t.new(self,...) or self,t) end}) end
+ 
 
 -- ### Linting
 function l.rogues()
@@ -286,7 +284,6 @@ function l.coerce(s1,    fun)
 -- Parse help string to infer the settings.
 function l.settings(s,    t,pat)
   t,pat = {}, "[-][-]([%S]+)[^=]+= ([%S]+)"
-  --t,pat = {}, "\n[%s]+[-][%S][%s]+[-][-]([%S]+)[^\n]+= ([%S]+)"
   for k, s1 in s:gmatch(pat) do t[k] = l.coerce(s1) end
   t._help = s
   return t end
@@ -331,9 +328,12 @@ function l.o(t,  n,      u)
       u[1+#u]= #t>0 and l.o(t[k],n) or l.fmt("%s: %s", l.o(k,n), l.o(t[k],n)) end end
   return "{" .. table.concat(u, ", ") .. "}" end
 
--- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
 -- ## Examples                                                           
+
 -- ### Examples support code
+
+-- Where to store examples
 local eg={}
 
 local function run(k,   oops,b4) 
@@ -393,19 +393,19 @@ function eg.csv(      n)
 function eg.data(     d,n)
   n=0
   d = DATA.new(the.file)
-  for i, t in pairs(d.rows) do
-    if i % 100 ==0 then n = n + #t; l.oo(t) end end
-  l.oo(d.cols.x[1])
+  for i, row in pairs(d.rows) do
+    if i % 100 ==0 then n = n + #row.cells; l.oo(row.cells) end end
+  l.oo(d.cols.x[1].cells)
   return n == 63 end
 
-local function learn(data,t,  my,kl)
+local function learn(data,row,  my,kl)
   my.n = my.n + 1
-  kl   = t[data.cols.klass.at]
+  kl   = row.cells[data.cols.klass.at]
   if my.n > 10 then
     my.tries = my.tries + 1
-    my.acc   = my.acc + (kl == likes(t, my.datas) and 1 or 0) end
+    my.acc   = my.acc + (kl == row:likes(my.datas) and 1 or 0) end
   my.datas[kl] = my.datas[kl] or DATA.new{data.cols.names}
-  my.datas[kl]:add(t) end 
+  my.datas[kl]:add(row) end 
 
 function eg.bayes()
   local wme = {acc=0,datas={},tries=0,n=0}
@@ -429,42 +429,43 @@ function eg.stats()
 
 function eg.sorted(   d)
   d=DATA.new("../data/auto93.csv")
-  table.sort(d.rows, function(a,b) return d:d2h(a) < d:d2h(b) end)
+  table.sort(d.rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
   print("",l.o(d.cols.names))
   for i, row in pairs(d.rows) do
     if i < 5  or i> #d.rows - 5 then print(i, l.o(row)) end end end 
-  
-function eg.soar(    stats,bests,d)
+
+function eg.gate(stats, bests, d, say,sayd)
+  local budget0,budget,some = 4,10,.5
   print(the.seed) 
-  d  =DATA.new("../data/auto93.csv")
-  print(l.o(d.cols.names),"about","d2h"); 
+  d = DATA.new("../data/auto93.csv")
+  function sayd(row, txt) print(l.o(row.cells), txt, l.rnd(row:d2h(d))) end
+  function say( row,txt)  print(l.o(row.cells), txt) end
+  print(l.o(d.cols.names),"about","d2h")
   print"#overall" -------------------------------------
-  print(l.o(d:mid()),"mid",l.rnd(d:d2h(d:mid())))
-  print(l.o(d:div()),"div")
-  print(l.o(d:small()),"small=div*"..the.cohen); 
+  sayd(d:mid(), "mid")
+  say(d:div() , "div")
+  say(d:small(),"small=div*"..the.cohen)
   print"#generality" ----------------------------------
-  local budget0,budget,some = 4,16,.5
-  stats,bests = d:soar(budget0, budget, some)
-  for i,stat in pairs(stats) do print(l.o(stat),i+budget0,l.rnd(d:d2h(stat))) end
+  stats,bests = d:gate(budget0, budget, some)
+  for i,stat in pairs(stats) do sayd(stat,i+budget0) end
   print"#specifically" ----------------------------------------------------------
-  for i,best in pairs(bests) do print(l.o(best),i+budget0,l.rnd(d:d2h(best))) end
+  for i,best in pairs(bests) do sayd(best,i+budget0) end
   print"#optimum" ------------------------------------------------------
-  table.sort(d.rows, function(a,b) return d:d2h(a) < d:d2h(b) end)
-  print(l.o(d.rows[1]),#d.rows,l.rnd(d:d2h(d.rows[1])))
+  table.sort(d.rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
+  sayd(d.rows[1], #d.rows)
   print"#random" ------------------------------------------------------
   local rows=l.shuffle(d.rows)
   rows = l.slice(rows,1,math.log(.05)/math.log(1-the.cohen/6))
-  table.sort(rows, function(a,b) return d:d2h(a) < d:d2h(b) end)
-  print(l.o(rows[1]),#rows,l.rnd(d:d2h(rows[1])))
-end
+  table.sort(rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
+  sayd(rows[1]) end
 
-function eg.soar20(    d,stats,bests,stat,best)
+function eg.gate20(    d,stats,bests,stat,best)
   print("#best, mid")
   for i=1,20 do
     d=DATA.new("../data/auto93.csv")
-    stats,bests = d:soar(4, 16, .5)
+    stats,bests = d:gate(4, 16, .5)
     stat,best = stats[#stats], bests[#bests]
-    print(l.rnd(d:d2h(best)), l.rnd(d:d2h(stat))) end end
+    print(l.rnd(best:d2h(d)), l.rnd(stat:d2h(d))) end end
 
 -- ----------------------------------------------------------------------------
 -- ## Start-up
@@ -472,4 +473,4 @@ function eg.soar20(    d,stats,bests,stat,best)
 the =  l.settings(help)
 if not pcall(debug.getlocal,4,1) then run(l.cli(the).todo) end
 l.rogues()
-return {the=the, COLS=COLS, DATA=DATA, NUM=NUM, SYM=SYM}
+return {the=the, COLS=COLS, DATA=DATA, NUM=NUM, ROW=ROW, SYM=SYM}

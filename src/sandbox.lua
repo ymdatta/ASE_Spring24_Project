@@ -35,7 +35,7 @@ function eg.discretize(           max,num1,sym1,mu,sd,t,u,n,y,v,i)
   for _, y in pairs(sort(u)) do
     n = sym1.has[y]
     i=i+1
-    print(fmt("%2s %6s%%   %4.1f  %s",y, n/10, v[y], ('*'):rep(n//10))) end endf
+    print(fmt("%2s %6s%%   %4.1f  %s",y, n/10, v[y], ('*'):rep(n//10))) end end
 
  
 
