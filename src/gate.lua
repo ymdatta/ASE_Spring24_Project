@@ -452,7 +452,7 @@ function eg.soar(    stats,bests,d)
   table.sort(d.rows, function(a,b) return d:d2h(a) < d:d2h(b) end)
   print(l.o(d.rows[1]),#d.rows,l.rnd(d:d2h(d.rows[1])))
   print"#random" ------------------------------------------------------
-  rows=l.shuffle(d.rows)
+  local rows=l.shuffle(d.rows)
   rows = l.slice(rows,1,math.log(.05)/math.log(1-the.cohen/6))
   table.sort(rows, function(a,b) return d:d2h(a) < d:d2h(b) end)
   print(l.o(rows[1]),#rows,l.rnd(d:d2h(rows[1])))
