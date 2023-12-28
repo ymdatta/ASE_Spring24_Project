@@ -112,7 +112,7 @@ function COLS:add(row)
       col:add(row.cells[col.at]) end end 
   return row end 
 
--- ### ROW
+-- ### ROW
 
 -- Store cells.
 local ROW=is"ROW"
@@ -190,7 +190,7 @@ function DATA:stats(cols,fun,ndivs,    u)
     u[col.txt] = l.rnd(getmetatable(col)[fun or "mid"](col), ndivs) end
   return u end
 
- -- Gate.
+-- Gate.
 function DATA:gate(budget0,budget,some)
   local rows,lite,dark
   local stats,bests = {},{}
