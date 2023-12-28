@@ -7,7 +7,6 @@ USAGE:
   lua smooth.lua [OPTIONS] [eg ACTION]
 
 OPTIONS:
-  -b --bins   number of bins                    = 10
   -c --cohen  small effect size sd*cohen        = .35
   -e --eg     start up action                   = help
   -f --file   csv data file name                = ../data/diabetes.csv

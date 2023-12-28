@@ -19,14 +19,17 @@ OPTIONS:
 
 -- ----------------------------------------------------------------------------
 -- ## Classes
+local  isa = setmetatable
+local function is(s,    t) t={a=s}; t.__index=t; return t end
+
 -- ### Numerics
 
 -- Create
-local NUM={}
-function NUM:new(s, n)
-  return {txt=s or " ", at=n or 0, n=0,
-          mu=0, m2=0, hi=-1E30, lo=1E30,
-          heaven = (s or ""):find"-$" and 0 or 1} end
+local NUM=is"NUM"
+function NUM.new(s, n)
+  return isa({txt=s or " ", at=n or 0, n=0, mu=0, m2=0, hi=-1E30, lo=1E30,
+              heaven = (s or ""):find"-$" and 0 or 1},
+              NUM) end
 
 -- Update
 function NUM:add(x,     d)
@@ -62,11 +65,11 @@ function NUM:like(x,_,      nom,denom)
 -- ### Symbols
 
 -- Create
-local SYM={}
-function SYM:new(s,n)
-  return {txt=s or " ", at=n or 0, n=0,
-          has={}, mode=nil, most=0} end
-
+local SYM=is"SYM"
+function SYM.new(s,n)
+  return isa({txt=s or " ", at=n or 0, n=0, has={}, mode=nil, most=0},
+             SYM) end
+ 
 -- Update
 function SYM:add(x)
   if x ~= "?" then 
@@ -79,9 +82,7 @@ function SYM:add(x)
 function SYM:mid() return self.mode end
 
 function SYM:div(    e) 
-  e=0
-  for _,v in pairs(self.has) do e=e - v/self.n*math.log(v/self.n,2) end
-  return e end
+  e=0; for _,v in pairs(self.has) do e=e-v/self.n*math.log(v/self.n,2) end; return e end
 
 function SYM:small() return 0 end
 
@@ -93,17 +94,18 @@ function SYM:like(x, prior)
 -- A contrainer storing multiple `NUM`s and `SYM`s.
 
 -- Create
-local COLS={}
-function COLS:new(t)
+local COLS=is"COLS"
+function COLS.new(t)
   local x,y,all = {},{},{}
   local klass,col
   for at,txt in pairs(t) do
-    col = (txt:find"^[A-Z]" and NUM or SYM)(txt,at)
+    col = (txt:find"^[A-Z]" and NUM or SYM).new(txt,at)
     all[1+#all] = col
     if not txt:find"X$" then
       if txt:find"!$" then klass=col end
       (txt:find"[!+-]$" and y or x)[at] = col end end
-  return {x=x, y=y, all=all, klass=klass, names=t} end
+  return isa({x=x, y=y, all=all, klass=klass, names=t},
+             COLS) end
 
 -- Update
 function COLS:add(t)
@@ -116,12 +118,13 @@ function COLS:add(t)
 -- Store `rows`, summarized in `COL`umns.
 
 -- Create from either a file name or a list of rows
-local DATA={}
-function DATA:new(src,  fun)
-  self.rows, self.cols = {},nil
+local DATA=is"DATA"
+function DATA.new(src,  fun,     self)
+  self = isa({rows={}, cols=nil},DATA)
   if   type(src) == "string"
   then for _,x in l.csv(src)       do self:add(x, fun) end
-  else for _,x in pairs(src or {}) do self:add(x, fun) end end end
+  else for _,x in pairs(src or {}) do self:add(x, fun) end end
+  return self end
 
 -- Update. First time through, assume the row defines the columns.
 -- Otherwise, update the columns then store the rows. If `fun` is
@@ -130,7 +133,7 @@ function DATA:add(t,  fun)
   if   self.cols
   then if fun then fun(self,t) end
        self.rows[1 + #self.rows] = self.cols:add(t)
-  else self.cols = COLS(t) end end
+  else self.cols = COLS.new(t) end end
 
 
 -- Query
@@ -163,7 +166,7 @@ function DATA:bestRest(rows,want,      best,rest,top)
   best, rest = {self.cols.names}, {self.cols.names}
   for i,row in pairs(rows) do
     if i <= want then best[1+#best]=row else rest[1+#rest]=row end end
-  return DATA(best), DATA(rest)  end
+  return DATA.new(best), DATA.new(rest)  end
 
 -- Likelihood. Using logs since these numbers are going to get very small.
 function DATA:like(t,n,nHypotheses,       prior,out,v,inc)
@@ -205,7 +208,7 @@ function DATA:soar(budget0,budget,some)
 -- Find the row scoring based on our acquite function.
 function DATA:split(best,rest,lite,dark)
   local selected,max,out
-  selected = DATA{self.cols.names}
+  selected = DATA.new{self.cols.names}
   max = 1E30
   out = 1
   for i,row in pairs(dark) do
@@ -214,7 +217,7 @@ function DATA:split(best,rest,lite,dark)
     r = rest:like(row, #lite, 2)
     if b>r then selected:add(row) end
     tmp = math.abs(b+r) / math.abs(b-r+1E-300)
-    --print(b,r,tmp)
+    --print(b,r,tmp) 
     if tmp > max then out,max = i,tmp end end  
   return out,selected end
 
@@ -222,9 +225,9 @@ function DATA:split(best,rest,lite,dark)
 -- ## Library Functions    
 -- ### Objects
 
-function l.objects(t)
-  for name,kl in pairs(t) do l.obj(name,kl) end 
-  return t end
+-- function l.objects(t)
+--   for name,kl in pairs(t) do l.obj(name,kl) end 
+--   return t end
 
 function l.obj(s,  t)
   t = t or {}
@@ -363,7 +366,7 @@ function eg.the() l.oo(the); return the.help ~= nil and the.seed and the.m and t
 function eg.help() print("\n"..the._help) end
 
 function eg.sym(      s,mode,e)
-  s = SYM()
+  s = SYM.new()
   for _, x in pairs{1,1,1,1,2,2,3} do s:add(x) end
   mode, e = s:mid(), s:div()
   print(mode, e)
@@ -375,11 +378,11 @@ local function norm(mu,sd,    R)
                                * math.cos(2 * math.pi * R()) end
 
 function eg.num(      e,mu,sd)
-  e = NUM()
+  e = NUM.new()
   for _ = 1,1000 do e:add(norm(10, 2)) end
   mu, sd = e:mid(), e:div()
   print(l.rnd(mu,3), l.rnd(sd,3))
-  return 9.9 < mu and mu < 10 and 1.95 < sd and sd < 2 end
+  return 10 < mu and mu < 10.1 and 2 < sd and sd < 2.05 end
 
 function eg.csv(      n)
   n=0
@@ -389,7 +392,7 @@ function eg.csv(      n)
 
 function eg.data(     d,n)
   n=0
-  d = DATA(the.file)
+  d = DATA.new(the.file)
   for i, t in pairs(d.rows) do
     if i % 100 ==0 then n = n + #t; l.oo(t) end end
   l.oo(d.cols.x[1])
@@ -401,12 +404,12 @@ local function learn(data,t,  my,kl)
   if my.n > 10 then
     my.tries = my.tries + 1
     my.acc   = my.acc + (kl == likes(t, my.datas) and 1 or 0) end
-  my.datas[kl] = my.datas[kl] or DATA{data.cols.names}
+  my.datas[kl] = my.datas[kl] or DATA.new{data.cols.names}
   my.datas[kl]:add(t) end 
 
 function eg.bayes()
   local wme = {acc=0,datas={},tries=0,n=0}
-   DATA("../data/diabetes.csv", function(data,t) learn(data,t,wme) end) 
+   DATA.new("../data/diabetes.csv", function(data,t) learn(data,t,wme) end) 
    print(wme.acc/(wme.tries))
    return wme.acc/(wme.tries) > .72 end
 
@@ -417,15 +420,15 @@ function eg.km()
       the.k = k
       the.m = m
       local wme = {acc=0,datas={},tries=0,n=0}
-      DATA("../data/soybean.csv", function(data,t) learn(data,t,wme) end) 
+      DATA.new("../data/soybean.csv", function(data,t) learn(data,t,wme) end) 
       print(l.fmt("%5.2f\t%s\t%s",wme.acc/wme.tries, k,m)) end end end
 
 function eg.stats()
-  return l.o(DATA("../data/auto93.csv"):stats()) == 
+  return l.o(DATA.new("../data/auto93.csv"):stats()) == 
      "{.N: 398, Acc+: 15.568, Lbs-: 2970.425, Mpg+: 23.844}" end
 
 function eg.sorted(   d)
-  d=DATA("../data/auto93.csv")
+  d=DATA.new("../data/auto93.csv")
   table.sort(d.rows, function(a,b) return d:d2h(a) < d:d2h(b) end)
   print("",l.o(d.cols.names))
   for i, row in pairs(d.rows) do
@@ -433,7 +436,7 @@ function eg.sorted(   d)
   
 function eg.soar(    stats,bests,d)
   print(the.seed) 
-  d  =DATA("../data/auto93.csv")
+  d  =DATA.new("../data/auto93.csv")
   print(l.o(d.cols.names),"about","d2h"); print"#overall"
   print(l.o(d:mid()),"mid",l.rnd(d:d2h(d:mid())))
   print(l.o(d:div()),"div")
@@ -447,7 +450,7 @@ end
 
 function eg.soar20(    d,stats,bests,stat,best)
   for i=1,20 do
-    d=DATA("../data/auto93.csv")
+    d=DATA.new("../data/auto93.csv")
     stats,bests = d:soar(4, 16, .5)
     stat,best = stats[#stats], bests[#bests]
     print(l.rnd(d:d2h(stat)), l.rnd(d:d2h(best))) end end
@@ -455,8 +458,7 @@ function eg.soar20(    d,stats,bests,stat,best)
 -- ----------------------------------------------------------------------------
 -- ## Start-up
 
-local gate=l.objects{COLS=COLS,DATA=DATA,NUM=NUM,SYM=SYM}
 the =  l.settings(help)
 if not pcall(debug.getlocal,4,1) then run(l.cli(the).todo) end
 l.rogues()
-return gate
+return {the=the, COLS=COLS, DATA=DATA, NUM=NUM, SYM=SYM}
