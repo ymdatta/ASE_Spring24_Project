@@ -9,7 +9,7 @@ USAGE:
   lua gate.lua [OPTIONS] 
 
 OPTIONS:
-   -c --cohen    small effect size               = .35
+  -c --cohen    small effect size               = .35
   -f --file     csv data file name              = ../data/diabetes.csv
   -h --help     show help                       = false
   -k --k        low class frequency kludge      = 1
@@ -424,8 +424,8 @@ function eg.km()
       print(l.fmt("%5.2f\t%s\t%s",wme.acc/wme.tries, k,m)) end end end
 
 function eg.stats()
-  return l.o(DATA.new("../data/auto93.csv"):stats()) == 
-     "{.N: 398, Acc+: 15.568, Lbs-: 2970.425, Mpg+: 23.844}" end
+  return  l.o(DATA.new("../data/auto93.csv"):stats())  == 
+             "{.N: 398, Acc+: 15.57, Lbs-: 2970.42, Mpg+: 23.84}" end
 
 function eg.sorted(   d)
   d=DATA.new("../data/auto93.csv")
@@ -437,23 +437,34 @@ function eg.sorted(   d)
 function eg.soar(    stats,bests,d)
   print(the.seed) 
   d  =DATA.new("../data/auto93.csv")
-  print(l.o(d.cols.names),"about","d2h"); print"#overall"
+  print(l.o(d.cols.names),"about","d2h"); 
+  print"#overall" -------------------------------------
   print(l.o(d:mid()),"mid",l.rnd(d:d2h(d:mid())))
   print(l.o(d:div()),"div")
-  print(l.o(d:small()),"small=div*"..the.cohen); print"#generality"
-  stats,bests = d:soar(4, 16, .5)
-  for i,stat in pairs(stats) do print(l.o(stat),"_",l.rnd(d:d2h(stat))) end; print"#specifically"
-  for i,best in pairs(bests) do print(l.o(best),"_",l.rnd(d:d2h(best))) end; print"#optimum"
+  print(l.o(d:small()),"small=div*"..the.cohen); 
+  print"#generality" ----------------------------------
+  local budget0,budget,some = 4,16,.5
+  stats,bests = d:soar(budget0, budget, some)
+  for i,stat in pairs(stats) do print(l.o(stat),i+budget0,l.rnd(d:d2h(stat))) end
+  print"#specifically" ----------------------------------------------------------
+  for i,best in pairs(bests) do print(l.o(best),i+budget0,l.rnd(d:d2h(best))) end
+  print"#optimum" ------------------------------------------------------
   table.sort(d.rows, function(a,b) return d:d2h(a) < d:d2h(b) end)
-  print(l.o(d.rows[1]),"_",l.rnd(d:d2h(d.rows[1])))
+  print(l.o(d.rows[1]),#d.rows,l.rnd(d:d2h(d.rows[1])))
+  print"#random" ------------------------------------------------------
+  rows=l.shuffle(d.rows)
+  rows = l.slice(rows,1,math.log(.05)/math.log(1-the.cohen/6))
+  table.sort(rows, function(a,b) return d:d2h(a) < d:d2h(b) end)
+  print(l.o(rows[1]),#rows,l.rnd(d:d2h(rows[1])))
 end
 
 function eg.soar20(    d,stats,bests,stat,best)
+  print("#best, mid")
   for i=1,20 do
     d=DATA.new("../data/auto93.csv")
     stats,bests = d:soar(4, 16, .5)
     stat,best = stats[#stats], bests[#bests]
-    print(l.rnd(d:d2h(stat)), l.rnd(d:d2h(best))) end end
+    print(l.rnd(d:d2h(best)), l.rnd(d:d2h(stat))) end end
 
 -- ----------------------------------------------------------------------------
 -- ## Start-up
