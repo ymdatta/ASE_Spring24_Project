@@ -45,7 +45,7 @@ function acquire.stress(b,r)
 -- ### Numerics
 
 -- Create
-local NUM={}  
+local NUM={}
 function NUM:new(s, n)
   return {txt=s or " ", at=n or 0, n=0,
           mu=0, m2=0, hi=-1E30, lo=1E30,
@@ -181,12 +181,12 @@ function DATA:d2h(t,     d,n)
 
 -- Sort on distance to heaven, split off the first `want` items to return
 -- a `best` and `rest` data.
-function DATA:bestRest(rows,want,      best,rest) 
+function DATA:bestRest(rows,want,      best,rest,top) 
   table.sort(rows, function(a,b) return self:d2h(a) < self:d2h(b) end)
   best, rest = {self.cols.names}, {self.cols.names}
   for i,row in pairs(rows) do
     if i <= want then best[1+#best]=row else rest[1+#rest]=row end end
-  return DATA(best), DATA(rest) end
+  return DATA(best), DATA(rest),rows end
 
 -- Likelihood. Using logs since these numbers are going to get very small.
 function DATA:like(t,n,nHypotheses,       prior,out,col,inc)
@@ -211,10 +211,11 @@ local function likes(t,datas,       n,nHypotheses,most,tmp,out)
   return out,most end
 
 -- Gate.
-function DATA:gate(report,  n1,n2,       dark,lite,best,rest,todo,data0)
+function DATA:soar(report,  n1,n2,       dark,lite,todo,data0)
   n1,n2 = n1 or 5, n2 or 10
   if report then
-    print(l.o(self.cols.names))
+    print(l.o(self.cols.names),"about","d2h")
+    print"#"
     print(l.o(self:mid()),"mid")
     print(l.o(self:div()),"div")
     local tmp={}
@@ -225,20 +226,52 @@ function DATA:gate(report,  n1,n2,       dark,lite,best,rest,todo,data0)
   dark,lite = {},{}
   for i,row in pairs(l.shuffle(self.rows)) do
     if i<=n1 then lite[1+#lite]=row else dark[1+#dark]=row end end
-  local d2h,x=1E30,nil
+  local d2h,out,x=1E30,nil,nil
   for i=1,n2 do
-    best,rest = self:bestRest(lite, (#lite)^.5)  -- assess
+    local best,rest,rows = self:bestRest(lite, (#lite)^.5)  -- assess
+    local top = rows[1]
     todo = self:acquisitionFunction(best,rest,lite,dark)  -- guess
-    x = self:d2h(dark[todo])
-    if x < d2h then
-      d2h = x
-      if report then print(l.o(dark[todo]),i, l.rnd(self:d2h(dark[todo]))) end end
+    out = out or top
+    if self:d2h(top) < d2h then
+      out=top
+      if report then print(l.o(out),i, l.rnd(self:d2h(out))) end end
     lite[1+#lite] = table.remove(dark,todo) end  -- try, extend
   if report then 
     print"#"
     table.sort(self.rows, function(a,b) return self:d2h(a) < self:d2h(b) end)
     print(l.o(self.rows[1]),#self.rows,l.rnd(self:d2h(self.rows[1]))) end
-  return best end
+  return top,best end
+
+function DATA:fall(report,  n1,n2,       dark,lite,best,rest,todo,data0)
+  n1,n2 = n1 or 5, n2 or 10
+  if report then
+    print(l.o(self.cols.names),"about","d2h")
+    print"#"
+    print(l.o(self:mid()),"mid")
+    print(l.o(self:div()),"div")
+    local tmp={}
+    for k,col in pairs(self.cols.all) do tmp[k]=col:small() end
+    print(l.o(tmp),"small") 
+    print"#"
+  end
+  dark,lite = {},{}
+  for i,row in pairs(l.shuffle(self.rows)) do
+    if i <= n1 then lite[1+#lite]=row else dark[1+#dark]=row end end
+  local d2h,out,x = 1E30,nil,nil
+  for i=1,n2 do
+    best,rest = self:bestRest(lite, #lite - (#lite)^.5)  -- assess
+    todo = self:acquisitionFunction(best,rest,lite,dark)  -- guess
+    x = self:d2h(dark[todo])
+    if x < d2h then
+      d2h = x
+      out=dark[todo]
+      if report then print(l.o(out),i, l.rnd(self:d2h(out))) end end
+    lite[1+#lite] = table.remove(dark,todo) end  -- try, extend
+  if report then 
+    print"#"
+    table.sort(self.rows, function(a,b) return self:d2h(a) < self:d2h(b) end)
+    print(l.o(self.rows[1]),#self.rows,l.rnd(self:d2h(self.rows[1]))) end
+  return out,best end
 
 -- Find the row scoring based on our acquite function.
 function DATA:acquisitionFunction(best,rest,lite,dark) 
@@ -247,7 +280,7 @@ function DATA:acquisitionFunction(best,rest,lite,dark)
   for i,row in pairs(dark) do
     b = best:like(row, #lite, 2)
     r = rest:like(row, #lite, 2)
-    tmp = acquire[the.acquire](b,r) 
+    tmp = acquire.stress(b,r) 
     if tmp > max then what,max = i,tmp end end
   return what end
 
@@ -455,8 +488,19 @@ function eg.sorted(   d)
   for i, row in pairs(d.rows) do
     if i < 5  or i> #d.rows - 5 then print(i, l.o(row)) end end end 
   
-function eg.gate1()
-  DATA("../data/auto93.csv"):gate(true,4,10) end
+function eg.soar(    out)
+  out=DATA("../data/auto93.csv"):soar(true,4,10)
+  print(l.o(out)) end
+
+function eg.soar20(    out,d)
+  d=DATA("../data/auto93.csv")
+  print("#d2h,",l.o(d.cols.names))
+  print("#"..l.rnd(d:d2h(d:mid())),l.o(d:mid()))
+  for i=1,20 do
+    d=DATA("../data/auto93.csv")
+    out=d:soar(false,4,10)
+    print(l.rnd(d:d2h(out)),l.o(out))
+   end end
 
 -- ----------------------------------------------------------------------------
 -- ## Start-up
