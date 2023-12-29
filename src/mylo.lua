@@ -139,33 +139,10 @@ function ROW:neighbors(data,  rows)
   return l.keysort(rows or data.rows,
                    function(row) return self:dist(row,data) end) end
 
--- ### Node
-
--- Recursive binary clustering returns a tree. That tree is build from `NODE`s.
-local NODE=is"NODE"
-function NODE.new(data) return isa(NODE,{here=data}) end
-
--- Walk over a tree, call `fun` on each node.
-function NODE:walk(fun, depth)
-  depth = depth or 0
-  fun(self, depth, not (self.lefts or self.rights))
-  if self.lefts  then self.lefts:walk(fun, depth+1) end
-  if self.rights then self.rights:walk(fun,depth+1) end end
-
--- Print a tree by printing each node.
-function NODE:show(_show, maxDepth)
-  local function d2h(data) return l.rnd(data:mid():d2h(self.here)) end
-  maxDepth = 0
-  function _show(node, depth, leafp,      post) 
-    post     = leafp and (d2h(node.here) .."\t".. l.o(node.here:mid().cells)) or ""
-    maxDepth = math.max(maxDepth,depth)
-    print(('|.. '):rep(depth), post)  end
-  self:walk(_show); print""
-  print( ("    "):rep(maxDepth), d2h(self.here),l.o(self.here:mid().cells) )
-  print( ("    "):rep(maxDepth), "_",   l.o(self.here.cols.names))
-  end
 
 -- ### Data
+
+local NODE 
 -- Store `rows`, summarized in `COL`umns.
 
 -- Create from either a file name or a list of rows
@@ -211,6 +188,33 @@ function DATA:clone(  rows,     new)
   for _,row in pairs(rows or {}) do new:add(row) end
   return new end
 
+-- ### NODE
+
+-- Recursive binary clustering returns a tree. That tree is build from `NODE`s.
+ NODE=is"NODE"
+function NODE.new(data) return isa(NODE, { here = data }) end
+
+-- Walk over a tree, call `fun` on each node.
+function NODE:walk(fun, depth)
+  depth = depth or 0
+  fun(self, depth, not (self.lefts or self.rights))
+  if self.lefts  then self.lefts:walk(fun, depth+1) end
+  if self.rights then self.rights:walk(fun,depth+1) end end
+
+-- Print a tree by printing each node.
+function NODE:show(_show, maxDepth)
+  local function d2h(data) return l.rnd(data:mid():d2h(self.here)) end
+  maxDepth = 0
+  function _show(node, depth, leafp,      post) 
+    post     = leafp and (d2h(node.here) .."\t".. l.o(node.here:mid().cells)) or ""
+    maxDepth = math.max(maxDepth,depth)
+    print(('|.. '):rep(depth), post)  end
+  self:walk(_show); print""
+  print( ("    "):rep(maxDepth), d2h(self.here),l.o(self.here:mid().cells) )
+  print( ("    "):rep(maxDepth), "_",   l.o(self.here.cols.names))
+  end
+
+  
 -- Return two distance points, and the distance between them.
 -- If `sortp` then ensure `a` is better than `b`.
 function DATA:farapart(rows,  sortp,a,    b,far,evals)
