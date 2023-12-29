@@ -37,6 +37,10 @@ help:  ## show help
 			/^[a-zA-Z_0-9-]+:.*?## / {printf "   \033[36m%-10s\033[0m : %s\n", $$1, $$2} \
 			' $(MAKEFILE_LIST)
 
+install: ## install lua on {debian, ubuntu, codespaces}
+	sudo apt update
+	sudo apt install lua5.3
+
 saved: ## save and push  to main brach 
 	git add *;git commit -am save;git push;git status
 
@@ -52,12 +56,12 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  $(addprefix ~/tmp/, $(FILES:.l
 	echo "$$css" >> ../docs/pycco.css
 	git  add  $@
 
-~/tmp/%.pdf: %.lua 
+~/tmp/%.pdf: %.lua  ## make pdf
 	mkdir -p ~/tmp
 	echo "a2ps: $^ -> $@" 
 	a2ps                          \
-		-qBr                          \
-		--chars-per-line 90          \
+		-qBr                         \
+		--chars-per-line 90           \
 		--file-align=fill              \
 		--line-numbers=1                \
 		--borders=no                     \
@@ -69,23 +73,8 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  $(addprefix ~/tmp/, $(FILES:.l
 	ps2pdf ~/tmp/$^.ps $@ ;  rm ~/tmp/$^.ps; \
   open $@
 
-zero:
-	lua zero.lua  -f ../data/zero.csv
-	cat ../data/zero.csv | lua zero.lua
-
-count1: ## simple count from cli file
-	lua count.lua -r mid -f ../data/diabetes.csv
-	lua count.lua -r div -f ../data/diabetes.csv
-
-count2:  ## simple count from standard input
-	cat ../data/diabetes.csv | lua count.lua -r mid  
-	cat ../data/diabetes.csv | lua count.lua -r div 
-
-counts: ## simple count from cli file
-	cat ../data/diabetes.csv | lua counts.lua 
-
-eggate:
+eggate: ## basic demo of GATE
 	lua gate.lua -t gate |column -t
 
-eggate20:
+eggate20: ## run gate*20 (with different random seeds)
 	lua gate.lua -s $$RANDOM -t gate20 | sort -n 

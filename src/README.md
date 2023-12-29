@@ -2,6 +2,16 @@
 
 # GATE
 
+- Classification, regression = means of leaf clusters
+- anomaly detection = find a new example's position in its leaf. if more than X5 away from mid, then anoamly
+- streaming = build model of first N samples, apply to next N examples, identify sub-trees with lots of anamalies. relearn from there.
+- Data generation  = sampling within each leaf
+- Optimization = pruning branches of the cluster tree.
+- Semi-supervised learning = only query the remote projection points.
+- Explanation = deltas between clusters
+
+Find the state of the art in the above. Compare.
+
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec dignissim, metus vel vehicula feugiat, mauris ante gravida purus, quis ultrices nulla risus quis sapien. Phasellus malesuada nisl id augue iaculis, a consequat enim sollicitudin. Suspendisse ut arcu facilisis, mattis mauris et, suscipit elit. Quisque eget viverra odio. Integer quis purus et tortor lacinia lacinia vel eget nibh. Vivamus neque ante, malesuada aliquet lorem vel, convallis sodales sapien. Nulla facilisi. Integer et lectus augue. Phasellus eleifend eros mauris, quis lacinia mauris rutrum at. Vestibulum ac augue in orci tempus sollicitudin. Sed at sodales libero, sed elementum nisi. Quisque id quam diam. Sed ultricies at sapien eu egestas.
 
 Sed vitae mauris vehicula nunc efficitur consectetur quis sit amet nibh. Curabitur viverra ligula vel vehicula condimentum. Mauris porta mollis lorem auctor sodales. Donec nec dolor quis felis finibus dignissim. Morbi sed tristique elit. Nam in congue mi. Aenean imperdiet et ante sed sodales. Pellentesque vel scelerisque neque. Mauris vulputate lobortis leo, maximus convallis diam lobortis facilisis. In hac habitasse platea dictumst. Aenean sodales, lacus id auctor scelerisque, quam risus malesuada nulla, id faucibus turpis ex eget augue. Quisque tristique viverra lorem non dignissim. Phasellus semper tempus turpis suscipit hendrerit.

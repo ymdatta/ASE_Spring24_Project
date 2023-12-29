@@ -1,28 +1,22 @@
 -- .
 local b4={}; for k, _ in pairs(_ENV) do b4[k]=k end
 local l,the,help = {},{},[[
-mylo: lo is less. less is more. go lo. 
-Recursive bi-clustering via random projections. 
+mylo: recursive bi-clustering via random projections (lo is less. less is more. go lo)
 (c) 2023, Tim Menzies, BSD-2
 
 USAGE:
-  lua gate.lua [OPTIONS] 
+  lua mylo.lua [OPTIONS]
 
 OPTIONS:
   -c --cohen  small effect size               = .35
   -f --file   csv data file name              = ../data/diabetes.csv
   -F --Far    how far to search for faraway?  = .95
-  -h --help   show help                       = false 
+  -h --help   show help                       = false
   -H --Half   #items to use in clustering     = 256
   -p --p      weights for distance            = 2
   -s --seed   random number seed              = 31210
-  -t --todo   start up action                 = help
+  -t --todo   start up action                 = help]]
 
-Classification, regression = means of leaf clusters
-Data generation, anamoaly detection = sampling within each leaf
-Optimization = pruning branches of the cluster tree.
-Semi-supervised learning = only query the remote projection points.
-Explanation = deltas between clusters]]
 -- ----------------------------------------------------------------------------
 -- ## Classes
 local function isa(x,y) return setmetatable(y,x) end
@@ -118,7 +112,7 @@ function COLS:add(row)
       col:add(row.cells[col.at]) end end 
   return row end 
 
--- ### ROW
+-- ### ROW
 
 -- Store cells.
 local ROW=is"ROW"
@@ -244,13 +238,9 @@ function DATA:tree(sortp,      _tree)
           node.lefts  = _tree(self:clone(lefts),  node.left)
           node.rights = _tree(self:clone(rights), node.right) end
     return node end
-  return _tree(self) end
-
-
-  
+  return _tree(self) end 
 -- ----------------------------------------------------------------------------
--- ## Library Functions    
- 
+-- ## Library Functions
 
 -- ### Linting
 function l.rogues()
@@ -445,8 +435,8 @@ function eg.dist(   d,rows,r1)
   r1   = d.rows[1]
   rows = r1:neighbors(d)
   for i, row in pairs(rows) do
-    if i%30 ==0 then print(l.o(row.cells), l.rnd(row:dist(r1,d))) end end end  
-    
+    if i%30 ==0 then print(l.o(row.cells), l.rnd(row:dist(r1,d))) end end end
+
 function eg.far(      d,rows,a,b,C)
   d  = DATA.new("../data/auto93.csv")
   a,b,C = d:farapart(d.rows)
@@ -457,14 +447,15 @@ function eg.half(      d,o)
   local lefts, rights, left, right, C,cut = d:half(d.rows)
   o = l.o
   print(o(#lefts),o(#rights),o(left.cells),o(right.cells),o(C),o(cut)) end
-  
+
 function eg.tree()
   DATA.new("../data/auto93.csv"):tree() end
-  
+
 -- ----------------------------------------------------------------------------
 -- ## Start-up
 
-the =  l.settings(help)
-if not pcall(debug.getlocal,4,1) then run(l.cli(the).todo) end
+the = l.settings(help)
+if   not pcall(debug.getlocal, 4, 1) -- if __name__ == "__main__":
+then run(l.cli(the).todo) end
 l.rogues()
-return {the=the, COLS=COLS, DATA=DATA, NUM=NUM, ROW=ROW, SYM=SYM}
+return {the=the, COLS=COLS, DATA=DATA, NODE=NODE, NUM=NUM, ROW=ROW, SYM=SYM}
