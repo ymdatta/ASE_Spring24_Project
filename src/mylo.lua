@@ -149,8 +149,8 @@ function NODE.new(data) return isa(NODE,{here=data}) end
 function NODE:walk(fun, depth)
   depth = depth or 0
   fun(self, depth, not (self.lefts or self.rights))
-  if self.lefts  then self.lefts.node:walk(fun, depth+1) end
-  if self.rights then self.rights.node:walk(fun,depth+1) end end
+  if self.lefts  and self.lefts.node then self.lefts.node:walk(fun, depth+1) end
+  if self.rights and self.rights.node then self.rights.node:walk(fun,depth+1) end end
 
 -- Print a tree by printing each node.
 function NODE:show(      _show,maxDepth)
@@ -159,7 +159,7 @@ function NODE:show(      _show,maxDepth)
     post     = leafp and l.o(l.stats(node.here)) or ""
     maxDepth = math.max(maxDepth,depth)
     print(('|.. '):rep(depth), post)  end
-  self:show(_show); print""
+  _show(self); print""
   print( ("    "):rep(maxDepth), l.o(l.stats(self.here))) end 
 
 -- ### Data
@@ -231,7 +231,7 @@ function DATA:half(rows,sortp,before)
 
 function DATA:tree(sortp,      _tree)
   function _tree(data,above,     lefts,rights,node)
-    node = NODE.new(data) 
+    node = NODE.new(data)
     if   #data.rows > 2*(#self.rows)^.5
     then lefts, rights, node.left, node.right, node.C, node.cut =
                             self:half(data.rows,sortp,above)
@@ -289,14 +289,14 @@ function l.slice(t, go, stop, inc,    u)
 
 -- Schwartzian transform:  decorate, sort, undecorate
 function l.keysort(t,fun,      u,v)
-  u={}; for _,x in pairs(t) do u[1+#u]={x=x, y=fun(x)} end --decorate
+  u={}; for _,x in pairs(t) do u[1+#u]={x=x, y=fun(x)} end -- decorate
   table.sort(u, function(a,b) return a.y < b.y end) -- sort
   v={}; for _,xy in pairs(u) do v[1+#v] = xy.x end -- undecoreate
   return v end
 
 -- ### String to Things
 
--- Coerce string to intm float, nil, true, false, or (it all else fails), a strong.
+-- Coerce string to int, float, nil, true, false, or (it all else fails), a strong.
 function l.coerce(s1,    fun) 
   function fun(s2)
     if s2=="nil" then return nil else return s2=="true" or (s2~="false" and s2) end end
@@ -357,7 +357,8 @@ function l.o(t,  n,      u)
 -- Where to store examples
 local eg={}
 
-local function run(k,   oops,b4) 
+local function run(k, oops, b4)
+  if not eg[k] then return print("-- ERROR: unknown start up action ["..k.."]") end
   b4 = l.copy(the) -- set up
   math.randomseed(the.seed) -- set up
   oops = eg[k]()==false
@@ -448,8 +449,9 @@ function eg.half(      d,o)
   o = l.o
   print(o(#lefts),o(#rights),o(left.cells),o(right.cells),o(C),o(cut)) end
 
-function eg.tree()
-  DATA.new("../data/auto93.csv"):tree() end
+function eg.walk()
+  print(1)
+  DATA.new("../data/auto93.csv"):tree():walk(print) end
 
 -- ----------------------------------------------------------------------------
 -- ## Start-up
