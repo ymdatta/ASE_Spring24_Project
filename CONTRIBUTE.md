@@ -1,11 +1,3 @@
-## Why no objects?
-
-- Cause it is not true [OO sync with the way with think](https://www.cs.kent.edu/~jmaletic/cs69995-PC/papers/Hatton98.pdf).
-- Also, OO (done wrong) can lead to 
-[massive code bloat](https://www.youtube.com/watch?v=o9pEzgHorH0)
-- Lastly, in my experience, polymorphism is used only for a
-small percent of all the method calls. And if replace
-that with just a little case-ing-on-top, are things really much worse?
 
 ## Lots of Small Functions
 
@@ -13,18 +5,24 @@ More than five lines per function makes me nervous, less than three makes me smi
 
 ## Few globals
 
-_N-1_ globals is better than _N_.
+_N-1_ globals is better than _N_. I just try to have one: the 
+global config settings `the`.
+
+## Function Args
+In function args:
+
+- two spaces denotes "start of optionals"
+- four spaces denotes "start of locals"
 
 ## Lots of small apps
 
-Common tricks are stored in some file `lib.lua`, that everyone loads.
 
 Each `src/app.lua` file:
 
 - Has doco in ``../docs/app.html`;
 - Can read from a `-f` file or from standard input;
 - Has help text at the top, from which `the` globals are extracted;
-- Has tests/examples in the file `appeg.lua`:
+- Has tests/examples at the end:
   - From the command line, we can run one specific test or all;
   - Before running a test, we reset the random number seed;
   - After running a test, we reset all the settings to their defaults;
@@ -51,13 +49,13 @@ e.g. for  `Age,job,Salary+`:
    - `Age` and `job` are the `x` independent variables.
        
 ## Classes
-`function ZZZ()` is a constructor (since it has an upper case name).   
-`function zzz(zz1,...)` updates `zzz1` of type `ZZZ`. 
+`function ZZZ.new()` is a constructor (since it has an upper case name).   
+`function ZZZ:new(...)` updates `zzz1` of type `ZZZ`. 
   
 ##  Type hints
 For function args (not for locals)
     
-- `zzz1` = instance of class `ZZZ`.
+- `zzz1` (or `zzz``) = instance of class `ZZZ`.
 - `x` is anything
 - `n` = number
 - `s` = string
@@ -66,11 +64,3 @@ For function args (not for locals)
 - `a` = array (index 1,2,3..)
 - `h` = hash (indexed by keys)
 - `fun` = function
-
-  
-  
-## Function Args
-In function args:
-  
-- two spaces denotes "start of optionals"
-- four spaces denotes "start of locals"

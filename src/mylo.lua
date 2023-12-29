@@ -2,19 +2,21 @@
 local b4={}; for k, _ in pairs(_ENV) do b4[k]=k end
 local l,the,help = {},{},[[
 mylo: lo is less. less is more. go lo. 
-(c) 2023, Tim Menzies, BSD-2
 Recursive bi-clustering via random projections. 
+(c) 2023, Tim Menzies, BSD-2
 
 USAGE:
   lua gate.lua [OPTIONS] 
 
 OPTIONS:
-  -c --cohen    small effect size               = .35
-  -f --file     csv data file name              = ../data/diabetes.csv
-  -h --help     show help                       = false 
-  -p --p        weights for distance            = 2
-  -s --seed     random number seed              = 31210
-  -t --todo     start up action                 = help
+  -c --cohen  small effect size               = .35
+  -f --file   csv data file nmake ame              = ../data/diabetes.csv
+  -F --Far    how far to search for faraway?  = .95
+  -h --help   show help                       = false 
+  -H --Halve  #items to use in clustering     = 256
+  -p --p      weights for distance            = 2
+  -s --seed   random number seed              = 31210
+  -t --todo   start up action                 = help
 
 Classification, regression = means of leaf clusters
 Data generation, anamoaly detection = sampling within each leaf
@@ -32,9 +34,8 @@ local function is(s,    t) t={a=s}; t.__index=t; return t end
 -- Create
 local NUM=is"NUM"
 function NUM.new(s, n)
-  return isa({txt=s or " ", at=n or 0, n=0, mu=0, m2=0, hi=-1E30, lo=1E30,
-              heaven = (s or ""):find"-$" and 0 or 1},
-              NUM) end
+  return isa(NUM, {txt=s or " ", at=n or 0, n=0, mu=0, m2=0, hi=-1E30, lo=1E30,
+              heaven = (s or ""):find"-$" and 0 or 1}) end
 
 -- Update
 function NUM:add(x,     d)
@@ -69,8 +70,7 @@ function NUM:dist(x,y)
 -- Create
 local SYM=is"SYM"
 function SYM.new(s,n)
-  return isa({txt=s or " ", at=n or 0, n=0, has={}, mode=nil, most=0},
-             SYM) end
+  return isa(SYM, {txt=s or " ", at=n or 0, n=0, has={}, mode=nil, most=0}) end
  
 -- Update
 function SYM:add(x)
@@ -109,8 +109,7 @@ function COLS.new(row)
     if not txt:find"X$" then
       if txt:find"!$" then klass=col end
       (txt:find"[!+-]$" and y or x)[at] = col end end
-  return isa({x=x, y=y, all=all, klass=klass, names=row.cells},
-             COLS) end
+  return isa(COLS, {x=x, y=y, all=all, klass=klass, names=row.cells}) end
 
 -- Update
 function COLS:add(row)
@@ -123,7 +122,7 @@ function COLS:add(row)
 
 -- Store cells.
 local ROW=is"ROW"
-function ROW.new(t) return isa({ cells = t }, ROW) end
+function ROW.new(t) return isa(ROW, { cells = t }) end
 
 -- Distance to best values (and _lower_ is _better_).
 function ROW:d2h(data, d, n)
@@ -133,7 +132,7 @@ function ROW:d2h(data, d, n)
       d = d + math.abs(col.heaven - col:norm(self.cells[col.at])) ^ 2 end
   return (d/n)^.5) end
 
-function ROW:dist(other)
+function ROW:dist(other,data)
   d, n = 0, 0
   for _, col in pairs(data.cols.x) do
       n = n + 1
@@ -141,10 +140,18 @@ function ROW:dist(other)
   return (d/n)^(1/the.p) end
 
 -- All neighbors in `rows`, sorted by dustance to `row1`,
-function ROW:neighbors(data,ows,     fun)
-  fun = function(row2) return l.dists(data1,row1,row2) end
-  return l.keysort(rows or data.rows, fun) end
+function ROW:neighbors(data,rows)
+  return l.keysort(rows or data.rows,
+                   function(row) return self:dist(row,data) end) end
 
+-- Return two distance points, and the distance between them.
+-- If `sortp` then ensure `a` is better than `b`.
+function ROW:faraway(data,rows,  a,sortp,    b,far)
+  far = (#rows*the.Far)//1
+  a   = a or self:neighbors(data, rows)[far]
+  b   = a:neighbors(data, rows)[far]
+  if sortp and b:d2h(data) < a:d2h(data) then a,b=b,a end
+  return a, b, a:dist(b,data) end
 
 -- ### Data
 -- Store `rows`, summarized in `COL`umns.
@@ -152,7 +159,7 @@ function ROW:neighbors(data,ows,     fun)
 -- Create from either a file name or a list of rows
 local DATA=is"DATA"
 function DATA.new(src,  fun,     self)
-  self = isa({rows={}, cols=nil},DATA)
+  self = isa(DATA, {rows={}, cols=nil})
   if   type(src) == "string"
   then for _,x in l.csv(src)       do self:add(x, fun) end
   else for _,x in pairs(src or {}) do self:add(x, fun) end end
@@ -187,48 +194,18 @@ function DATA:stats(cols,fun,ndivs,    u)
     u[col.txt] = l.rnd(getmetatable(col)[fun or "mid"](col), ndivs) end
   return u end
 
- -- Gate.
-function DATA:gate(budget0,budget,some)
-  local rows,lite,dark
-  local stats,bests = {},{}
-  rows = l.shuffle(self.rows)
-  lite = l.slice(rows,1,budget0)
-  dark = l.slice(rows, budget0+1)
-  for i=1,budget do
-    local best, rest     = self:bestRest(lite, (#lite)^some)  -- assess
-    local todo, selected = self:split(best,rest,lite,dark)
-    stats[i] = selected:mid()
-    bests[i] = best.rows[1]
-    table.insert(lite, table.remove(dark,todo)) end 
-  return stats,bests end
+-- Divide `rows` into two halves, based on distance to two far points.
+function DATA:half(rows,sortp,before)
+  local some,a,b,d,C,project,as,bs
+  some  = l.many(rows, math.min(the.Half,#rows))
+  a,b,C = l.twoFarPoints(data1, some, sortp, before)
+  function d(row1,row2) return l.dists(data1,row1,row2) end
+  function project(r)   return (d(r,a)^2 + C^2 -d(r,b)^2)/(2*C) end
+  as,bs= {},{}
+  for n,row1 in pairs(l.keysort(rows,project)) do
+    l.push(n <=(#rows)//2 and as or bs, row1) end
+  return as, bs, a, b, C, d(a, bs[1])  end
 
--- Find the row scoring based on our acquite function.
-function DATA:split(best,rest,lite,dark)
-  local selected,max,out
-  selected = DATA.new{self.cols.names}
-  max = 1E30
-  out = 1
-  for i,row in pairs(dark) do
-    local b,r,tmp
-    b = row:like(best, #lite, 2)
-    r = row:like(rest, #lite, 2)
-    if b>r then selected:add(row) end
-    tmp = math.abs(b+r) / math.abs(b-r+1E-300)
-    --print(b,r,tmp) 
-    if tmp > max then out,max = i,tmp end end  
-  return out,selected end
-
--- Sort on distance to heaven, split off the first `want` items to return
--- a `best` and `rest` data.
-function DATA:bestRest(rows, want, best, rest, top)
-    table.sort(rows, function(a, b) return a:d2h(self) < b:d2h(self) end)
-    best, rest = { self.cols.names }, { self.cols.names }
-    for i, row in pairs(rows) do
-        if i <= want then best[1 + #best] = row else rest[1 + #rest] = row end
-    end
-    return DATA.new(best), DATA.new(rest)
-end
-  
 -- ----------------------------------------------------------------------------
 -- ## Library Functions    
  
@@ -246,6 +223,14 @@ function l.rnd(n, ndecs)
 
 -- ### Lists
 
+-- Return any item.
+function l.any(t) return t[math.random(#t)] end
+
+-- Return any `n` items (there may be repeats).
+function l.many(t,  n,     u)
+  n = n or #t
+  u={}; for _ = 1,n do u[1+#u] = l.any(t) end; return u end
+  
 -- Sorted keys
 function l.keys(t,    u)
   u={}; for k,_ in pairs(t) do u[1+#u]=k end; table.sort(u); return u end
