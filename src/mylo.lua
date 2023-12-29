@@ -149,18 +149,21 @@ function NODE.new(data) return isa(NODE,{here=data}) end
 function NODE:walk(fun, depth)
   depth = depth or 0
   fun(self, depth, not (self.lefts or self.rights))
-  if self.lefts  and self.lefts.node then self.lefts.node:walk(fun, depth+1) end
-  if self.rights and self.rights.node then self.rights.node:walk(fun,depth+1) end end
+  if self.lefts  then self.lefts:walk(fun, depth+1) end
+  if self.rights then self.rights:walk(fun,depth+1) end end
 
 -- Print a tree by printing each node.
-function NODE:show(      _show,maxDepth)
+function NODE:show(_show, maxDepth)
+  local function d2h(data) return l.rnd(data:mid():d2h(self.here)) end
   maxDepth = 0
-  function _show(node,depth,leafp,     post)
-    post     = leafp and l.o(l.stats(node.here)) or ""
+  function _show(node, depth, leafp,      post) 
+    post     = leafp and (d2h(node.here) .."\t".. l.o(node.here:mid().cells)) or ""
     maxDepth = math.max(maxDepth,depth)
     print(('|.. '):rep(depth), post)  end
-  _show(self); print""
-  print( ("    "):rep(maxDepth), l.o(l.stats(self.here))) end 
+  self:walk(_show); print""
+  print( ("    "):rep(maxDepth), d2h(self.here),l.o(self.here:mid().cells) )
+  print( ("    "):rep(maxDepth), "_",   l.o(self.here.cols.names))
+  end
 
 -- ### Data
 -- Store `rows`, summarized in `COL`umns.
@@ -210,35 +213,52 @@ function DATA:clone(  rows,     new)
 
 -- Return two distance points, and the distance between them.
 -- If `sortp` then ensure `a` is better than `b`.
-function DATA:farapart(rows,  a,sortp,    b,far)
-  far = (#rows*the.Far)//1
+function DATA:farapart(rows,  sortp,a,    b,far,evals)
+  far = (#rows * the.Far) // 1
+  evals   = a and 1 or 2
   a   = a or l.any(rows):neighbors(self, rows)[far]
   b   = a:neighbors(self, rows)[far]
   if sortp and b:d2h(self) < a:d2h(self) then a,b=b,a end
-  return a, b, a:dist(b,self) end
+  return a, b, a:dist(b,self),evals end
 
 -- Divide `rows` into two halves, based on distance to two far points.
-function DATA:half(rows,sortp,before)
+function DATA:half(rows,sortp,before,evals)
   local some,a,b,d,C,project,as,bs
   some  = l.many(rows, math.min(the.Half,#rows))
-  a,b,C = self:farapart(some, sortp, before)
+  a,b,C,evals = self:farapart(some, sortp, before)
   function d(row1,row2) return row1:dist(row2,self)  end
   function project(r)   return (d(r,a)^2 + C^2 -d(r,b)^2)/(2*C) end
   as,bs= {},{}
   for n,row in pairs(l.keysort(rows,project)) do
     table.insert(n <=(#rows)//2 and as or bs, row) end
-  return as, bs, a, b, C, d(a, bs[1])  end
+  return as, bs, a, b, C, d(a, bs[1]), evals end
 
-function DATA:tree(sortp,      _tree)
+function DATA:tree(sortp, _tree,      evals,evals1)
+  evals = 0
   function _tree(data,above,     lefts,rights,node)
     node = NODE.new(data)
     if   #data.rows > 2*(#self.rows)^.5
-    then lefts, rights, node.left, node.right, node.C, node.cut =
-                            self:half(data.rows,sortp,above)
+    then lefts, rights, node.left, node.right, node.C, node.cut, evals1 =
+                self:half(data.rows, sortp, above)
+          evals = evals + evals1
           node.lefts  = _tree(self:clone(lefts),  node.left)
           node.rights = _tree(self:clone(rights), node.right) end
     return node end
-  return _tree(self) end 
+  return _tree(self),evals end
+
+-- Return a small group of `best` rows, and all the `rest`.
+function DATA:branch(  stop,           rest, _branch,evals)
+  evals, rest = 1, {}
+  stop = stop or 2*(#self.rows)^.5
+  function _branch(data, above, left, lefts, rights)
+      if #data.rows > stop
+      then lefts, rights, left = self:half(data.rows, true, above)
+           evals=evals+1
+           for _, row1 in pairs(rights) do rest[1+#rest]= row1 end
+           return _branch(data:clone(lefts), left)
+      else return self:clone(data.rows), self:clone(rest),evals end end
+  return _branch(self)  end
+  
 -- ----------------------------------------------------------------------------
 -- ## Library Functions
 
@@ -449,9 +469,24 @@ function eg.half(      d,o)
   o = l.o
   print(o(#lefts),o(#rights),o(left.cells),o(right.cells),o(C),o(cut)) end
 
-function eg.walk()
-  print(1)
-  DATA.new("../data/auto93.csv"):tree():walk(print) end
+function eg.tree(t, evals)
+    t, evals = DATA.new("../data/auto93.csv"):tree(true)
+    t:show()
+    print(evals) end
+ 
+function eg.branch(t, d, best, rest, evals)
+    d = DATA.new("../data/auto93.csv")
+    best, rest, evals = d:branch()
+    print(l.o(best:mid().cells), l.o(rest:mid().cells))
+    print(evals)
+end
+
+function eg.twice(t,   d,best,rest,evals)
+  d = DATA.new("../data/auto93.csv")
+  best1, rest, evals1 = d:branch(64)
+  best2, _,    evals2 = best1:branch(4)
+  print(l.o(best2:mid().cells), l.o(rest:mid().cells)) 
+  print(evals1+evals2) end 
 
 -- ----------------------------------------------------------------------------
 -- ## Start-up
