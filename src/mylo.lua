@@ -10,10 +10,10 @@ USAGE:
 
 OPTIONS:
   -c --cohen  small effect size               = .35
-  -f --file   csv data file nmake ame              = ../data/diabetes.csv
+  -f --file   csv data file name              = ../data/diabetes.csv
   -F --Far    how far to search for faraway?  = .95
   -h --help   show help                       = false 
-  -H --Halve  #items to use in clustering     = 256
+  -H --Half   #items to use in clustering     = 256
   -p --p      weights for distance            = 2
   -s --seed   random number seed              = 31210
   -t --todo   start up action                 = help
@@ -125,33 +125,48 @@ local ROW=is"ROW"
 function ROW.new(t) return isa(ROW, { cells = t }) end
 
 -- Distance to best values (and _lower_ is _better_).
-function ROW:d2h(data, d, n)
-  d, n = 0, 0
+function ROW:d2h(data,     d,n,p)
+  d, n, p = 0, 0, 2
   for _, col in pairs(data.cols.y) do
-      n = n + 1
-      d = d + math.abs(col.heaven - col:norm(self.cells[col.at])) ^ 2 end
-  return (d/n)^.5) end
+    n = n + 1
+    d = d + math.abs(col.heaven - col:norm(self.cells[col.at])) ^ p end
+  return (d/n)^(1/p) end
 
-function ROW:dist(other,data)
-  d, n = 0, 0
+-- Minkowski dsitance (the.p=1 is taxicab/Manhattan; the.p=2 is Euclidean)
+function ROW:dist(other,data,     d,n,p)
+  d, n, p = 0, 0, the.p
   for _, col in pairs(data.cols.x) do
-      n = n + 1
-      d = d + col:dist(self.cells[col.at], other.cells[col.at]) ^ the.p end
-  return (d/n)^(1/the.p) end
+    n = n + 1
+    d = d + col:dist(self.cells[col.at], other.cells[col.at]) ^ p end
+  return (d/n)^(1/p) end
 
 -- All neighbors in `rows`, sorted by dustance to `row1`,
-function ROW:neighbors(data,rows)
+function ROW:neighbors(data,  rows)
   return l.keysort(rows or data.rows,
                    function(row) return self:dist(row,data) end) end
 
--- Return two distance points, and the distance between them.
--- If `sortp` then ensure `a` is better than `b`.
-function ROW:faraway(data,rows,  a,sortp,    b,far)
-  far = (#rows*the.Far)//1
-  a   = a or self:neighbors(data, rows)[far]
-  b   = a:neighbors(data, rows)[far]
-  if sortp and b:d2h(data) < a:d2h(data) then a,b=b,a end
-  return a, b, a:dist(b,data) end
+-- ### Node
+
+-- Recursive binary clustering returns a tree. That tree is build from `NODE`s.
+local NODE=is"NODE"
+function NODE.new(data) return isa(NODE,{here=data}) end
+
+-- Walk over a tree, call `fun` on each node.
+function NODE:walk(fun, depth)
+  depth = depth or 0
+  fun(self, depth, not (self.lefts or self.rights))
+  if self.lefts  then self.lefts.node:walk(fun, depth+1) end
+  if self.rights then self.rights.node:walk(fun,depth+1) end end
+
+-- Print a tree by printing each node.
+function NODE:show(      _show,maxDepth)
+  maxDepth = 0
+  function _show(node,depth,leafp,     post)
+    post     = leafp and l.o(l.stats(node.here)) or ""
+    maxDepth = math.max(maxDepth,depth)
+    print(('|.. '):rep(depth), post)  end
+  self:show(_show); print""
+  print( ("    "):rep(maxDepth), l.o(l.stats(self.here))) end 
 
 -- ### Data
 -- Store `rows`, summarized in `COL`umns.
@@ -194,18 +209,45 @@ function DATA:stats(cols,fun,ndivs,    u)
     u[col.txt] = l.rnd(getmetatable(col)[fun or "mid"](col), ndivs) end
   return u end
 
+function DATA:clone(  rows,     new)
+  new=DATA.new{self.cols.names}
+  for _,row in pairs(rows or {}) do new:add(row) end
+  return new end
+
+-- Return two distance points, and the distance between them.
+-- If `sortp` then ensure `a` is better than `b`.
+function DATA:farapart(rows,  a,sortp,    b,far)
+  far = (#rows*the.Far)//1
+  a   = a or l.any(rows):neighbors(self, rows)[far]
+  b   = a:neighbors(self, rows)[far]
+  if sortp and b:d2h(self) < a:d2h(self) then a,b=b,a end
+  return a, b, a:dist(b,self) end
+
 -- Divide `rows` into two halves, based on distance to two far points.
 function DATA:half(rows,sortp,before)
   local some,a,b,d,C,project,as,bs
   some  = l.many(rows, math.min(the.Half,#rows))
-  a,b,C = l.twoFarPoints(data1, some, sortp, before)
-  function d(row1,row2) return l.dists(data1,row1,row2) end
+  a,b,C = self:farapart(some, sortp, before)
+  function d(row1,row2) return row1:dist(row2,self)  end
   function project(r)   return (d(r,a)^2 + C^2 -d(r,b)^2)/(2*C) end
   as,bs= {},{}
-  for n,row1 in pairs(l.keysort(rows,project)) do
-    l.push(n <=(#rows)//2 and as or bs, row1) end
+  for n,row in pairs(l.keysort(rows,project)) do
+    table.insert(n <=(#rows)//2 and as or bs, row) end
   return as, bs, a, b, C, d(a, bs[1])  end
 
+function DATA:tree(sortp,      _tree)
+  function _tree(data,above,     lefts,rights,node)
+    node = NODE.new(data) 
+    if   #data.rows > 2*(#self.rows)^.5
+    then lefts, rights, node.left, node.right, node.C, node.cut =
+                            self:half(data.rows,sortp,above)
+          node.lefts  = _tree(self:clone(lefts),  node.left)
+          node.rights = _tree(self:clone(rights), node.right) end
+    return node end
+  return _tree(self) end
+
+
+  
 -- ----------------------------------------------------------------------------
 -- ## Library Functions    
  
@@ -258,7 +300,7 @@ function l.slice(t, go, stop, inc,    u)
 -- Schwartzian transform:  decorate, sort, undecorate
 function l.keysort(t,fun,      u,v)
   u={}; for _,x in pairs(t) do u[1+#u]={x=x, y=fun(x)} end --decorate
-  table.sort(y, function(a,b) return a.y < b.y end) -- sort
+  table.sort(u, function(a,b) return a.y < b.y end) -- sort
   v={}; for _,xy in pairs(u) do v[1+#v] = xy.x end -- undecoreate
   return v end
 
@@ -387,75 +429,38 @@ function eg.data(     d,n)
   l.oo(d.cols.x[1].cells)
   return n == 63 end
 
-local function learn(data,row,  my,kl)
-  my.n = my.n + 1
-  kl   = row.cells[data.cols.klass.at]
-  if my.n > 10 then
-    my.tries = my.tries + 1
-    my.acc   = my.acc + (kl == row:likes(my.datas) and 1 or 0) end
-  my.datas[kl] = my.datas[kl] or DATA.new{data.cols.names}
-  my.datas[kl]:add(row) end 
-
-function eg.bayes()
-  local wme = {acc=0,datas={},tries=0,n=0}
-   DATA.new("../data/diabetes.csv", function(data,t) learn(data,t,wme) end) 
-   print(wme.acc/(wme.tries))
-   return wme.acc/(wme.tries) > .72 end
-
-function eg.km()
-  print(l.fmt("#%4s\t%s\t%s","acc","k","m"))
-  for k=0,3,1 do
-    for m=0,3,1 do
-      the.k = k
-      the.m = m
-      local wme = {acc=0,datas={},tries=0,n=0}
-      DATA.new("../data/soybean.csv", function(data,t) learn(data,t,wme) end) 
-      print(l.fmt("%5.2f\t%s\t%s",wme.acc/wme.tries, k,m)) end end end
-
 function eg.stats()
-  return  l.o(DATA.new("../data/auto93.csv"):stats())  == 
+  return  l.o(DATA.new("../data/auto93.csv"):stats())  ==
              "{.N: 398, Acc+: 15.57, Lbs-: 2970.42, Mpg+: 23.84}" end
 
 function eg.sorted(   d)
-  d=DATA.new("../data/auto93.csv")
+  d = DATA.new("../data/auto93.csv")
   table.sort(d.rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
   print("",l.o(d.cols.names))
   for i, row in pairs(d.rows) do
     if i < 5  or i> #d.rows - 5 then print(i, l.o(row)) end end end 
 
-function eg.gate(stats, bests, d, say,sayd)
-  local budget0,budget,some = 4,10,.5
-  print(the.seed) 
-  d = DATA.new("../data/auto93.csv")
-  function sayd(row, txt) print(l.o(row.cells), txt, l.rnd(row:d2h(d))) end
-  function say( row,txt)  print(l.o(row.cells), txt) end
-  print(l.o(d.cols.names),"about","d2h")
-  print"#overall" -------------------------------------
-  sayd(d:mid(), "mid")
-  say(d:div() , "div")
-  say(d:small(),"small=div*"..the.cohen)
-  print"#generality" ----------------------------------
-  stats,bests = d:gate(budget0, budget, some)
-  for i,stat in pairs(stats) do sayd(stat,i+budget0) end
-  print"#specifically" ----------------------------------------------------------
-  for i,best in pairs(bests) do sayd(best,i+budget0) end
-  print"#optimum" ------------------------------------------------------
-  table.sort(d.rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
-  sayd(d.rows[1], #d.rows)
-  print"#random" ------------------------------------------------------
-  local rows=l.shuffle(d.rows)
-  rows = l.slice(rows,1,math.log(.05)/math.log(1-the.cohen/6))
-  table.sort(rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
-  sayd(rows[1]) end
+function eg.dist(   d,rows,r1)
+  d  = DATA.new("../data/auto93.csv")
+  r1   = d.rows[1]
+  rows = r1:neighbors(d)
+  for i, row in pairs(rows) do
+    if i%30 ==0 then print(l.o(row.cells), l.rnd(row:dist(r1,d))) end end end  
+    
+function eg.far(      d,rows,a,b,C)
+  d  = DATA.new("../data/auto93.csv")
+  a,b,C = d:farapart(d.rows)
+  print(l.o(a),l.o(b),C) end
 
-function eg.gate20(    d,stats,bests,stat,best)
-  print("#best, mid")
-  for i=1,20 do
-    d=DATA.new("../data/auto93.csv")
-    stats,bests = d:gate(4, 16, .5)
-    stat,best = stats[#stats], bests[#bests]
-    print(l.rnd(best:d2h(d)), l.rnd(stat:d2h(d))) end end
-
+function eg.half(      d,o)
+  d     = DATA.new("../data/auto93.csv")
+  local lefts, rights, left, right, C,cut = d:half(d.rows)
+  o = l.o
+  print(o(#lefts),o(#rights),o(left.cells),o(right.cells),o(C),o(cut)) end
+  
+function eg.tree()
+  DATA.new("../data/auto93.csv"):tree() end
+  
 -- ----------------------------------------------------------------------------
 -- ## Start-up
 
