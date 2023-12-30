@@ -8,6 +8,7 @@ USAGE:
   lua mylo.lua [OPTIONS]
 
 OPTIONS:
+  -b --bins   max number of bins              = 16
   -c --cohen  small effect size               = .35
   -f --file   csv data file name              = ../data/diabetes.csv
   -F --Far    how far to search for faraway?  = .95
@@ -23,6 +24,35 @@ local function isa(x,y) return setmetatable(y,x) end
 local function is(s,    t) t={a=s}; t.__index=t; return t end
 
 -- ## Columns
+-- ### Symbols
+
+-- Create
+local SYM=is"SYM"
+function SYM.new(s,n)
+  return isa(SYM, {txt=s or " ", at=n or 0, n=0, has={}, mode=nil, most=0}) end
+ 
+-- Update
+function SYM:add(x)
+  if x ~= "?" then 
+    self.n = self.n + 1
+    self.has[x] = 1 + (self.has[x] or 0)
+    if self.has[x] > self.most then 
+      self.most,self.mode = self.has[x], x end end end
+
+-- Query
+function SYM:mid() return self.mode end
+
+function SYM:div() return l.entropy(self.has) end 
+  
+function SYM:small() return 0 end
+
+-- Distance
+function SYM:dist(x,y)
+  return  (x=="?" and y=="?" and 1) or (x==y and 0 or 1) end
+
+-- Discertization 
+function SYM:bin(x) return x end
+
 -- ### Numerics
 
 -- Create
@@ -59,31 +89,11 @@ function NUM:dist(x,y)
   if y=="?" then y=x<.5 and 1 or 0 end
   return math.abs(x-y) end
 
--- ### Symbols
-
--- Create
-local SYM=is"SYM"
-function SYM.new(s,n)
-  return isa(SYM, {txt=s or " ", at=n or 0, n=0, has={}, mode=nil, most=0}) end
- 
--- Update
-function SYM:add(x)
-  if x ~= "?" then 
-    self.n = self.n + 1
-    self.has[x] = 1 + (self.has[x] or 0)
-    if self.has[x] > self.most then 
-      self.most,self.mode = self.has[x], x end end end
-
--- Query
-function SYM:mid() return self.mode end
-
-function SYM:div() return l.entropy(self.has) end 
-  
-function SYM:small() return 0 end
-
-function SYM:dist(x,y)
-  return  (x=="?" and y=="?" and 1) or (x==y and 0 or 1) end
-  
+-- Discertization 
+function NUM:bin(x,     tmp)
+  tmp = (self.hi - self.lo) / (the.bins - 1)
+  return self.hi == self.lo and 1 or math.floor(x / tmp + .5) * tmp end
+    
 -- ### Columns
 -- A contrainer storing multiple `NUM`s and `SYM`s.
 
@@ -140,9 +150,10 @@ function ROW:neighbors(data,  rows)
 
 
 -- ### Data
-
-local NODE 
 -- Store `rows`, summarized in `COL`umns.
+
+-- Some Lua trivia (needed to access a class, defined later). 
+local NODE
 
 -- Create from either a file name or a list of rows
 local DATA=is"DATA"
@@ -187,10 +198,10 @@ function DATA:clone(  rows,     new)
   for _,row in pairs(rows or {}) do new:add(row) end
   return new end
 
--- ### NODE
-
+-- ### Clustering
 -- Recursive binary clustering returns a tree. That tree is build from `NODE`s.
- NODE=is"NODE"
+-- See also, some extensions to DATA (below).
+NODE=is"NODE"
 function NODE.new(data) return isa(NODE, { here = data }) end
 
 -- Walk over a tree, call `fun` on each node.
@@ -213,7 +224,6 @@ function NODE:show(_show, maxDepth)
   print( ("    "):rep(maxDepth), "_",   l.o(self.here.cols.names))
   end
 
-  
 -- Return two distance points, and the distance between them.
 -- If `sortp` then ensure `a` is better than `b`.
 function DATA:farapart(rows,  sortp,a,    b,far,evals)
@@ -236,6 +246,7 @@ function DATA:half(rows,sortp,before,evals)
     table.insert(n <=(#rows)//2 and as or bs, row) end
   return as, bs, a, b, C, d(a, bs[1]), evals end
 
+-- Recursive random projects.  `Half` then data, then recurse on each half.
 function DATA:tree(sortp, _tree,      evals,evals1)
   evals = 0
   function _tree(data,above,     lefts,rights,node)
@@ -249,10 +260,11 @@ function DATA:tree(sortp, _tree,      evals,evals1)
     return node end
   return _tree(self),evals end
 
--- Return a small group of `best` rows, and all the `rest`.
+-- Optimization via tecursive random projects. 
+-- `Half` then data, then recurse on the best half. 
 function DATA:branch(  stop,           rest, _branch,evals)
   evals, rest = 1, {}
-  stop = stop or 2*(#self.rows)^.5
+  stop = stop or (2*(#self.rows)^.5)
   function _branch(data, above, left, lefts, rights)
       if #data.rows > stop
       then lefts, rights, left = self:half(data.rows, true, above)
@@ -268,20 +280,31 @@ function DATA:branch(  stop,           rest, _branch,evals)
 -- Return RANGEs that distinguish sets of rows (stored in `rowss`).
 -- To reduce the search space,
 -- values in `col` are mapped to small number of `bin`s.
--- For NUMs, that number is `is.bins=16` (say) (and after dividing
+-- For NUMs, that number is `the.bins=16` (say) (and after dividing
 -- the column into, say, 16 bins, then we call `mergeAny` to see
 -- how many of them can be combined with their neighboring bin).
 local RANGE=is"RANGE"
-function RANGE.new(col,lo,    hi)
-  return isa(RANGE, {col=col, x={lo=lo,hi=hi or lo}, y={}}) end
+function RANGE.new(col,txt,lo,    hi)
+  return isa(RANGE, {col=col, txt=txt,
+                     x = { lo = lo, hi = hi or lo },
+                     y = {}}) end
 
 function RANGE:add(x,y)
   self.x.lo = math.min(self.x.lo, x)
   self.x.hi = math.max(self.x.hi, x)
   self.y[y] = (self.y[y] or 0) + 1 end
 
+-- Given a goal class, and a count `B,R`  of what we like/hate,
+-- score range by probablity of selecting the liked class.
+function RANGE:score(goal,LIKE,HATE,    like,hate,tiny)
+  like, hate, tiny = 0, 0, 1E-30
+  for klass,n in pairs(self.y) do
+    if klass==goal then like=like+n else hate=hate+n end end
+  like,hate = like/(LIKE+tiny), hate/(HATE+tiny)
+  return like^2/(like + hate) end
+  
 function RANGE:merge(other,   both)
-  both = RANGE(self.col, self.x.lo)
+  both = RANGE(self.col, self.txt, self.x.lo)
   both.x.lo = math.min(self.x.lo, other.x.lo)
   both.x.hi = math.max(self.x.hi, other.x.hi)
   for _,t in pairs{self.y, other.y} do
@@ -289,101 +312,51 @@ function RANGE:merge(other,   both)
       both.y[k] = (both.y[k] or 0) + v end end
   return both end
 
-function RANGE:merged(other,     both,e1,n1,e2,n2)
+function RANGE:merged(other,tooFew,     both,e1,n1,e2,n2)
   both  = self:merge(other)
   e1,n1 = l.entropy(self.y)
   e2,n2 = l.entropy(other.y)
+  if n1 <= tooFew or n2 <= tooFew then return both end
   if l.entropy(both) <= (n1*e1 + n2*e2) / (n1+n2) then
     return both end end
 
--- XXX add too small
-local function mergeds(ranges,  i,a,t)
-  i,t=1,{}
+-- Study rows, divided into class `y`. For row values, discretize
+-- then into a `bin`. Track what `y`s are associated with what `bin`s.
+-- Merge bins that are too small or which do not add much information to the mix.
+local ranges, mergeds
+function ranges(col,rowss,    out,x,bin,nrows)
+  out,nrows = {},0
+  for y, rows in pairs(rowss) do
+    nrows = nrows + #rows
+    for _, row in pairs(rows) do
+      x = row.cells[col.at]
+      if  x ~= "?" then
+        bin = col:bin(x)
+        out[bin] = out[bin] or RANGE(col.at, col.txt, x)
+        out[bin]:add(x,y) end end end
+  out = l.asList(out)
+  table.sort(out, function(a,b) return a.lo < b.lo end)
+  return col.has and out or mergeds(out, nrows/the.bins) end
+
+-- Bottom-up clustering. Try to merge neighbors. Stop when no new merges found.
+-- Before returning, ensure ranges span -inf to +inf with no gaps in the middle.
+function mergeds(ranges,tooFew,  i,a,t,both)
+  i,t = 1,{}
   while i <= #ranges do
     a = ranges[i]
     if i < #ranges then
-      b = a:merged(ranges[i+1])
-      if b then
-        a = b
+      both = a:merged(ranges[i+1],tooFew)
+      if both then 
+        a = both
         i = i+1 end end
     t[1+#t] = a
     i = i+1 end
-  return #t == #ranges and ranges or merges(t) end
-
-function bins(cols,rowss,      with1Col,withAllRows)
-  function with1Col(col,     n,ranges)
-    n,ranges = withAllRows(col)
-    ranges   = sort(map(ranges,itself),lt"lo") -- keyArray to numArray, sorted
-    if   col.isSym 
-    then return ranges 
-    else return merges(ranges, n/is.bins, is.d*div(col)) end end
-  function withAllRows(col,    n,ranges,xy)
-    function xy(x,y,      k)
-      if x ~= "?" then 
-        n = n + 1
-        k = bin(col,x)
-        ranges[k] = ranges[k] or RANGE(col.at,col.txt,x)
-        extend(ranges[k], x, y) end 
-    end -----------
-    n,ranges = 0,{}
-    for y,rows in pairs(rowss) do for _,row in pairs(rows) do xy(row[col.at],y) end end
-    return n, ranges 
-  end --------------
-  return map(cols, with1Col) end
-
--- Map `x` into a small number of bins. `SYM`s just get mapped
--- to themselves but `NUM`s get mapped to one of `is.bins` values.
--- Called by function `bins`.
-function bin(col,x,      tmp)
-  if x=="?" or col.isSym then return x end
-  tmp = (col.hi - col.lo)/(is.bins - 1)
-  return col.hi == col.lo and 1 or m.floor(x/tmp + .5)*tmp end
-
--- Given a sorted list of ranges, try fusing adjacent items
--- (stopping when no more fuse-ings can be found). When done,
--- make the ranges run from minus to plus infinity
--- (with no gaps in between).
-function merges(ranges0,nSmall,nFar,     noGaps,try2Merge)
-  function noGaps(t)
-    for j = 2,#t do t[j].lo = t[j-1].hi end
-    t[1].lo  = -m.huge
-    t[#t].hi =  m.huge
-    return t end
-  function try2Merge(left,right,j,     y)
-    y = merged(left.y, right.y, nSmall, nFar)
-    if y then 
-      j = j+1 -- next round, skip over right.
-      left.hi, left.y = right.hi, y end 
-    return j , left 
-  end -------------
-  local ranges1,j,here = {},1
-  while j <= #ranges0 do
-    here = ranges0[j]
-    if j < #ranges0 then j,here = try2Merge(here, ranges0[j+1], j) end 
-    j=j+1
-    push(ranges1,here) end
-  return #ranges0==#ranges1 and noGaps(ranges0) or merges(ranges1,nSmall,nFar) end
-
--- If (1) the parts are too small or
--- (2) the whole is as good (or simpler) than the parts,
--- then return the merge.
-function merged(col1,col2,nSmall, nFar,  both)
-  both = merge(col1,col2)
-  if nSmall and col1.n < nSmall or col2.n < nSmall                     then return new end
-  if nFar   and not col1.isSym and m.abs(mid(col1) - mid(col2)) < nFar then return new end
-  if div(new) <= (div(col1)*col1.n + div(col2)*col2.n)/new.n then
-    return new end end
-
--- Merge two `cols`. Called by function `merged`.
-function merge(col1,col2,    new)
-  new = copy(col1)
-  if   col1.isSym 
-  then for x,n in pairs(col2.has) do add(new,x,n) end
-  else for _,n in pairs(col2.has) do add(new,n)   end
-       new.lo = m.min(col1.lo, col2.lo)
-       new.hi = m.max(col1.hi, col2.hi) end 
-  return new end
-
+  if #t < #ranges then return mergeds(t,tooFew) end
+  for i = 2,#t do t[i].lo = t[i-1].hi end
+  t[1].lo  = -math.huge
+  t[#t].hi =  math.huge
+  return t end
+  
 -- ----------------------------------------------------------------------------
 -- ## Library Functions
 
@@ -400,6 +373,11 @@ function l.rnd(n, ndecs)
 
 -- ### Lists
 
+-- Return `t` in an array with indexes 1,2.3...
+function l.asList(t,    u)
+  u={}; for _,v in pairs(t) do u[1+#u] =v end; return u end 
+
+-- Effort required to recreate the signal in `t`.
 function l.entropy(t,    e,n)
   n=0; for _,v in pairs(t) do n = n+v end
   e=0; for _,v in pairs(t) do e = e-v/n * math.log(v/n,2) end; 
@@ -609,16 +587,26 @@ function eg.branch(t, d, best, rest, evals)
     d = DATA.new("../data/auto93.csv")
     best, rest, evals = d:branch()
     print(l.o(best:mid().cells), l.o(rest:mid().cells))
-    print(evals)
-end
+    print(evals) end
 
-function eg.twice(t, best1, best2, evals2, evals1, _,d,rest)
+function eg.doubletap(t, best1, best2, evals2, evals1, _,d,rest)
   d = DATA.new("../data/auto93.csv")
-  best1, rest, evals1 = d:branch(64)
+  best1, rest, evals1 = d:branch(32)
   best2, _,    evals2 = best1:branch(4)
   print(l.o(best2:mid().cells), l.o(rest:mid().cells)) 
   print(evals1+evals2) end 
 
+function eg.branch1(t, d, best, rest, evals)
+  d = DATA.new("../data/auto93.csv")
+  best, rest, evals = d:branch()
+  like=best.rows
+  hate = l.slice(l.shuffle(rest.rows), 1, 3 * #like)
+  for _,col in pairs(d.cols.x) do
+    for range in pairs(ranges(col,{like=like,hate=hate})) do
+       t[1+#t]=range end end 
+  table.sort(t,function(a,b) a:score("like",#like,#hate) > a:score("like",#like,#hate)  end)
+  for k,v in pairs(t) do
+    print(l.o(v), v:scored("like",#like,#hate)) end end
 -- ----------------------------------------------------------------------------
 -- ## Start-up
 
