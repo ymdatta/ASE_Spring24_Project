@@ -77,9 +77,8 @@ function SYM:add(x)
 -- Query
 function SYM:mid() return self.mode end
 
-function SYM:div(    e) 
-  e=0; for _,v in pairs(self.has) do e=e-v/self.n*math.log(v/self.n,2) end; return e end
-
+function SYM:div() return l.entropy(self.has) end 
+  
 function SYM:small() return 0 end
 
 function SYM:dist(x,y)
@@ -262,7 +261,129 @@ function DATA:branch(  stop,           rest, _branch,evals)
            return _branch(data:clone(lefts), left)
       else return self:clone(data.rows), self:clone(rest),evals end end
   return _branch(self)  end
-  
+
+-- ----------------------------------------------------------------------------
+-- ## -- ## Discretization
+
+-- Return RANGEs that distinguish sets of rows (stored in `rowss`).
+-- To reduce the search space,
+-- values in `col` are mapped to small number of `bin`s.
+-- For NUMs, that number is `is.bins=16` (say) (and after dividing
+-- the column into, say, 16 bins, then we call `mergeAny` to see
+-- how many of them can be combined with their neighboring bin).
+local RANGE=is"RANGE"
+function RANGE.new(col,lo,    hi)
+  return isa(RANGE, {col=col, x={lo=lo,hi=hi or lo}, y={}}) end
+
+function RANGE:add(x,y)
+  self.x.lo = math.min(self.x.lo, x)
+  self.x.hi = math.max(self.x.hi, x)
+  self.y[y] = (self.y[y] or 0) + 1 end
+
+function RANGE:merge(other,   both)
+  both = RANGE(self.col, self.x.lo)
+  both.x.lo = math.min(self.x.lo, other.x.lo)
+  both.x.hi = math.max(self.x.hi, other.x.hi)
+  for _,t in pairs{self.y, other.y} do
+    for k,v in pairs(t) do 
+      both.y[k] = (both.y[k] or 0) + v end end
+  return both end
+
+function RANGE:merged(other,     both,e1,n1,e2,n2)
+  both  = self:merge(other)
+  e1,n1 = l.entropy(self.y)
+  e2,n2 = l.entropy(other.y)
+  if l.entropy(both) <= (n1*e1 + n2*e2) / (n1+n2) then
+    return both end end
+
+-- XXX add too small
+local function mergeds(ranges,  i,a,t)
+  i,t=1,{}
+  while i <= #ranges do
+    a = ranges[i]
+    if i < #ranges then
+      b = a:merged(ranges[i+1])
+      if b then
+        a = b
+        i = i+1 end end
+    t[1+#t] = a
+    i = i+1 end
+  return #t == #ranges and ranges or merges(t) end
+
+function bins(cols,rowss,      with1Col,withAllRows)
+  function with1Col(col,     n,ranges)
+    n,ranges = withAllRows(col)
+    ranges   = sort(map(ranges,itself),lt"lo") -- keyArray to numArray, sorted
+    if   col.isSym 
+    then return ranges 
+    else return merges(ranges, n/is.bins, is.d*div(col)) end end
+  function withAllRows(col,    n,ranges,xy)
+    function xy(x,y,      k)
+      if x ~= "?" then 
+        n = n + 1
+        k = bin(col,x)
+        ranges[k] = ranges[k] or RANGE(col.at,col.txt,x)
+        extend(ranges[k], x, y) end 
+    end -----------
+    n,ranges = 0,{}
+    for y,rows in pairs(rowss) do for _,row in pairs(rows) do xy(row[col.at],y) end end
+    return n, ranges 
+  end --------------
+  return map(cols, with1Col) end
+
+-- Map `x` into a small number of bins. `SYM`s just get mapped
+-- to themselves but `NUM`s get mapped to one of `is.bins` values.
+-- Called by function `bins`.
+function bin(col,x,      tmp)
+  if x=="?" or col.isSym then return x end
+  tmp = (col.hi - col.lo)/(is.bins - 1)
+  return col.hi == col.lo and 1 or m.floor(x/tmp + .5)*tmp end
+
+-- Given a sorted list of ranges, try fusing adjacent items
+-- (stopping when no more fuse-ings can be found). When done,
+-- make the ranges run from minus to plus infinity
+-- (with no gaps in between).
+function merges(ranges0,nSmall,nFar,     noGaps,try2Merge)
+  function noGaps(t)
+    for j = 2,#t do t[j].lo = t[j-1].hi end
+    t[1].lo  = -m.huge
+    t[#t].hi =  m.huge
+    return t end
+  function try2Merge(left,right,j,     y)
+    y = merged(left.y, right.y, nSmall, nFar)
+    if y then 
+      j = j+1 -- next round, skip over right.
+      left.hi, left.y = right.hi, y end 
+    return j , left 
+  end -------------
+  local ranges1,j,here = {},1
+  while j <= #ranges0 do
+    here = ranges0[j]
+    if j < #ranges0 then j,here = try2Merge(here, ranges0[j+1], j) end 
+    j=j+1
+    push(ranges1,here) end
+  return #ranges0==#ranges1 and noGaps(ranges0) or merges(ranges1,nSmall,nFar) end
+
+-- If (1) the parts are too small or
+-- (2) the whole is as good (or simpler) than the parts,
+-- then return the merge.
+function merged(col1,col2,nSmall, nFar,  both)
+  both = merge(col1,col2)
+  if nSmall and col1.n < nSmall or col2.n < nSmall                     then return new end
+  if nFar   and not col1.isSym and m.abs(mid(col1) - mid(col2)) < nFar then return new end
+  if div(new) <= (div(col1)*col1.n + div(col2)*col2.n)/new.n then
+    return new end end
+
+-- Merge two `cols`. Called by function `merged`.
+function merge(col1,col2,    new)
+  new = copy(col1)
+  if   col1.isSym 
+  then for x,n in pairs(col2.has) do add(new,x,n) end
+  else for _,n in pairs(col2.has) do add(new,n)   end
+       new.lo = m.min(col1.lo, col2.lo)
+       new.hi = m.max(col1.hi, col2.hi) end 
+  return new end
+
 -- ----------------------------------------------------------------------------
 -- ## Library Functions
 
@@ -279,6 +400,11 @@ function l.rnd(n, ndecs)
 
 -- ### Lists
 
+function l.entropy(t,    e,n)
+  n=0; for _,v in pairs(t) do n = n+v end
+  e=0; for _,v in pairs(t) do e = e-v/n * math.log(v/n,2) end; 
+  return e,n end
+
 -- Return any item.
 function l.any(t) return t[math.random(#t)] end
 
@@ -294,7 +420,8 @@ function l.keys(t,    u)
 -- Deep copy
 function l.copy(t,    u)
   if type(t) ~= "table" then return t end
-  u={}; for k,v in pairs(t) do u[l.copy(k)] = l.copy(v) end
+  u = setmetatable({}, getmetatable(t))
+  for k,v in pairs(t) do u[l.copy(k)] = l.copy(v) end
   return u end 
 
 -- Return a new table, with old items sorted randomly.
@@ -485,7 +612,7 @@ function eg.branch(t, d, best, rest, evals)
     print(evals)
 end
 
-function eg.twice(t,   d,best,rest,evals)
+function eg.twice(t, best1, best2, evals2, evals1, _,d,rest)
   d = DATA.new("../data/auto93.csv")
   best1, rest, evals1 = d:branch(64)
   best2, _,    evals2 = best1:branch(4)
