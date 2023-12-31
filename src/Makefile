@@ -41,8 +41,8 @@ install: ## install lua on {debian, ubuntu, codespaces}
 	sudo apt update
 	sudo apt install lua5.3
 
-saved: ## save and push  to main brach 
-	git add *;git commit -am save;git push;git status
+saved: ## save and push  to main branch 
+	read -p "commit msg> " x; git commit -am "$$x"; git push;git status
 
 FILES=$(wildcard *.lua)
 docs: $(addprefix ../docs/, $(FILES:.lua=.html))  $(addprefix ~/tmp/, $(FILES:.lua=.pdf))  ## update docs/*.html

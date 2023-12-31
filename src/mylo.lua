@@ -11,6 +11,7 @@ OPTIONS:
   -b --bins   max number of bins              = 16
   -B --Beam   max number of ranges            = 10
   -c --cohen  small effect size               = .35
+  -C --Cut    ignore ranges less than C*max   = .1
   -f --file   csv data file name              = ../data/diabetes.csv
   -F --Far    how far to search for faraway?  = .95
   -h --help   show help                       = false
@@ -287,7 +288,7 @@ function DATA:branch(  stop,           rest, _branch,evals)
 -- how many of them can be combined with their neighboring bin).
 local RANGE=is"RANGE"
 function RANGE.new(col,txt,lo,    hi)
-  return isa(RANGE, {col=col, txt=txt,
+  return isa(RANGE, {col=col, txt=txt, scored=0,
                      x = { lo = lo, hi = hi or lo },
                      y = {}}) end
 
@@ -298,13 +299,8 @@ function RANGE:add(x,y)
 
 -- Given a goal class, and a count `B,R`  of what we like/hate,
 -- score range by probablity of selecting the liked class.
-function RANGE:score(goal,LIKE,HATE,    like,hate,tiny)
-  like, hate, tiny = 0, 0, 1E-30
-  for klass, n in pairs(self.y) do
-    if klass == goal then like = like + n else hate = hate + n end end
-  like, hate = like / (LIKE + tiny), hate / (HATE + tiny)
-  if hate > like then return 0 else return like ^ the.Support / (like + hate) end
- end
+function RANGE:score(goal, LIKE, HATE)
+  return l.score(self.y,goal,LIKE,HATE) end
 
 function RANGE:merge(other,   both)
   both = RANGE.new(self.col, self.txt, self.x.lo)
@@ -359,10 +355,91 @@ function mergeds(ranges,tooFew,  i,a,t,both)
   t[1].x.lo  = -math.huge
   t[#t].x.hi =  math.huge
   return t end
-  
+
+-- ----------------------------------------------------------------------------
+-- ## Explanation
+
+-- ## RULE
+
+-- Create
+local RULE=is"RULE"
+function RULE.new(ranges, rule)
+  rule = isa(RULE, {parts = {}, scored=0})
+  for _, range in pairs(ranges) do
+      rule.parts[range.txt]  = rule.parts[range.txt]  or {}
+      t = rule.parts[range.txt]
+      t[1+#t] = {lo= range.x.lo, hi= range.x.hi , at=range.at}  end
+  return rule end
+
+function RULE:show()
+  for _,ranges in pairs(self.parts) do
+
+function RULE:disjunction(ranges,row,     x,lo,hi) 
+  x = row.cells[ranges[1].at]
+  if x == "?" then return true end
+  for _,range in pairs(ranges) do
+    lo,hi = range.lo, range.hi
+    if lo==hi and lo == x or lo<=x and x <hi then return true end end
+  return false end
+
+function RULE:conjunction(row)
+  for _,ranges in pairs(self.parts) do
+    if not self:disjunction(ranges,row) then return false end end
+  return true end
+
+function RULE:selects(rows,    t)
+  t={}; for _,r in pairs(rows) do if self:and(r) then t[1+#t]=r end end; return t end 
+
+function RULE:selectss(rowss, t)
+  t={}; for y,rows in pairs(rowss) do t[y] = #self:selects(rows) end; return t end
+
+-- ## RULES
+-- Manages the process of scoring ranges, trying all their combinations, 
+-- scoring the combinations, returning the result.
+local RULES=is"RULE"
+function RULES.new(ranges,goal,rowss,     self)
+  self = isa(RULES, {sorted={}, goals=goal,rowss=rowss, LIKE=0, HATE=0})
+  self:likeHate()
+  for _,range in pairs(ranges) do range.scored = self.score(range.y) end
+  self.sorted = self:top( self:try( self:top(ranges)))
+  return self end
+
+function RULES:likeHate()
+  for y,rows in pairs(self.rowss) do
+    if   y == self.goal
+    then self.LIKE = self.LIKE + #rows 
+    else self.HATE = self.HATE + #rows end end end
+
+function RULES:score(t)
+  return  l.score(t, self.goal, self.LIKE, self.HATE) end
+
+function RULES:try(ranges,     u, rule)
+  u={}
+  for _,subset in pairs(l.powerset(ranges)) do
+    rule  = RULE.new(subset)
+    u[1+#u] = rule
+    rule.scored = self:score( rule:selectss(self.rowss) ) end 
+  return u end
+
+function RULES:top(t,       u)
+  table.sort(t, function(a,b) return a.scored > b.scored end)
+  u = {}
+  for _,x in pairs(t) do
+    if x.scored >= t[1].scored * the.Cut then
+      u[1+#u] = x end end
+  return l.slice(u, 1, the.Beam) end
+
 -- ----------------------------------------------------------------------------
 -- ## Library Functions
 
+-- Scoring 
+function l.score(goal, LIKE, HATE,         like, hate,tiny)
+    like, hate, tiny = 0, 0, 1E-30
+    for klass, n in pairs(t) do
+        if klass == goal then like=like + n else hate=hate + n end end
+    like, hate = like / (LIKE + tiny), hate / (HATE + tiny)
+    if hate > like then return 0 else return like ^ the.Support / (like + hate) end end
+ 
 -- ### Linting
 function l.rogues()
   for k,v in pairs(_ENV) do if not b4[k] then print("E:",k,type(k)) end end end
@@ -375,6 +452,15 @@ function l.rnd(n, ndecs)
   return math.floor(n * mult + 0.5) / mult end
 
 -- ### Lists
+
+-- subsets
+function l.powerset(s,       t)
+  t = {{}}
+  for i = 1, #s do
+    for j = 1, #t do
+      t[#t+1] = {s[i],table.unpack(t[j])} end end
+   return t end
+
 
 -- Return `t` in an array with indexes 1,2.3...
 function l.asList(t,    u)
@@ -614,9 +700,10 @@ function eg.bins(t, d, best, rest, score,t,hate,like,max)
   table.sort(t, function(a, b) return score(a) > score(b) end)
   max = score(t[1])
   print "\n#scores:\n"
-  for _, v in pairs(l.slice(t,1,the.Beam)) do
-    if score(v) > max*.1 then  
-      print(l.rnd(score(v)), l.o(v)) end   end  end
+  for _, v in pairs(l.slice(t, 1, the.Beam)) do
+      if score(v) > max * .1 then
+          print(l.rnd(score(v)), l.o(v)) end end
+  l.oo{likes=#like, hate=#hate} end
 -- ----------------------------------------------------------------------------
 -- ## Start-up
 
