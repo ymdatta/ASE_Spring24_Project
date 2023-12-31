@@ -9,6 +9,7 @@ USAGE:
 
 OPTIONS:
   -b --bins   max number of bins              = 16
+  -B --Beam   max number of ranges            = 10
   -c --cohen  small effect size               = .35
   -f --file   csv data file name              = ../data/diabetes.csv
   -F --Far    how far to search for faraway?  = .95
@@ -16,6 +17,7 @@ OPTIONS:
   -H --Half   #items to use in clustering     = 256
   -p --p      weights for distance            = 2
   -s --seed   random number seed              = 31210
+  -S --Support coeffecient on best            = 2
   -t --todo   start up action                 = help]]
 
 -- ----------------------------------------------------------------------------
@@ -298,13 +300,14 @@ function RANGE:add(x,y)
 -- score range by probablity of selecting the liked class.
 function RANGE:score(goal,LIKE,HATE,    like,hate,tiny)
   like, hate, tiny = 0, 0, 1E-30
-  for klass,n in pairs(self.y) do
-    if klass==goal then like=like+n else hate=hate+n end end
-  like,hate = like/(LIKE+tiny), hate/(HATE+tiny)
-  return like^2/(like + hate) end
-  
+  for klass, n in pairs(self.y) do
+    if klass == goal then like = like + n else hate = hate + n end end
+  like, hate = like / (LIKE + tiny), hate / (HATE + tiny)
+  if hate > like then return 0 else return like ^ the.Support / (like + hate) end
+ end
+
 function RANGE:merge(other,   both)
-  both = RANGE(self.col, self.txt, self.x.lo)
+  both = RANGE.new(self.col, self.txt, self.x.lo)
   both.x.lo = math.min(self.x.lo, other.x.lo)
   both.x.hi = math.max(self.x.hi, other.x.hi)
   for _,t in pairs{self.y, other.y} do
@@ -313,11 +316,11 @@ function RANGE:merge(other,   both)
   return both end
 
 function RANGE:merged(other,tooFew,     both,e1,n1,e2,n2)
-  both  = self:merge(other)
+  both  = self:merge(other) 
   e1,n1 = l.entropy(self.y)
   e2,n2 = l.entropy(other.y)
   if n1 <= tooFew or n2 <= tooFew then return both end
-  if l.entropy(both) <= (n1*e1 + n2*e2) / (n1+n2) then
+  if l.entropy(both.y) <= (n1*e1 + n2*e2) / (n1+n2) then
     return both end end
 
 -- Study rows, divided into class `y`. For row values, discretize
@@ -332,10 +335,10 @@ function ranges(col,rowss,    out,x,bin,nrows)
       x = row.cells[col.at]
       if  x ~= "?" then
         bin = col:bin(x)
-        out[bin] = out[bin] or RANGE(col.at, col.txt, x)
+        out[bin] = out[bin] or RANGE.new(col.at, col.txt, x)
         out[bin]:add(x,y) end end end
   out = l.asList(out)
-  table.sort(out, function(a,b) return a.lo < b.lo end)
+  table.sort(out, function(a,b) return a.x.lo < b.x.lo end)
   return col.has and out or mergeds(out, nrows/the.bins) end
 
 -- Bottom-up clustering. Try to merge neighbors. Stop when no new merges found.
@@ -352,9 +355,9 @@ function mergeds(ranges,tooFew,  i,a,t,both)
     t[1+#t] = a
     i = i+1 end
   if #t < #ranges then return mergeds(t,tooFew) end
-  for i = 2,#t do t[i].lo = t[i-1].hi end
-  t[1].lo  = -math.huge
-  t[#t].hi =  math.huge
+  for i = 2,#t do t[i].x.lo = t[i-1].x.hi end
+  t[1].x.lo  = -math.huge
+  t[#t].x.hi =  math.huge
   return t end
   
 -- ----------------------------------------------------------------------------
@@ -378,7 +381,7 @@ function l.asList(t,    u)
   u={}; for _,v in pairs(t) do u[1+#u] =v end; return u end 
 
 -- Effort required to recreate the signal in `t`.
-function l.entropy(t,    e,n)
+function l.entropy(t, e, n)
   n=0; for _,v in pairs(t) do n = n+v end
   e=0; for _,v in pairs(t) do e = e-v/n * math.log(v/n,2) end; 
   return e,n end
@@ -596,17 +599,24 @@ function eg.doubletap(t, best1, best2, evals2, evals1, _,d,rest)
   print(l.o(best2:mid().cells), l.o(rest:mid().cells)) 
   print(evals1+evals2) end 
 
-function eg.branch1(t, d, best, rest, evals)
+function eg.bins(t, d, best, rest, score,t,hate,like,max)
   d = DATA.new("../data/auto93.csv")
-  best, rest, evals = d:branch()
-  like=best.rows
+  best, rest = d:branch()
+  like = best.rows
   hate = l.slice(l.shuffle(rest.rows), 1, 3 * #like)
+  function score(range) return range:score("like", #like, #hate) end
+  t={}
   for _,col in pairs(d.cols.x) do
-    for range in pairs(ranges(col,{like=like,hate=hate})) do
-       t[1+#t]=range end end 
-  table.sort(t,function(a,b) a:score("like",#like,#hate) > a:score("like",#like,#hate)  end)
-  for k,v in pairs(t) do
-    print(l.o(v), v:scored("like",#like,#hate)) end end
+    print ""
+    for _, range in pairs(ranges(col, { like = like, hate = hate })) do
+      l.oo(range)
+      t[1+#t]=range end end 
+  table.sort(t, function(a, b) return score(a) > score(b) end)
+  max = score(t[1])
+  print "\n#scores:\n"
+  for _, v in pairs(l.slice(t,1,the.Beam)) do
+    if score(v) > max*.1 then  
+      print(l.rnd(score(v)), l.o(v)) end   end  end
 -- ----------------------------------------------------------------------------
 -- ## Start-up
 
