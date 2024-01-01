@@ -322,8 +322,15 @@ function RANGE:merged(other,tooFew,     both,e1,n1,e2,n2)
 -- Study rows, divided into class `y`. For row values, discretize
 -- then into a `bin`. Track what `y`s are associated with what `bin`s.
 -- Merge bins that are too small or which do not add much information to the mix.
-local ranges, mergeds
-function ranges(col,rowss,    out,x,bin,nrows)
+local _ranges, _ranges1, _mergeds
+function _ranges(cols,rowss,     t)
+  t={}
+  for _, col in pairs(cols) do
+    for _, range in pairs(_ranges1(col, rowss)) do
+      t[1 + #t] = range end end
+  return end
+  
+function _ranges1(col,rowss,    out,x,bin,nrows)
   out,nrows = {},0
   for y, rows in pairs(rowss) do
     nrows = nrows + #rows
@@ -335,11 +342,11 @@ function ranges(col,rowss,    out,x,bin,nrows)
         out[bin]:add(x,y) end end end
   out = l.asList(out)
   table.sort(out, function(a,b) return a.x.lo < b.x.lo end)
-  return col.has and out or mergeds(out, nrows/the.bins) end
+  return col.has and out or _mergeds(out, nrows/the.bins) end
 
 -- Bottom-up clustering. Try to merge neighbors. Stop when no new merges found.
 -- Before returning, ensure ranges span -inf to +inf with no gaps in the middle.
-function mergeds(ranges,tooFew,  i,a,t,both)
+function _mergeds(ranges,tooFew,  i,a,t,both)
   i,t = 1,{}
   while i <= #ranges do
     a = ranges[i]
@@ -350,7 +357,7 @@ function mergeds(ranges,tooFew,  i,a,t,both)
         i = i+1 end end
     t[1+#t] = a
     i = i+1 end
-  if #t < #ranges then return mergeds(t,tooFew) end
+  if #t < #ranges then return _mergeds(t,tooFew) end
   for i = 2,#t do t[i].x.lo = t[i-1].x.hi end
   t[1].x.lo  = -math.huge
   t[#t].x.hi =  math.huge
@@ -363,17 +370,16 @@ function mergeds(ranges,tooFew,  i,a,t,both)
 
 -- Create
 local RULE=is"RULE"
-function RULE.new(ranges, rule)
-  rule = isa(RULE, {parts = {}, scored=0})
-  for _, range in pairs(ranges) do
-      rule.parts[range.txt]  = rule.parts[range.txt]  or {}
-      t = rule.parts[range.txt]
-      t[1+#t] = {lo= range.x.lo, hi= range.x.hi , at=range.at}  end
-  return rule end
-
-function RULE:show()
-  for _,ranges in pairs(self.parts) do
-
+function RULE.new(ranges, rule, t)
+    rule = isa(RULE, { parts = {}, scored = 0 })
+    for _, range in pairs(ranges) do
+        rule.parts[range.txt] = rule.parts[range.txt] or {}
+        t                     = rule.parts[range.txt]
+        t[1 + #t]             = { lo = range.x.lo, hi = range.x.hi, at = range.at }
+    end
+    return rule
+end
+  
 function RULE:disjunction(ranges,row,     x,lo,hi) 
   x = row.cells[ranges[1].at]
   if x == "?" then return true end
@@ -388,10 +394,41 @@ function RULE:conjunction(row)
   return true end
 
 function RULE:selects(rows,    t)
-  t={}; for _,r in pairs(rows) do if self:and(r) then t[1+#t]=r end end; return t end 
+  t = {}; for _,r in pairs(rows) do
+            if self:conjunction(r) then t[1+#t]=r end end; return t end
 
 function RULE:selectss(rowss, t)
-  t={}; for y,rows in pairs(rowss) do t[y] = #self:selects(rows) end; return t end
+  t={}; for y,rows in pairs(rowss) do t[y] = #self:accselectsepts(rows) end; return t end
+
+local _showMerge,_showPretty
+function RULE:show(        t,u,v)
+  t = {}
+  for txt,ranges in pairs(self.parts) do
+    table.sort(ranges,function(a,b) return a.lo < b.lo end)
+    u,v = {},{}
+    for _,r in pairs(ranges) do u[1+#u] = {r.lo, r.hi} end
+    for _,two in pairs(_showMerge(u)) do v[1+#v] = _showPretty(txt,two) end
+    t[1+#t] = table.concat(v," or ") end 
+  return table.concat(t," and ") end
+
+function _showMerge(t,     i,u,a,b)
+  i,u = 1,{}
+  while i <= #t do
+    a = t[i]
+    if i < #t then
+      b = t[i+1]
+      if a[2] == b[1] then 
+        a = {a[1], b[2]}
+        i=i+1 end end
+    u[1+#u] = a
+    i=i+1  end
+  return  #u == #t and t or _showMerge(u) end
+
+function _showPretty(txt, r)
+  if r[1] == -math.huge then return l.fmt("%s < %s",txt,r[2]) end
+  if r[2] ==  math.huge then return l.fmt("%s >= %s",txt,r[1]) end
+  if r[1] == r[2]       then return l.fmt("%s == %s",txt,r[1]) end
+  return l.fmt("%s <= %s < %s", r[1], txt, r[2]) end
 
 -- ## RULES
 -- Manages the process of scoring ranges, trying all their combinations, 
@@ -685,25 +722,33 @@ function eg.doubletap(t, best1, best2, evals2, evals1, _,d,rest)
   print(l.o(best2:mid().cells), l.o(rest:mid().cells)) 
   print(evals1+evals2) end 
 
-function eg.bins(t, d, best, rest, score,t,hate,like,max)
+function eg.bins(t, d, best, rest, score,t,HATE,LIKE,max)
   d = DATA.new("../data/auto93.csv")
   best, rest = d:branch()
-  like = best.rows
-  hate = l.slice(l.shuffle(rest.rows), 1, 3 * #like)
-  function score(range) return range:score("like", #like, #hate) end
+  LIKE = best.rows
+  HATE = l.slice(l.shuffle(rest.rows), 1, 3 * #LIKE)
+  function score(range) return range:score("LIKE", #LIKE, #HATE) end
   t={}
   for _,col in pairs(d.cols.x) do
     print ""
-    for _, range in pairs(ranges(col, { like = like, hate = hate })) do
+    for _, range in pairs(_ranges1(col, { LIKE = LIKE, HATE = HATE })) do
       l.oo(range)
       t[1+#t]=range end end 
   table.sort(t, function(a, b) return score(a) > score(b) end)
   max = score(t[1])
   print "\n#scores:\n"
   for _, v in pairs(l.slice(t, 1, the.Beam)) do
-      if score(v) > max * .1 then
-          print(l.rnd(score(v)), l.o(v)) end end
-  l.oo{likes=#like, hate=#hate} end
+    if score(v) > max * .1 then
+      print(l.rnd(score(v)), l.o(v)) end end
+  l.oo{LIKE=#LIKE, HATE=#HATE} end
+  
+function eg.rules(     d,rows)
+  d = DATA.new("../data/auto93.csv")
+  best, rest = d:branch()
+  LIKE = best.rows
+  HATE = l.slice(l.shuffle(rest.rows), 1, 3 * #LIKE)
+  rowss = {LIKE=LIKE,HATE=HATE}
+  RULES.new(_ranges(d.cols.x, rowss),"LIKE",rowss) end
 -- ----------------------------------------------------------------------------
 -- ## Start-up
 
