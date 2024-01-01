@@ -328,7 +328,7 @@ function _ranges(cols,rowss,     t)
   for _, col in pairs(cols) do
     for _, range in pairs(_ranges1(col, rowss)) do
       t[1 + #t] = range end end
-  return end
+  return t end
   
 function _ranges1(col,rowss,    out,x,bin,nrows)
   out,nrows = {},0
@@ -380,11 +380,13 @@ function RULE.new(ranges, rule, t)
     return rule
 end
   
-function RULE:disjunction(ranges,row,     x,lo,hi) 
+function RULE:disjunction(ranges, row, x, lo, hi)
+  l.oo(ranges)
   x = row.cells[ranges[1].at]
   if x == "?" then return true end
-  for _,range in pairs(ranges) do
-    lo,hi = range.lo, range.hi
+  for _, range in pairs(ranges) do
+    l.oo(range)
+    lo,hi = range.x.lo, range.x.hi
     if lo==hi and lo == x or lo<=x and x <hi then return true end end
   return false end
 
@@ -398,7 +400,7 @@ function RULE:selects(rows,    t)
             if self:conjunction(r) then t[1+#t]=r end end; return t end
 
 function RULE:selectss(rowss, t)
-  t={}; for y,rows in pairs(rowss) do t[y] = #self:accselectsepts(rows) end; return t end
+  t={}; for y,rows in pairs(rowss) do t[y] = #self:selects(rows) end; return t end
 
 local _showMerge,_showPretty
 function RULE:show(        t,u,v)
@@ -406,7 +408,7 @@ function RULE:show(        t,u,v)
   for txt,ranges in pairs(self.parts) do
     table.sort(ranges,function(a,b) return a.lo < b.lo end)
     u,v = {},{}
-    for _,r in pairs(ranges) do u[1+#u] = {r.lo, r.hi} end
+    for _,r in pairs(ranges) do u[1+#u] = {r.lo, r.hi, r.at} end
     for _,two in pairs(_showMerge(u)) do v[1+#v] = _showPretty(txt,two) end
     t[1+#t] = table.concat(v," or ") end 
   return table.concat(t," and ") end
@@ -417,8 +419,8 @@ function _showMerge(t,     i,u,a,b)
     a = t[i]
     if i < #t then
       b = t[i+1]
-      if a[2] == b[1] then 
-        a = {a[1], b[2]}
+      if a[2] == b[1] then
+        a = {a[1], b[2], a[3]}
         i=i+1 end end
     u[1+#u] = a
     i=i+1  end
@@ -434,10 +436,13 @@ function _showPretty(txt, r)
 -- Manages the process of scoring ranges, trying all their combinations, 
 -- scoring the combinations, returning the result.
 local RULES=is"RULE"
-function RULES.new(ranges,goal,rowss,     self)
-  self = isa(RULES, {sorted={}, goals=goal,rowss=rowss, LIKE=0, HATE=0})
-  self:likeHate()
-  for _,range in pairs(ranges) do range.scored = self.score(range.y) end
+function RULES.new(ranges, goal, rowss, self)
+  for k,v in pairs(rowss) do print(k,#v) end
+  self = isa(RULES, {sorted={}, goal=goal,rowss=rowss, LIKE=0, HATE=0})
+    self:likeHate()
+  print(3)
+  for _, range in pairs(ranges) do l.oo(range); range.scored = self:score(range.y) end
+  print(1)
   self.sorted = self:top( self:try( self:top(ranges)))
   return self end
 
@@ -447,8 +452,13 @@ function RULES:likeHate()
     then self.LIKE = self.LIKE + #rows 
     else self.HATE = self.HATE + #rows end end end
 
-function RULES:score(t)
-  return  l.score(t, self.goal, self.LIKE, self.HATE) end
+function RULES:score(t, x)
+  print(200,l.o(t),self.goal, self.LIKE,self.HATE)
+  x =  l.score(t, self.goal, self.LIKE, self.HATE)
+    
+  print(100,x)
+    
+  return x end
 
 function RULES:try(ranges,     u, rule)
   u={}
@@ -470,7 +480,7 @@ function RULES:top(t,       u)
 -- ## Library Functions
 
 -- Scoring 
-function l.score(goal, LIKE, HATE,         like, hate,tiny)
+function l.score(t, goal, LIKE, HATE,         like, hate,tiny)
     like, hate, tiny = 0, 0, 1E-30
     for klass, n in pairs(t) do
         if klass == goal then like=like + n else hate=hate + n end end
@@ -742,13 +752,14 @@ function eg.bins(t, d, best, rest, score,t,HATE,LIKE,max)
       print(l.rnd(score(v)), l.o(v)) end end
   l.oo{LIKE=#LIKE, HATE=#HATE} end
   
-function eg.rules(     d,rows)
+function eg.rules(     d,rowss,  best, rest,LIKE,HATE)
   d = DATA.new("../data/auto93.csv")
   best, rest = d:branch()
   LIKE = best.rows
   HATE = l.slice(l.shuffle(rest.rows), 1, 3 * #LIKE)
   rowss = {LIKE=LIKE,HATE=HATE}
-  RULES.new(_ranges(d.cols.x, rowss),"LIKE",rowss) end
+  RULES.new(_ranges(d.cols.x, rowss),"LIKE",rowss)
+  end
 -- ----------------------------------------------------------------------------
 -- ## Start-up
 
