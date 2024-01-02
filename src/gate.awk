@@ -5,7 +5,8 @@ BEGIN { FS = ","
         SEED = 31210 }
 NR==1 { head() }
 NR>1  { body(NR-1) }
-END   { rogues() }
+END   { oo(statsy(0))
+        rogues() }
 
 function rogues(    i) {
   for(i in SYMTAB) 
@@ -40,7 +41,7 @@ function addNum(g,c,x,    n,d) {
   d = x - Mu[g][c]
   Mu[g][c] += d / n
   M2[g][c] += d *(x - Mu[g][c])
-  Sd[g][c]  = N[g][c] < 2 ? 0 : (M2[g][c]/(n - 1))**.5  }
+  Sd[g][c]  = n < 2 ? 0 : (M2[g][c]/(n - 1))**.5  }
 
 function addSym(g,c,x,     n) {
   n = ++Has[g][c][x]
@@ -51,22 +52,30 @@ function addSym(g,c,x,     n) {
 function mid(g,c) { return c in Lo ? Mu[g][c] : Mode[g][c] }
 function div(g,c) { return c in Lo ? Sd[g][c] : entropy(Has[g][c]) }
 
-function statsy(g,a,  fun,    c) {
-  a[n] = length(ROW[g])
+function statsy(g,a,f,  fun,    c) {
   fun  = fun ? fun : "mid"  
-  for(c in Goal) a[Name[c]] = @fun(g,c) }
+  f    = f   ? f   : "%.3f"
+  a["n"] = length(ROW[g])
+  for(c in Goal) a[Name[c]] = sprintf(f, @fun(g,c)) }
+
+function statsx(g,a,f,  fun,    c) {
+  fun  = fun ? fun : "mid"  
+  f    = f   ? f   : "%.3f"
+  a["n"] = length(ROW[g])
+  for(c in NAME) if(!(c in GOAL)) a[Name[c]] = sprintf(f, @fun(g,c)) }
 
 function entropy(a,    k,e,n) {
   for(k in a) n += a[k]
-  for(k in a) e -= a[k]/n * log(a[k]/n, 2)
+  for(k in a) e -= a[k]/n * log( a[k]/n)/log(2)
   return e }
 
 function max(n1,n2) {return n1>n2 ? n1 : n2}
 function min(n1,n2) {return n1<n2 ? n1 : n2}
 
+function oo(a,pre) {print(o(a,pre)) }
 function o(a,pre,    i,s,sep,nump) {
-  if (typeof(a) == "number") return sprintf("%g",a) 
-  if (typeof(a) != "array")  return sprintf("%s",a)
+  if (typeof(a) == "number") return sprintf("~%g",a) 
+  if (typeof(a) != "array")  return sprintf("~%s!",a)
   for(i in a) {nump = i==1; break}
   for(i in a) {
     s = s sep (nump? sprintf("%s",o(a[i])) : sprintf(":%s %s",i,o(a[i])))
