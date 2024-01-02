@@ -40,7 +40,7 @@ function addNum(g,c,x,    n,d) {
   n = ++N[g][c]
   d = x - Mu[g][c]
   Mu[g][c] += d / n
-  M2[g][c] += d *(x - Mu[g][c])
+  M2[g][c] += d * (x - Mu[g][c])
   Sd[g][c]  = n < 2 ? 0 : (M2[g][c]/(n - 1))**.5  }
 
 function addSym(g,c,x,     n) {
