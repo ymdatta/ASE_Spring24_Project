@@ -1,12 +1,21 @@
 
 ## Lots of Small Functions
 
-More than five lines per function makes me nervous, less than three makes me smile.
+More than six lines per function makes me nervous, five lines makes me happy,
+ less than three makes me   gleeful.
+
+## Width, Height
+
+I work to 90 chars/line or less (otherwise the pdf printing messes up).
+
+Also, if a  line just contains `end`, the i add it to the line above.
 
 ## Few globals
 
-_N-1_ globals is better than _N_. I just try to have one: the 
-global config settings `the`.
+_N-1_ globals is better than _N_. I just try to have one: 
+- the  global config settings `the`.
+- `the` is aprsed from the help text listed at top of file.
+- Optionally, `the` can be updated from the command-line options.
 
 ## Function Args
 In function args:
@@ -15,7 +24,6 @@ In function args:
 - four spaces denotes "start of locals"
 
 ## Lots of small apps
-
 
 Each `src/app.lua` file:
 
@@ -43,19 +51,22 @@ This code reads data files which names columns on line1:
 - Everything else are the dependent `x` columns.
    
 e.g. for  `Age,job,Salary+`:
-    
+
    - `Age` and `Salary` are numeric
    - `Salary` is a goal to be maximized 
    - `Age` and `job` are the `x` independent variables.
-       
-## Classes
-`function ZZZ.new()` is a constructor (since it has an upper case name).   
-`function ZZZ:new(...)` updates `zzz1` of type `ZZZ`. 
-  
+
+## Structs
+With encapsulation, polymorphism, but no inheritance (why? well, see 
+[^diederich12] [^hadden96] and if you really want inheritance,   use a language that
+truly supports it, like Smalltalk or Crystal).
+
+`function ZZZ.new(...)` is a constructor that returns a new struct of type `ZZZ`.   
+
 ##  Type hints
-For function args (not for locals)
-    
-- `zzz1` (or `zzz``) = instance of class `ZZZ`.
+For function args (not for locals). A weakly applied standard:
+
+- `zzz` (or `zzz1``) = instance of class `ZZZ`.
 - `x` is anything
 - `n` = number
 - `s` = string
@@ -64,3 +75,10 @@ For function args (not for locals)
 - `a` = array (index 1,2,3..)
 - `h` = hash (indexed by keys)
 - `fun` = function
+
+
+[^hatton98]: Hatton, Les. “Does OO Sync with How We Think?” IEEE Softw. 15 (1998): 46-54.
+https://www.cs.kent.edu/~jmaletic/Prog-Comp/Papers/Hatton98.pdf
+
+[^diederich12]: Jack Diederich. "Stop Writing Classes". Youtube video. Mar 15, 2012.
+https://youtu.be/o9pEzgHorH0?si=KWLVXsHuD_hwGtLz
