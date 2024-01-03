@@ -33,11 +33,23 @@ class Num(Col):
     Col.__init__(**d)
     self.lo, self.hi = 1E30, -1E30
     self.heaven = 0 if self.txt[-1]=="-" else 1
+  def mid(self, h:hold): 
+    a= h:has(); return a[length(a)//2]
+  def div(self, h:hold): 
+    a= h:has(); return (a[length(a)*.9//1] - a[length(a)*.1//1])/2.56
   
 class Sym(Col):
   def __init__(self,**d): Col.__init__(**d) 
   def mid(self,d: dict) -> float: return max(d, key=d.get)
   def div(self,d: dict) -> float: return ent(d) 
+
+class Hold:
+  def __init__(i): self._has=[];  self.ok=True
+  def add(i,x): self._has  +=[x]; self.ok=False
+  def has(i,x): 
+    if not self.ok: self._has.sort(); 
+    self.ok=True
+    return self._has
 #--------------------------------------------------------------------
 class Eg:
   _all = locals() 
