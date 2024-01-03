@@ -757,26 +757,27 @@ function eg.bins(t, d, best, rest, score,t,HATE,LIKE,max)
   l.oo{LIKE=#LIKE, HATE=#HATE} end
   
 function eg.rules(     d,rowss,  best, rest,LIKE,HATE,best0,result,evals1,evals2,_)
-  d = DATA.new(the.file)
-  --best, rest = d:branch()
-  
-  best0, rest, evals1 = d:branch(the.d)
-  best, _, evals2 = best0:branch(the.D)
-  print(evals1+evals2+the.D-1)
-  LIKE = best.rows
-  HATE = l.slice(l.shuffle(rest.rows), 1, 3 * #LIKE)
-  rowss = { LIKE = LIKE, HATE = HATE }
-  -- local _t ={}
-  -- for k, rows in pairs(rowss) do
-  --   for _,row in pairs(rows) do
-  --     if row.cells[4] >= 79 and row.cells[2] < 115 and row.cells[5] ==3 then _t[k] = (_t[k] or 0) + 1 end end end
-    -- l.oo(_t)
-  for i, rule in pairs(RULES.new(_ranges(d.cols.x, rowss), "LIKE", rowss).sorted) do
-    result = d:clone(rule:selects(rest.rows))
-    if #result.rows > 0 then
-        table.sort(result.rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
-        print(l.rnd(rule.scored), l.rnd(result:mid():d2h(d)), l.rnd(result.rows[1]:d2h(d)), l.o(result:mid().cells),"\t",rule:show()) end
-     
+  for xxx=1,20 do
+      d = DATA.new(the.file)
+    --best, rest = d:branch()
+    
+    best0, rest, evals1 = d:branch(the.d)
+    best, _, evals2 = best0:branch(the.D)
+    print(evals1+evals2+the.D-1)
+    LIKE = best.rows
+    HATE = l.slice(l.shuffle(rest.rows), 1, 3 * #LIKE)
+    rowss = { LIKE = LIKE, HATE = HATE }
+    -- local _t ={}
+    -- for k, rows in pairs(rowss) do
+    --   for _,row in pairs(rows) do
+    --     if row.cells[4] >= 79 and row.cells[2] < 115 and row.cells[5] ==3 then _t[k] = (_t[k] or 0) + 1 end end end
+      -- l.oo(_t)
+    for i, rule in pairs(RULES.new(_ranges(d.cols.x, rowss), "LIKE", rowss).sorted) do
+      result = d:clone(rule:selects(rest.rows))
+      if #result.rows > 0 then
+          table.sort(result.rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
+          print(l.rnd(rule.scored), l.rnd(result:mid():d2h(d)), l.rnd(result.rows[1]:d2h(d)), l.o(result:mid().cells),"\t",rule:show()) end
+      end
     
         -- for _, ranges in pairs(rule.parts) do
         --     for _, range in pairs(ranges) do
