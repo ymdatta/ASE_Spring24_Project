@@ -12,6 +12,8 @@ OPTIONS:
   -B --Beam   max number of ranges            = 10
   -c --cohen  small effect size               = .35
   -C --Cut    ignore ranges less than C*max   = .1
+  -d --d      frist cut                       = 32
+  -D --D      second cut                      = 4
   -f --file   csv data file name              = ../data/diabetes.csv
   -F --Far    how far to search for faraway?  = .95
   -h --help   show help                       = false
@@ -22,7 +24,7 @@ OPTIONS:
   -t --todo   start up action                 = help]]
 
 -- ----------------------------------------------------------------------------
--- ## Classes
+-- ## Structs (with encapsulation, polymorphism, but no inheritance)
 local function isa(x,y) return setmetatable(y,x) end
 local function is(s,    t) t={a=s}; t.__index=t; return t end
 
@@ -81,7 +83,7 @@ function NUM:div() return self.n < 2 and 0 or (self.m2/(self.n - 1))^.5 end
 
 function NUM:small() return the.cohen*self:div() end
 
-function NUM:norm(x)
+function NUM:norm(x) 
   return x=="?" and x or (x - self.lo) / (self.hi - self.lo + 1E-30) end
 
 -- Distance
@@ -131,11 +133,13 @@ local ROW=is"ROW"
 function ROW.new(t) return isa(ROW, { cells = t }) end
 
 -- Distance to best values (and _lower_ is _better_).
-function ROW:d2h(data,     d,n,p)
+function ROW:d2h(data,     d,n,p,x)
   d, n, p = 0, 0, 2
   for _, col in pairs(data.cols.y) do
-    n = n + 1
-    d = d + math.abs(col.heaven - col:norm(self.cells[col.at])) ^ p end
+    x = self.cells[col.at]
+    if x == nil then io.stderr:write("?") else
+      n = n + 1
+      d = d + math.abs(col.heaven - col:norm(self.cells[col.at])) ^ p end end
   return (d/n)^(1/p) end
 
 -- Minkowski dsitance (the.p=1 is taxicab/Manhattan; the.p=2 is Euclidean)
@@ -164,7 +168,7 @@ function DATA.new(src,  fun,     self)
   self = isa(DATA, {rows={}, cols=nil})
   if   type(src) == "string"
   then for _,x in l.csv(src)       do self:add(x, fun) end
-  else for _,x in pairs(src or {}) do self:add(x, fun) end end
+  else for _,x in pairs(src or {}) do self:add(x, fun) end end 
   return self end
 
 -- Update. First time through, assume the row defines the columns.
@@ -173,7 +177,8 @@ function DATA.new(src,  fun,     self)
 function DATA:add(t,  fun,row)
   row = t.cells and t or ROW.new(t)
   if   self.cols
-  then if fun then fun(self,row) end
+  then --assert(#t.cells == #self.cols.names, l.fmt("bad row: %s",l.o(t.cells)))
+       if fun then fun(self,row) end
        self.rows[1 + #self.rows] = self.cols:add(row)
   else self.cols = COLS.new(row) end end
 
@@ -201,7 +206,7 @@ function DATA:clone(  rows,     new)
   for _,row in pairs(rows or {}) do new:add(row) end
   return new end
 
--- ### Clustering
+-- ### Clustering
 -- Recursive binary clustering returns a tree. That tree is build from `NODE`s.
 -- See also, some extensions to DATA (below).
 NODE=is"NODE"
@@ -277,7 +282,7 @@ function DATA:branch(  stop,           rest, _branch,evals)
       else return self:clone(data.rows), self:clone(rest),evals end end
   return _branch(self)  end
 
--- ----------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
 -- ## -- ## Discretization
 
 -- Return RANGEs that distinguish sets of rows (stored in `rowss`).
@@ -287,15 +292,22 @@ function DATA:branch(  stop,           rest, _branch,evals)
 -- the column into, say, 16 bins, then we call `mergeAny` to see
 -- how many of them can be combined with their neighboring bin).
 local RANGE=is"RANGE"
-function RANGE.new(col,txt,lo,    hi)
-  return isa(RANGE, {col=col, txt=txt, scored=0,
+function RANGE.new(at,txt,lo,    hi)
+  return isa(RANGE, {at=at, txt=txt, scored=0,
                      x = { lo = lo, hi = hi or lo },
                      y = {}}) end
 
-function RANGE:add(x,y)
-  self.x.lo = math.min(self.x.lo, x)
-  self.x.hi = math.max(self.x.hi, x)
-  self.y[y] = (self.y[y] or 0) + 1 end
+function RANGE:add(x, y)
+    self.x.lo = math.min(self.x.lo, x)
+    self.x.hi = math.max(self.x.hi, x)
+    self.y[y] = (self.y[y] or 0) + 1 end 
+
+function RANGE:show(     lo,hi,s)
+  lo,hi,s = self.x.lo, self.x.hi,self.txt
+  if lo == -math.huge then return l.fmt("%s < %s", s,hi) end
+  if hi ==  math.huge then return l.fmt("%s >= %s",s,lo) end
+  if lo ==  hi        then return l.fmt("%s == %s",s,lo) end
+  return l.fmt("%s <= %s < %s", lo, s, hi) end
 
 -- Given a goal class, and a count `B,R`  of what we like/hate,
 -- score range by probablity of selecting the liked class.
@@ -303,7 +315,7 @@ function RANGE:score(goal, LIKE, HATE)
   return l.score(self.y,goal,LIKE,HATE) end
 
 function RANGE:merge(other,   both)
-  both = RANGE.new(self.col, self.txt, self.x.lo)
+  both = RANGE.new(self.at, self.txt, self.x.lo)
   both.x.lo = math.min(self.x.lo, other.x.lo)
   both.x.hi = math.max(self.x.hi, other.x.hi)
   for _,t in pairs{self.y, other.y} do
@@ -369,69 +381,61 @@ function _mergeds(ranges,tooFew,  i,a,t,both)
 -- ## RULE
 
 -- Create
-local RULE=is"RULE"
+local RULE = is "RULE"
 function RULE.new(ranges, rule, t)
-    rule = isa(RULE, { parts = {}, scored = 0 })
-    for _, range in pairs(ranges) do
-        rule.parts[range.txt] = rule.parts[range.txt] or {}
-        t                     = rule.parts[range.txt]
-        t[1 + #t]             = { lo = range.x.lo, hi = range.x.hi, at = range.at }
-    end
-    return rule
-end
-  
-function RULE:disjunction(ranges, row, x, lo, hi)
-  l.oo(ranges)
+  rule = isa(RULE, { parts = {}, scored = 0 })
+  for _, range in pairs(ranges) do
+      t = rule.parts[range.txt] or {}
+      t[1 + #t] = range
+      rule.parts[range.txt] = t end 
+  return rule end
+
+function RULE:_or(ranges, row, x, lo, hi) 
   x = row.cells[ranges[1].at]
   if x == "?" then return true end
   for _, range in pairs(ranges) do
-    l.oo(range)
-    lo,hi = range.x.lo, range.x.hi
+    lo, hi = range.x.lo, range.x.hi 
     if lo==hi and lo == x or lo<=x and x <hi then return true end end
   return false end
 
-function RULE:conjunction(row)
+function RULE:_and(row)
   for _,ranges in pairs(self.parts) do
-    if not self:disjunction(ranges,row) then return false end end
+    if not self:_or(ranges,row) then return false end end
   return true end
 
 function RULE:selects(rows,    t)
   t = {}; for _,r in pairs(rows) do
-            if self:conjunction(r) then t[1+#t]=r end end; return t end
+            if self:_and(r) then t[1+#t]=r end end; return t end
 
 function RULE:selectss(rowss, t)
   t={}; for y,rows in pairs(rowss) do t[y] = #self:selects(rows) end; return t end
 
-local _showMerge,_showPretty
-function RULE:show(        t,u,v)
-  t = {}
-  for txt,ranges in pairs(self.parts) do
-    table.sort(ranges,function(a,b) return a.lo < b.lo end)
-    u,v = {},{}
-    for _,r in pairs(ranges) do u[1+#u] = {r.lo, r.hi, r.at} end
-    for _,two in pairs(_showMerge(u)) do v[1+#v] = _showPretty(txt,two) end
-    t[1+#t] = table.concat(v," or ") end 
-  return table.concat(t," and ") end
+local _showLess
+function RULE:show(        ands) 
+  ands={}
+  for _, ranges in pairs(self.parts) do
+    local ors = _showLess(ranges)
+    local at
+    for i, range in pairs(ors) do  at=range.at; ors[i]=range:show() end
+    ands[1+#ands]= table.concat(ors, " or ") end 
+  return table.concat(ands," and ") end
 
-function _showMerge(t,     i,u,a,b)
-  i,u = 1,{}
+-- try and merge contiguous ranges
+function _showLess(t,  ready,       i,u,a)
+  if not ready then
+    t = l.copy(t) -- important, since we are about to mess up the y counts
+    table.sort(t, function(a,b) return a.x.lo < b.x.lo end) end
+  i, u = 1, {}
   while i <= #t do
     a = t[i]
     if i < #t then
-      b = t[i+1]
-      if a[2] == b[1] then
-        a = {a[1], b[2], a[3]}
-        i=i+1 end end
-    u[1+#u] = a
-    i=i+1  end
-  return  #u == #t and t or _showMerge(u) end
-
-function _showPretty(txt, r)
-  if r[1] == -math.huge then return l.fmt("%s < %s",txt,r[2]) end
-  if r[2] ==  math.huge then return l.fmt("%s >= %s",txt,r[1]) end
-  if r[1] == r[2]       then return l.fmt("%s == %s",txt,r[1]) end
-  return l.fmt("%s <= %s < %s", r[1], txt, r[2]) end
-
+      if a.x.hi == t[i + 1].x.lo then
+        a = a:merge(t[i + 1]) -- warning. the y counts now may be very wrong
+        i = i + 1 end end
+    u[1 + #u] = a
+    i = i + 1 end 
+  return #u == #t and t or _showLess(u,ready) end
+  
 -- ## RULES
 -- Manages the process of scoring ranges, trying all their combinations, 
 -- scoring the combinations, returning the result.
@@ -439,10 +443,8 @@ local RULES=is"RULE"
 function RULES.new(ranges, goal, rowss, self)
   for k,v in pairs(rowss) do print(k,#v) end
   self = isa(RULES, {sorted={}, goal=goal,rowss=rowss, LIKE=0, HATE=0})
-    self:likeHate()
-  print(3)
-  for _, range in pairs(ranges) do l.oo(range); range.scored = self:score(range.y) end
-  print(1)
+  self:likeHate() 
+  for _, range in pairs(ranges) do  range.scored = self:score(range.y)  end 
   self.sorted = self:top( self:try( self:top(ranges)))
   return self end
 
@@ -452,24 +454,20 @@ function RULES:likeHate()
     then self.LIKE = self.LIKE + #rows 
     else self.HATE = self.HATE + #rows end end end
 
-function RULES:score(t, x)
-  print(200,l.o(t),self.goal, self.LIKE,self.HATE)
-  x =  l.score(t, self.goal, self.LIKE, self.HATE)
-    
-  print(100,x)
-    
-  return x end
+function RULES:score(t)
+  return l.score(t, self.goal, self.LIKE, self.HATE) end
 
-function RULES:try(ranges,     u, rule)
+function RULES:try(ranges,     u, rule,n)
   u={}
-  for _,subset in pairs(l.powerset(ranges)) do
-    rule  = RULE.new(subset)
-    u[1+#u] = rule
-    rule.scored = self:score( rule:selectss(self.rowss) ) end 
+  for _, subset in pairs(l.powerset(ranges)) do
+    if #subset > 0 then
+      rule  = RULE.new(subset)
+      rule.scored = self:score( rule:selectss(self.rowss) )
+      if rule.scored > 0.01 then u[1+#u] = rule  end end end
   return u end
 
 function RULES:top(t,       u)
-  table.sort(t, function(a,b) return a.scored > b.scored end)
+  table.sort(t, function(a, b) return a.scored > b.scored end)
   u = {}
   for _,x in pairs(t) do
     if x.scored >= t[1].scored * the.Cut then
@@ -561,10 +559,10 @@ function l.keysort(t,fun,      u,v)
 
 -- ### String to Things
 
--- Coerce string to int, float, nil, true, false, or (it all else fails), a strong.
+-- Coerce string to int, float,  true, false, or (it all else fails), a strong.
 function l.coerce(s1,    fun) 
   function fun(s2)
-    if s2=="nil" then return nil else return s2=="true" or (s2~="false" and s2) end end
+    return s2=="true" or (s2~="false" and s2) or false end 
   return math.tointeger(s1) or tonumber(s1) or fun(s1:match'^%s*(.*%S)') end
 
 -- Parse help string to infer the settings.
@@ -651,6 +649,12 @@ function eg.oo()
 function eg.the() l.oo(the); return the.help ~= nil and the.seed and the.m and the.k  end 
 
 function eg.help() print("\n"..the._help) end
+
+function eg.copy(    t,u)
+  t={a=1,b={c={2,3,{4,5,6}}}}
+  u=l.copy(t)
+  u.b.c[1] = 4000 
+  return t.b.c[1] ~= u.b.c[1] end
 
 function eg.sym(      s,mode,e)
   s = SYM.new()
@@ -752,14 +756,35 @@ function eg.bins(t, d, best, rest, score,t,HATE,LIKE,max)
       print(l.rnd(score(v)), l.o(v)) end end
   l.oo{LIKE=#LIKE, HATE=#HATE} end
   
-function eg.rules(     d,rowss,  best, rest,LIKE,HATE)
-  d = DATA.new("../data/auto93.csv")
-  best, rest = d:branch()
-  LIKE = best.rows
-  HATE = l.slice(l.shuffle(rest.rows), 1, 3 * #LIKE)
-  rowss = {LIKE=LIKE,HATE=HATE}
-  RULES.new(_ranges(d.cols.x, rowss),"LIKE",rowss)
-  end
+function eg.rules(     d,rowss,  best, rest,LIKE,HATE,best0,result,evals1,evals2,_)
+  for xxx=1,20 do
+      d = DATA.new(the.file)
+    --best, rest = d:branch()
+    
+    best0, rest, evals1 = d:branch(the.d)
+    best, _, evals2 = best0:branch(the.D)
+    print(evals1+evals2+the.D-1)
+    LIKE = best.rows
+    HATE = l.slice(l.shuffle(rest.rows), 1, 3 * #LIKE)
+    rowss = { LIKE = LIKE, HATE = HATE }
+    -- local _t ={}
+    -- for k, rows in pairs(rowss) do
+    --   for _,row in pairs(rows) do
+    --     if row.cells[4] >= 79 and row.cells[2] < 115 and row.cells[5] ==3 then _t[k] = (_t[k] or 0) + 1 end end end
+      -- l.oo(_t)
+    for i, rule in pairs(RULES.new(_ranges(d.cols.x, rowss), "LIKE", rowss).sorted) do
+      result = d:clone(rule:selects(rest.rows))
+      if #result.rows > 0 then
+          table.sort(result.rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
+          print(l.rnd(rule.scored), l.rnd(result:mid():d2h(d)), l.rnd(result.rows[1]:d2h(d)), l.o(result:mid().cells),"\t",rule:show()) end
+      end
+    
+        -- for _, ranges in pairs(rule.parts) do
+        --     for _, range in pairs(ranges) do
+        --         print(i, range.txt, range.x.lo, range.x.hi)
+        --     end
+        -- end
+  end end
 -- ----------------------------------------------------------------------------
 -- ## Start-up
 

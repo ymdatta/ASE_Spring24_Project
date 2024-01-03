@@ -78,3 +78,12 @@ eggate: ## basic demo of GATE
 
 eggate20: ## run gate*20 (with different random seeds)
 	lua gate.lua -s $$RANDOM -t gate20 | sort -n 
+
+egs:
+	make -B  ~/tmp/auto93.out   ~/tmp/coc10000.out   ~/tmp/healthCloseIsses12mths0011-easy.out  ~/tmp/pom.out \
+~/tmp/china.out      ~/tmp/nasa93dem.out     \
+~/tmp/coc1000.out    ~/tmp/healthCloseIsses12mths0001-hard.out  ~/tmp/nasa93demNums.out                       ../data/weather.csv
+
+~/tmp/%.out : ../data/%.csv
+	echo $@
+	lua mylo.lua -s $$RANDOM -f $^  -t rules    > $@; cat $@

@@ -83,7 +83,7 @@ function eg.f(     d)
   d = DATA('../data/diabetes.csv')
   oo(d.f) end
 
-function eg.contrast(d, yes, no, R, B, r, b, w)
+  function eg.contrast(d, yes, no, R, B, r, b, w)
 the.bins = 5
 d = DATA('../data/diabetes.csv')
 yes = "pos"; B = d.cols.klass.has[yes] + 1E-30
