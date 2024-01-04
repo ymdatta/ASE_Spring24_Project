@@ -43,13 +43,23 @@ class Sym(Col):
   def mid(self,d: dict) -> float: return max(d, key=d.get)
   def div(self,d: dict) -> float: return ent(d) 
 
-class Hold:
-  def __init__(i): self._has=[];  self.ok=True
-  def add(i,x): self._has  +=[x]; self.ok=False
-  def has(i,x): 
-    if not self.ok: self._has.sort(); 
-    self.ok=True
-    return self._has
+class Nums:
+  def __init__(i): i.n,i.mu,i.m,i.sd2 = 0,0,0,0
+  def add(i,x): 
+    if x !="?" :
+      i.n  += 1
+      d     = x - i.mu
+      i.mu += d/i.n
+      i.m2 += d*(x-i.mu)
+      i.sd  = 0 if i.n < 2 else (i.m2/(i.n-1))**.5
+
+class Syms:
+   def __init__(i):  i.has={}
+   def add(i,x):
+     if x != "?" :
+      i.n += 1
+      tmp  = i.has[x] = i.has.get(x,0) + 1
+      if tmp > i.most: i.mode,i.most = x,tmp 
 #--------------------------------------------------------------------
 class Eg:
   _all = locals() 
