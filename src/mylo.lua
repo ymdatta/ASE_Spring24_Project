@@ -756,12 +756,53 @@ function eg.bins(t, d, best, rest, score,t,HATE,LIKE,max)
       print(l.rnd(score(v)), l.o(v)) end end
   l.oo{LIKE=#LIKE, HATE=#HATE} end
   
-function eg.rules(     d,rowss,  best, rest,LIKE,HATE,best0,result,evals1,evals2,_)
-  for xxx=1,20 do
-      d = DATA.new(the.file)
-    --best, rest = d:branch()
+function eg.rules(d, rowss, best, rest, LIKE, HATE, best0, result, evals1, evals2, _)
+    for xxx = 1, 1 do
+        d     = DATA.new(the.file)
+        --best, rest = d:branch()
+         
+
+        best0, rest, evals1 = d:branch(the.d)
+        best, _, evals2 = best0:branch(the.D)
+        print(evals1 + evals2 + the.D - 1)
+        LIKE = best.rows
+        HATE = l.slice(l.shuffle(rest.rows), 1, 3 * #LIKE)
+        rowss = { LIKE = LIKE, HATE = HATE }
+        -- local _t ={}
+        -- for k, rows in pairs(rowss) do
+        --   for _,row in pairs(rows) do
+        --     if row.cells[4] >= 79 and row.cells[2] < 115 and row.cells[5] ==3 then _t[k] = (_t[k] or 0) + 1 end end end
+        -- l.oo(_t)
+        for i, rule in pairs(RULES.new(_ranges(d.cols.x, rowss), "LIKE", rowss).sorted) do
+            result = d:clone(rule:selects(rest.rows))
+            if #result.rows > 0 then
+                table.sort(result.rows, function(a, b) return a:d2h(d) < b:d2h(d) end)
+                print(l.rnd(rule.scored), l.rnd(result:mid():d2h(d)), l.rnd(result.rows[1]:d2h(d)),
+                    l.o(result:mid().cells), "\t", rule:show())
+            end
+        end
+
+        -- for _, ranges in pairs(rule.parts) do
+        --     for _, range in pairs(ranges) do
+        --         print(i, range.txt, range.x.lo, range.x.hi)
+        --     end
+        -- end
+    end
+end
+  
+function eg.rules2(     d,rowss,  best, rest,LIKE,HATE,best0,result,evals1,evals2,_,train,test,tmp,random)
+  for xxx=1,1 do
+    d     = DATA.new(the.file)
+      
+     --best, rest = d:branch()
+    tmp = l.shuffle(d.rows)
+    train = d:clone(l.slice(tmp, 1, #tmp // 2))
+    test  = d:clone(l.slice(tmp, #tmp // 2 + 1))
+    table.sort(test.rows, function(a, b) return a:d2h(d) < b:d2h(d) end)
+    print("base",  l.rnd(test:mid():d2h(d)), l.rnd(test.rows[1]:d2h(d)),"\n") 
+    test.rows = l.shuffle(test.rows)
     
-    best0, rest, evals1 = d:branch(the.d)
+    best0, rest, evals1 = train:branch(the.d)
     best, _, evals2 = best0:branch(the.D)
     print(evals1+evals2+the.D-1)
     LIKE = best.rows
@@ -772,11 +813,17 @@ function eg.rules(     d,rowss,  best, rest,LIKE,HATE,best0,result,evals1,evals2
     --   for _,row in pairs(rows) do
     --     if row.cells[4] >= 79 and row.cells[2] < 115 and row.cells[5] ==3 then _t[k] = (_t[k] or 0) + 1 end end end
       -- l.oo(_t)
-    for i, rule in pairs(RULES.new(_ranges(d.cols.x, rowss), "LIKE", rowss).sorted) do
-      result = d:clone(rule:selects(rest.rows))
-      if #result.rows > 0 then
+      test.rows = l.shuffle(test.rows)
+      random = test:clone(l.slice(test.rows, 1, evals1 + evals2 + the.D - 1))
+      table.sort(random.rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
+      for i, rule in pairs(RULES.new(_ranges(train.cols.x, rowss), "LIKE", rowss).sorted) do
+      result = train:clone(rule:selects(test.rows))
+        if #result.rows > 0 then
+          
           table.sort(result.rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
-          print(l.rnd(rule.scored), l.rnd(result:mid():d2h(d)), l.rnd(result.rows[1]:d2h(d)), l.o(result:mid().cells),"\t",rule:show()) end
+          print(l.rnd(rule.scored), l.rnd(result:mid():d2h(d)), l.rnd(result.rows[1]:d2h(d)),
+                                    l.rnd(random:mid():d2h(d)), l.rnd(random.rows[1]:d2h(d)),
+                                     l.o(result:mid().cells),"\t",rule:show()) end
       end
     
         -- for _, ranges in pairs(rule.parts) do
@@ -792,4 +839,5 @@ the = l.settings(help)
 if   not pcall(debug.getlocal, 4, 1) -- if __name__ == "__main__":
 then run(l.cli(the).todo) end
 l.rogues()
-return {the=the, COLS=COLS, DATA=DATA, NODE=NODE, NUM=NUM, ROW=ROW, SYM=SYM}
+return {the=the, COLS=COLS, DATA=DATA, NODE=NODE, NUM=NUM, 
+                 RANGE=RANGE, ROW=ROW, RULE=RULE, RULES=RULES, SYM=SYM}
