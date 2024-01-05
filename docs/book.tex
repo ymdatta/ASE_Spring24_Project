@@ -27,29 +27,30 @@
 \usemintedstyle{tango}
 \setminted{fontsize=\scriptsize,firstnumber=last,mathescape,frame=lines,linenos,framerule=1pt,rulecolor=\color{gray!40}}
 
-\title{A Little Less AI (in under 500 lines)}
+\title{Smarter, shorter, AI Software}
 %\subtitle{Multi-objective Sequential Model Optimization}
 \author{{\bf Tim Menzies}\\ \url{mailto:youremail@example.com}{timm@ieee.org} \\ \url{http://yourhomepage.com}{http://timm.fyi}}
 \date{\today}
 
 \begin{document}
 \maketitle
+\tableofcontents
 
-\chapter{1}
-For AI and SE, do you know what you are doing? 
-Can you build AI software, succinctly, from just a handful of parts? And can other people
-understand, critique and improve?
+\chapter{Do We Understand AI Software?}
+For AI and SE, do we know what we are doing? 
+Can we build AI software, succinctly, from just a handful of parts? And can other people
+understand, critique and improve that system?
 
-Let's check. Let's build an explanation system for multi-objective semi-supervised learning (which, in this book, is a long-winded
-way of saying 
-The task explored here is finding effective human-readable rules for multi-goal problems, after labelling just a handful of examples.
-\begin{itemize}
-  \item By {\em effecive} I mean that the rules can actually select for important parts of the problem space.
-  \item And I want to do this by {\em labelling just a few examples}, I mean that dependent and independent variables are different
-    Depednent varables are goals like "wealth" which we want to maximize or ``weight'' which we want t minimize..
-    Whiele we see indendepntn values all aroudn us, the labels saying that something is ``good'' or ``bad'' are far 
-    harder to obtain)..
-\end{itemize}
+Let's check. Given a few hundred lines of cade,
+can we build, say, an explanation system for a multi-objective semi-supervised optimizer.
+To put that another way,
+we want to learn human-readable rules for multi-goal problems, after labeling just a handful of examples.
+    These  rules have to  be {\em effective}; i.e. they have to  recognize  parts of the problem space where (say) we see the fastest {\em and} cheapest car designs.
+And we're going to assume that this learner can only ask humans about 20 examples, or less,  since if we demand more than that,
+    humans get tired and mi stables (or they do not have time to answer all our nagging questions).
+
+
+
 $N$ things can be 
 Too many choices, not enough time to look at them all.
 \begin{itemize}
