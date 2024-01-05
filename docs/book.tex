@@ -46,8 +46,65 @@ can we build, say, an explanation system for a multi-objective semi-supervised o
 To put that another way,
 we want to learn human-readable rules for multi-goal problems, after labeling just a handful of examples.
     These  rules have to  be {\em effective}; i.e. they have to  recognize  parts of the problem space where (say) we see the fastest {\em and} cheapest car designs.
-And we're going to assume that this learner can only ask humans about 20 examples, or less,  since if we demand more than that,
-    humans get tired and mi stables (or they do not have time to answer all our nagging questions).
+And we're going to assume that this learner can only ask humans about 20 examples, or less
+(since if we demand more,
+    humans get tired and make mistakes  (or they do not have time to answer all our nagging questions).
+
+\section{Data}
+We'll assume input data of CSV files, where row one lists the column names and types.
+- ame starting in upper case are numberic
+- namesrow one 
+
+
+In this paper,
+{\em data} are tables with {\em rows} and {\em columns}.
+Columns are also known as
+{\em features, aributes}, or
+{\em variables}.
+
+Rows contain multiple $X,Y$ features where $X$ are the  {\em independent variables} (that can be observed, and sometimes controlled) while $Y$ are the {\em dependent} variables (e.g. number of defects). When $Y$ is absent,  then {\em unsupervised}  learners seek mappings
+between the $X$ values. For example,
+{\em clustering} algorithms find groupings of similar rows (i.e. rows with similar $X$ values).
+
+Usually most rows have values for most $X$ values. But with {\em text mining}, the opposite is true. In principle, text miners have one column 
+for each work in text's language. Since not all documents use all words, these means that the rows of a text mining data set are often ``sparse''; 
+i.e. has mostly missing values.
+
+
+When $Y$ is present and there is only one of them (i.e. $|Y|=1$) then {\em supervised} learners seek mappings from the $X$ features to the $Y$ values. For example,
+{\em logistic regression} tries to fit the $X,Y$ mapping to a particular equation. 
+
+When there are many $Y$ values (i.e. $|Y|>1$), then another array $W$ stores a  set of
+{\em weights} indicating what we want to  minimize or maximize  (e.g. we
+would seek to minimize $Y_i$ when \mbox{$W_i<0$}).  In this case,
+{\em multi-objective optimizers} seek $X$ values that most minimize or maximize their associated $Y$ values. So:
+\bi
+\item
+{\em Clustering} algorithms find groups of rows;
+\item
+and {\em Classifiers}
+(and {\em regression algorithms}) find how those groups relate to the target $Y$ variables;
+\item
+\BLUE
+and {\em Optimizers}
+are tools that suggest ``better'' settings
+for the  $X$ values (and, here, ``better'' means settings that improve the expected value
+of the  $Y$ values).\BLACK
+\ei
+Apart from $W,X,Y$,  we add $Z$, the {\em hyperparameter} settings that control how learners performs regression or clustering.
+For example, a KNeighbors algorithm needs
+to know how many nearby rows to use for its classification (in which case, that $k\in Z$).
+Usually the $Z$ values are shared across all rows (exception: some optimizers first cluster the data and use different $Z$
+settings for different clusters).
+
+Two important detail not discussed above are  {\em feature engineering}
+and  how to select {\em performance metrics}.
+Feature engineering includes all the pre-processing algorithms listed in
+Table~\ref{tbl:options}. These algorithms
+are used to ``massage'' data prior to clustering or classification or optimization.
+For example,   the LDA pre-processor shown in Table~\ref{tbl:options} is a text mining pre-processor that finds {\em topics}; i.e. words that often occur together within the same paragraph. Topics usually occur at  exponentially decreasing frequency; i.e. , a dozen or so topics might cover most of the document space. Later in this paper,
+we will   (a)~replace sparse raw text mining data with a non-sparse ``topics matrix'' comprising one column per topics and rows showing how much each 
+document matches each topic; then (b)~run a simple learner over this non-sparse matrix.
 
 
 
