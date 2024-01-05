@@ -1,0 +1,161 @@
+\documentclass[twocolumn,landscape]{book}
+\usepackage{minted}
+\usepackage{inconsolata}
+\usepackage{amssymb}
+\usepackage{pifont}
+\usepackage{array}
+  \usepackage[T1]{fontenc}
+    \usepackage{textcomp}
+   \usepackage{mathpazo}
+\usepackage{tikz}
+
+\newcommand{\BALL}[1]{\tikz[baseline=(myanchor.base)] \node[circle,fill=.,inner sep=1pt] (myanchor) {\color{-.}\bfseries\footnotesize #1};}
+
+
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\setitemize{topsep=0pt,parsep=0pt,partopsep=0pt}
+\usepackage[margin=.7in]{geometry}
+\usepackage{pdflscape}
+ \setlength{\columnsep}{30pt}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{natbib}
+
+
+\usemintedstyle{tango}
+\setminted{fontsize=\scriptsize,mathescape,frame=lines,linenos,framerule=1pt,rulecolor=\color{gray!40}}
+
+\title{How to  Write an AI (in under 500 lines)}
+%\subtitle{Multi-objective Sequential Model Optimization}
+\author{{\bf Tim Menzies}\\ \url{mailto:youremail@example.com}{timm@ieee.org} \\ \url{http://yourhomepage.com}{http://timm.fyi}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\chapter{1}
+Too many choices, not enough time to look at them all.
+\begin{itemize}
+\item e.g. Hundreds of cars in a car yard, you try three, then buy one;
+\item e.g. You can't test everything -- so you just test a few;
+\item e.g. Software has $10^9$ of options -- but you  have time to try a few.
+\end{itemize}
+So lets apply {\em sequential model optimization}:
+\begin{itemize}
+\item \citet{xia2020sequential}, 
+\citet{hutter2011sequential},
+\citet{nair2018finding},
+\citet{hsu2018arrow},
+\citet{mockus1989bayesian},
+\citet{golovin17}
+
+
+
+\item e.g. Hundreds of cars in a car yard, you try three, then buy one;
+Some terminology
+\[ \underbrace{y_1,y_2,...}_{\mathit{}dependent\;variables,\;goals} = f(\underbrace{x_1, x_2, x_3, x_4, x_5, x_6,....}_{\mathit{indendepent variables}})
+\]
+\end{itemize}
+\begin{itemize}
+\item 
+\item But depndent variables are more expesnive to collect 
+\item e.g. A supermarket has 100 apples. Which ones are tasty?
+So lets walk data incrementally:
+\end{itemize}
+
+
+\section{Problem}
+Too many choices, not enough time to look at them all.
+line \ref{one}.
+\begin{itemize} 
+\item adas
+\end{itemize}
+\clearpage
+\begin{minted}{lua}
+  function NUM.new(i,at,txt) -- --> NUM;  constructor; $\label{one}$
+  i.at, i.txt = at or 0, txt or "" -- column position 
+  i.n, i.mu, i.m2 = 0, 0, 0
+  i.lo, i.hi = math.huge, -math.huge 
+  i.w = i.txt:find"-$" and -1 or 1 end
+
+function NUM.new(i,at,txt) --> NUM;  constructor; 
+  i.at, i.txt = at or 0, txt or "" -- column position 
+  i.n, i.mu, i.m2 = 0, 0, 0
+  i.lo, i.hi = math.huge, -math.huge 
+  i.w = i.txt:find"-$" and -1 or 1 end
+
+
+
+function NUM.new(i,at,txt) --> NUM;  constructor; 
+  i.at, i.txt = at or 0, txt or "" -- column position 
+  i.n, i.mu, i.m2 = 0, 0, 0
+  i.lo, i.hi = math.huge, -math.huge 
+  i.w = i.txt:find"-$" and -1 or 1 end
+
+
+function NUM.new(i,at,txt) --> NUM;  constructor; 
+  i.at, i.txt = at or 0, txt or "" -- column position 
+  i.n, i.mu, i.m2 = 0, 0, 0
+  i.lo, i.hi = math.huge, -math.huge 
+  i.w = i.txt:find"-$" and -1 or 1 end
+
+
+function NUM.new(i,at,txt) --> NUM;  constructor; 
+  i.at, i.txt = at or 0, txt or "" -- column position 
+  i.n, i.mu, i.m2 = 0, 0, 0
+  i.lo, i.hi = math.huge, -math.huge 
+  i.w = i.txt:find"-$" and -1 or 1 end
+
+
+function NUM.new(i,at,txt) --> NUM;  constructor; 
+  i.at, i.txt = at or 0, txt or "" -- column position 
+  i.n, i.mu, i.m2 = 0, 0, 0
+  i.lo, i.hi = math.huge, -math.huge 
+  i.w = i.txt:find"-$" and -1 or 1 end
+
+function NUM.new(i,at,txt) --> NUM;  constructor; 
+  i.at, i.txt = at or 0, txt or "" -- column position 
+  i.n, i.mu, i.m2 = 0, 0, 0
+  i.lo, i.hi = math.huge, -math.huge 
+  i.w = i.txt:find"-$" and -1 or 1 end
+
+function NUM.new(i,at,txt) --> NUM;  constructor; 
+  i.at, i.txt = at or 0, txt or "" -- column position 
+  i.n, i.mu, i.m2 = 0, 0, 0
+  i.lo, i.hi = math.huge, -math.huge 
+  i.w = i.txt:find"-$" and -1 or 1 end
+
+function NUM.new(i,at,txt) --> NUM;  constructor; 
+  i.at, i.txt = at or 0, txt or "" -- column position 
+  i.n, i.mu, i.m2 = 0, 0, 0
+  i.lo, i.hi = math.huge, -math.huge 
+  i.w = i.txt:find"-$" and -1 or 1 end
+
+
+\end{minted}
+
+
+
+\section{Test section one}
+
+\section{What is Prolog?}
+\begin{itemize}
+    \item A programming language associated with artificial intelligence and computational linguistics.
+    \item Based on formal logic.
+    \item Declarative: Describe the problem, not how to solve it.
+    \item Known for its ability to handle symbolic reasoning and knowledge representation.
+\end{itemize}
+
+
+   some text here some text here some text here some text here some text here
+    \begin{center}
+       asdsa
+     \end{center}
+
+\section{References}
+         \bibliographystyle{natbib}
+         \bibliography{slides.bib}
+
+\end{document}
