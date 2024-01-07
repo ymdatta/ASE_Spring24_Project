@@ -4,6 +4,7 @@ author: Tim Menzies
 date: Jan 8, 2024
 geometry: margin=1in
 documentclass: article
+font-size: 8pt
 header-includes: |
     \usepackage{titlesec}
     \newcommand{\sectionbreak}{\clearpage}
@@ -21,14 +22,12 @@ header-includes: |
     \fancyfoot[LE,RO]{\thepage}
     \BeforeBeginEnvironment{listings}{\par\noindent\begin{minipage}{\linewidth}}
     \AfterEndEnvironment{listings}{\end{minipage}\par\addvspace{\topskip}}
-    \usepackage[itemsep=1pt,parskip=0pt,parsep=0pt]{enumitem}
 ---
 
-# Notes on Gate.lua1
+# Overview
 
 
-
-GATE  is a  simple demonstrator  of  an incremental  optimization method  called \ding{202}
+GATE  is a  simple demonstrator  of  an incremental  optimization method  called
 sequential model optimzation.  GATE assumes that (a) data divides into X and Y
 columns, and (b) it  is expensive to access the Y values.  In that case, GATE
 learns how to recognize good Y-values, using just very few  Y values.
@@ -62,10 +61,21 @@ _best,rest_, then the most confused example is the one that maximizes
 _abs(b+r)/abs(b-r)_.
 That example is then evaluated and the model is extended.
 
+The rest of this document describes GATE:
 
-\newpage
+- First, we talk how to install the system;
+- Second, we discuss some of the coding convetions used here.
+- After that, we discuss the four main sections of the code
+  - Help and settings
+  - GATE's input data format
+  - The example and demo library
+  - Classes
+    - The column classes;
+    - The DATA classes.
+  - A library of support code.  All these functions are stored inside the `l`
+    table (e.g. see the`l.settings` function shown below).
 
-# Installation2
+# Installation
 
 ## Install LUA
 ```
@@ -112,15 +122,79 @@ lua gate.lua -t all
 
 If this works, the last line of the test output should be say "PASS 0 fail(s)".
 
-# Input Data
+# Coding Convetions
+
+## Small functions
+More than six lines per function makes me nervous, five lines makes me happy,
+ less than three makes me   gleeful.
+Also, if a  line just contains `end`, the I add it to the line above.
+
+## Narrow lines
+90 chars/line or less (otherwise the pdf printing messes up).
+
+## Few globals
+_N-1_ globals is better than _N_. I just try to have one:
+- The  global config settings `the`.
+- This `the` variable is parsed from the help text listed at top of file.
+- Optionally, `the` can be updated from the command-line options.
+
+## Function arguments
+Two spaces denotes "start of optionals" and
+four spaces denotes "start of locals"
+
+## Tests
+From command line we can run one, or all tests.
+-   Before running a test, we reset the random number seed;
+-   After running a test, we reset all the settings to their defaults;
+- Each test returns `true``, `false``, or `nil``.  If `false`, then
+    we say a test fails.
+- If we run `all``, the code returns the number of failed tests;
+    (so `$?==0` means "no errors").
+
+## Structs
+Classes in my Lua are defined as tables that know
+know to look up methods in themselves, before looking elsewhere:
+```lua
+local function isa(x,y) return setmetatable(y,x) end
+local function is(s,    t) t={a=s}; t.__index=t; return t end
+```
+`function ZZZ.new(...)` is a constructor that returns a new struct of type `ZZZ`.
+My structs support  encapsulation, polymorphism, but no inheritance. Why?:
+- See [^diederich12] [^hatton98] about the errors introduced by objects;
+- If you really want inheritance,   use a langua ge that
+truly supports it, like Smalltalk or Crystal).
+
+## Type hints
+For function argumnets (but not for locals) I try to apply the following stadards:
+
+- `zzz` (or `zzz1``) = instance of class `ZZZ`.
+- `x` is anything
+- `n` = number
+- `s` = string
+- `xs` = list of many `x`
+- `t` = table.
+- `a` = array (index 1,2,3..)
+- `h` = hash (indexed by keys)
+- `fun` = function
+
+
+[^hatton98]: Hatton, Les. “Does OO Sync with How We Think?” IEEE Softw. 15 (1
+998): 46-54.
+https://www.cs.kent.edu/~jmaletic/Prog-Comp/Papers/Hatton98.pdf
+
+[^diederich12]: Jack Diederich. "Stop Writing Classes". Youtube video. Mar 15
+, 2012.
+https://youtu.be/o9pEzgHorH0?si=KWLVXsHuD_hwGtLz
+
+# GATE's Input Data Format
 
 GATE reads comma-seperated files (e.g. auto93.csv) whose first row names the columns.
 
 - Names starting with uppercase are numeries; e.g. `Volume`. All
-  other names are symbolic columns (e.g. `origin`)  
-- Names ending with X are ignored by the reasoning; e.g. `HpX`.  
+  other names are symbolic columns (e.g. `origin`)
+- Names ending with X are ignored by the reasoning; e.g. `HpX`.
 - Numeric names ending with `-` or `+` are goals to be minimized or maximized; 
-  e.g. `Lbs-` and `Acc+`.  
+  e.g. `Lbs-` and `Acc+`.
 - Symolic names ending with `!` are classes to be recognized; e.g. `happy!`.
 
 ```
@@ -154,21 +228,11 @@ The net result is that the rows closest to the goals are shown first (lightest,
 fastest, most economical cars) and the worst casrs are shown last
 (heaviest, slowest, worst MPG).
 
-## Code Format
-
-gate.lua has four major sections: help text,  examples, classes, 
-and library functions (and  all the library functions are stored
-in the `l` table; e.g. see the `l.settings` function shown
-below).
-
-### Help Text
-
+# Help and Settings
 The top of gate.lua is a help string from which this code extracts the system's
 config.
-
 ```txt
 help =[[
-
 gate: guess, assess, try, expand
 (c) 2023, Tim Menzies, BSD-2
 Learn a little, guess a lot, try the strangest guess, learn a little more, repeat
@@ -186,11 +250,12 @@ OPTIONS:
   -t --todo     start up action                 = help]]
 ```
 
-The parser for this help is very simple (it just looks for a regular
-expression that finds a word after two dashes: 
+The help text parser a  regular
+expression to  find a word after two dashes:
 
        [-][-]([%S]+)[^=]+= ([%S]+)
 
+That pattern is used in `l.settings` as follows:
 ```lua
 function l.settings(s,    t,pat) --> a dictionary with the config options
   t,pat = {}, "[-][-]([%S]+)[^=]+= ([%S]+)" -- @\ding{202}@
@@ -198,29 +263,23 @@ function l.settings(s,    t,pat) --> a dictionary with the config options
   t._help = s
   return t end
 ```
-
 That parser needs a function to `coerce` strings to (e.g.) numbers or
 booleans. 
-
 ```lua
 function l.coerce(s1,    fun) --> nil or bool or int or float or string
   function fun(s2)
     if s2=="nil" then return nil else return s2=="true" or (s2~="false" and s2) end end
   return math.tointeger(s1) or tonumber(s1) or fun(s1:match'^%s*(.*%S)') end
 ```
-
 This code is used to generate a variable `the` storing the
 config.
-
 ```
 the = l.settings(help)
 ```
-
 Optinonally, we can update the built in defaults via 
 command-line flags using the `cli` function (which,
 incidently, uses `coerce` to turn command line strings
 into values):
-
 ```lua
 function l.cli(t) --> the table `t` updated from command line
   for k, v in pairs(t) do
@@ -234,7 +293,7 @@ function l.cli(t) --> the table `t` updated from command line
 
 the = l.cli(the)
 ```
-### Example library
+# Examples and Demos Library
 
 The code ends with a few dozen tests that test/demo differnt parts
 of the system. For example, here are two examples:
@@ -243,28 +302,24 @@ of the system. For example, here are two examples:
 - ``eg.sym`` tests  class that accepts atoms and can report
    the mode and entropy of that collection (code for `SYM`
    is presented below).
-
-All these tests can be run at the command line:
-
-```
-lua gate.lua -t oo
-lua gate.lua -t sym
-```
-
 ```lua
 local eg={}
 
-function eg.oo()
+function eg.oo() --> bool
   return l.o{a=1,b=2,c=3,d={e=3,f=4}}  == "{a: 1, b: 2, c: 3, d: {e: 3, f: 4}}" end
 
-function eg.sym(      s,mode,e)
+function eg.sym(      s,mode,e) --> bool
   s = SYM.new()
   for _, x in pairs{1,1,1,1,2,2,3} do s:add(x) end
   mode, e = s:mid(), s:div()
   print(mode, e)
   return 1.37 < e and e < 1.38 and mode == 1 end
 ```
-
+All these tests can be run at the command line:
+```
+lua gate.lua -t oo
+lua gate.lua -t sym
+```
 The example library needs some support code.  The `run` function
 checks what is returned by each example (and if it is `false`, then
 this test returns `true` indicating a failure). Note also that `run`
@@ -277,7 +332,7 @@ has does some _setup_ and _tearDown_:
 
 
 ```lua
-local function run(k,   oops,b4)
+local function run(k,   oops,b4) --> bool
   b4 = l.copy(the)          -- set up
   math.randomseed(the.seed) -- set up
   oops = eg[k]()==false
@@ -292,7 +347,7 @@ Note the use of `l.keys()`: this returns the example names,
 sorted alphabetically (so the tests are run in that order).
 
 ```lua
-function eg.all(     bad)
+function eg.all(     bad) --> failure count to operating system
   bad=0
   for _,k in pairs(l.keys(eg)) do
     if k ~= "all" then
@@ -307,5 +362,134 @@ Note that, like anything else in `eg`, `eg.all` can be called from the command l
 lua gate.lua -t all
 ```
 
+# Column Classes
 
+GATE reads data and stores them in rows. Row columns are summarized in either
+NUMeric or SYMbolic column classes. 
+These classes respond to  the same 
+polymorphic methods:
 
+-  `mid()`: central tendancy (mean for NUMs and mode for SYMs);
+- `div()`: the tendancy to move away from `mid()` (standard deviation for NUMs
+  and entropy for SYMs);
+- `small()`: indistinguishable differences. For SYMs, NUMs, that is zero or
+   .35*standard deviation [^saw];
+- `like(x):` how likely is `x` to belong to the distribution stored in
+  the NUM or SYM
+
+[^saw]: Sawilowsky, S.S.: New effect size rules of thumb. Journal of Modern Applied Statistical
+
+## NUMeric class
+NUMerics incrementally updates the control parameters of 
+a Gaussian function [^gaussfun].
+
+[^gaussfun]: https://en.wikipedia.org/wiki/Gaussian\_function
+
+```lua
+local NUM=is"NUM"
+function NUM.new(s, n) --> NUM
+  return isa(NUM, 
+           {txt=s or " ",                                 -- column name
+            at=n or 0,                                    -- column position
+            n=0, mu=0, m2=0                               -- used to calcuate mean an sd
+            hi=-1E30, lo=1E30,                            -- used when normalizing
+            heaven = (s or ""):find"-$" and 0 or 1}) end  -- 0,1 for min,maximizationg
+
+function NUM:add(x,     d) --> nil
+  if x ~="?" then
+    self.n  = self.n+1
+    d       = x - self.mu
+    self.mu = self.mu + d/self.n
+    self.m2 = self.m2 + d*(x - self.mu)
+    self.lo = math.min(x, self.lo)
+    self.hi = math.max(x, self.hi) end end
+
+function NUM:mid() --> num
+  return self.mu end
+
+function NUM:div() --> num
+  return self.n < 2 and 0 or (self.m2/(self.n - 1))^.5 end
+
+function NUM:small() --> num
+  return the.cohen*self:div() end
+
+function NUM:like(x,_,      nom,denom) --> num
+  local mu, sd =  self:mid(), (self:div() + 1E-30)
+  nom   = 2.718^(-.5*(x - mu)^2/(sd^2))
+  denom = (sd*2.5 + 1E-30)
+  return  nom/denom end
+```
+`like` for NUMs is just a standard gaussian proability distribution function[^norm].
+
+[^norm]: https://en.wikipedia.org/wiki/Normal_distribution
+
+NUMs have one specialy method called `norm(x)` that returns 0..1,
+min..max.
+```lua
+function NUM:norm(x) --> num
+  return x=="?" and x or (x - self.lo) / (self.hi - self.lo + 1E-30) end
+```
+## SYMbolic Classes
+This class supports the same methods as NUMbers; i.e. `mid()`, `div()`,
+`small(x)`, `like(x,prior)`.
+
+```lua
+local SYM=is"SYM"
+function SYM.new(s,n) --> SYM
+  return isa(SYM,{txt=s or " ", at=n or 0, n=0, has={}, mode=nil, most=0}) end
+
+function SYM:add(x) --> nil
+  if x ~= "?" then
+    self.n = self.n + 1
+    self.has[x] = 1 + (self.has[x] or 0)
+    if self.has[x] > self.most then
+      self.most,self.mode = self.has[x], x end end end
+
+function SYM:mid()  --> any
+   return self.mode end
+
+function SYM:div(    e) --> num
+  e=0; for _,v in pairs(self.has) do e=e-v/self.n*math.log(v/self.n,2) end; return e end
+
+function SYM:small() --> 0
+   return 0 end
+
+function SYM:like(x, prior) --> num
+  return ((self.has[x] or 0) + the.m*prior)/(self.n +the.m) end
+```
+
+Note the last method (`like`) has some low frequency tricks to handle
+lightly sampled regions of the data space (see `prior` and `the.m`).
+
+# DATA Class
+
+In order to read rows and summarize their contents in NUMeric or
+SYMbolic columns, we need three things
+```lua
+-- ### Columns
+-- A contrainer storing multiple `NUM`s and `SYM`s.
+
+-- Create a set of columns from a set of strings. If uppercase
+-- then `NUM`, else `SYM`. `Klass`es end in `!`. Numeric goals to
+-- minimize of maximize end in `-`,`+`. Keep all cols in `all`.
+-- Also add dependent columns to `y` (anthing ending in `-`,`+`,`!`) and
+-- independent columns in `x` (skipping over anyhing ending in `X`).
+local COLS=is"COLS"
+function COLS.new(row)
+  local x,y,all = {},{},{}
+  local klass,col
+  for at,txt in pairs(row.cells) do
+    col = (txt:find"^[A-Z]" and NUM or SYM).new(txt,at)
+    all[1+#all] = col
+    if not txt:find"X$" then
+      if txt:find"!$" then klass=col end
+      (txt:find"[!+-]$" and y or x)[at] = col end end
+  return isa(COLS,{x=x, y=y, all=all, klass=klass, names=row.cells}) end
+
+-- Update
+function COLS:add(row)
+  for _,cols in pairs{self.x, self.y} do
+    for _,col in pairs(cols) do
+      col:add(row.cells[col.at]) end end
+  return row end
+```
