@@ -95,7 +95,7 @@ function l.settings(s,    t,pat)
 
 That parser needs to coerse a string:
 
-```
+```lua
 function l.coerce(s1,    fun)
   function fun(s2)
     if s2=="nil" then return nil else return s2=="true" or (s2~="false" and s2) end end
