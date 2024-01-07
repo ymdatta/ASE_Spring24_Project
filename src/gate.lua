@@ -432,7 +432,7 @@ function eg.sorted(   d)
   table.sort(d.rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
   print("",l.o(d.cols.names))
   for i, row in pairs(d.rows) do
-    if i < 5  or i> #d.rows - 5 then print(i, l.o(row)) end end end 
+    if i < 5  or i> #d.rows - 5 then print(i, l.o(row.cells)) end end end 
 
 function eg.gate(stats, bests, d, say,sayd)
   local budget0,budget,some = 4,10,.5
