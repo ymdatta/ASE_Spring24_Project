@@ -48,14 +48,17 @@ nasa93dem.csv, pom.csv.
 
 GATE reads comma-seperated files (e.g. auto93.csv) whose first row names the columns.
 
-- Names starting with uppercase are numeries; e.g. `Salary`. All other names are symbolic columns.
-- Names ending with X are ignored by the reasoning; e.g. `SexM`.
-- Numeric names ending with `-` or `+` are goals to be minimized or maximized; e.g. `Weight-` and `Salary+`.
+- Names starting with uppercase are numeries; e.g. `Salary`. All
+  other names are symbolic columns.  
+- Names ending with X are ignored by the reasoning; e.g. `SexM`.  
+- Numeric names ending with `-` or `+` are goals to be minimized or maximized; 
+  e.g. `Weight-` and `Salary+`.  
 - Symolic names ending with `!` are classes to be recognized; e.g. `happy!`.
 
 ## Code Format
 
-gate.lua has sections: help text, classes, library functions, examples.
+gate.lua has sections: help text,  examples, classes, 
+and library functions.
 
 ### Help Text
 
