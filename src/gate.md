@@ -1,3 +1,20 @@
+---
+header-includes: |
+    \usepackage{fancyhdr}
+    \pagestyle{fancy}
+    \fancyhead[CO,CE]{This is fancy}
+    \fancyfoot[CO,CE]{So is this}
+    \fancyfoot[LE,RO]{\thepage}
+    \usepackage{etoolbox}
+    \makeatletter
+    \patchcmd{\@verbatim}
+        {\verbatim@font}
+        {\verbatim@font\scriptsize}
+        {}{}
+    \makeatother
+documentclass: book
+---
+
 # Notes on Gate.lua
 
 Tim Menzies  
@@ -84,7 +101,7 @@ lua gate.lua -t all
 
 If this works, the last line of the test output should be say "PASS 0 fail(s)".
 
-## Data Format
+## Input Data
 
 GATE reads comma-seperated files (e.g. auto93.csv) whose first row names the columns.
 
@@ -133,7 +150,7 @@ and library functions (and  all the library functions are stored
 in the `l` table; e.g. see the `l.settings` function shown
 below).
 
-##a Help Text
+### Help Text
 
 The top of gate.lua is a help string from which this code extracts the system's
 config.
@@ -239,10 +256,10 @@ function eg.sym(      s,mode,e)
 
 The example library needs some support code.  The `run` function
 checks what is returned by each example (and if it is `false`, then
-this test returns `true` indicating a failure. Note also that `run`
+this test returns `true` indicating a failure). Note also that `run`
 has does some _setup_ and _tearDown_:
 
-- In the `tearDown` step, we restore the global config.
+- In the _tearDown_ step, we restore the global config.
 - As _setup_, the global config is cached (so it can be 
   restored in `tearDown`) and the randomseed is restored
   to some default value.
@@ -253,7 +270,7 @@ local function run(k,   oops,b4)
   b4 = l.copy(the) -- set up
   math.randomseed(the.seed) -- set up
   oops = eg[k]()==false
-  io.stderr:write(l.fmt("# %s %s\n",oops and "❌ FAIL" or "✅ PASS",k))
+  io.stderr:write(l.fmt("# %s %s\n",oops and " FAIL" or " PASS",k))
   for k,v in pairs(b4) do the[k]=v end -- tear down
   return oops end
 ```
@@ -269,11 +286,11 @@ function eg.all(     bad)
   for _,k in pairs(l.keys(eg)) do
     if k ~= "all" then
       if run(k) then bad=bad+1 end end end
-  io.stderr:write(l.fmt("# %s %s fail(s)\n",bad>0 and "❌ FAIL" or "✅ PASS",bad))
+  io.stderr:write(l.fmt("# %s %s fail(s)\n",bad>0 and " FAIL" or " PASS",bad))
   os.exit(bad) end
 ```
 
-Note that `eg.all` can be called from the command line
+Note that, like anything else in `eg`, `eg.all` can be called from the command line
 
 ```
 lua gate.lua -t all
