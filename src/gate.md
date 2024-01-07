@@ -21,13 +21,14 @@ header-includes: |
     \fancyfoot[LE,RO]{\thepage}
     \BeforeBeginEnvironment{listings}{\par\noindent\begin{minipage}{\linewidth}}
     \AfterEndEnvironment{listings}{\end{minipage}\par\addvspace{\topskip}}
+    \usepackage[itemsep=1pt,parskip=0pt,parsep=0pt]{enumitem}
 ---
 
 # Notes on Gate.lua1
 
 
 
-GATE  is a  simple demonstrator  of  an incremental  optimization method  called
+GATE  is a  simple demonstrator  of  an incremental  optimization method  called \ding{202}
 sequential model optimzation.  GATE assumes that (a) data divides into X and Y
 columns, and (b) it  is expensive to access the Y values.  In that case, GATE
 learns how to recognize good Y-values, using just very few  Y values.
@@ -192,7 +193,7 @@ expression that finds a word after two dashes:
 
 ```lua
 function l.settings(s,    t,pat) --> a dictionary with the config options
-  t,pat = {}, "[-][-]([%S]+)[^=]+= ([%S]+)"
+  t,pat = {}, "[-][-]([%S]+)[^=]+= ([%S]+)" -- @\ding{202}@
   for k, s1 in s:gmatch(pat) do t[k] = l.coerce(s1) end
   t._help = s
   return t end
