@@ -13,9 +13,10 @@ it so simple. Other languages were explored: LISP was too hard
 for newbies; Julia and Crystal had annoying slow start-ups; 
 Gawk functions are too limited (cannot  return structs); 
 Python was just dull; and I could never crack the Haskell barrier.
-  The resulting code is under 500 lines, most
-of which is support code (demo suites, library functions, etc).
-The actual incremental optimier is jsut a few dozen lines. 
+  The resulting code is under 500 lines, but that includes
+all the
+support code (demo suites, library functions, etc).
+The actual incremental optimier is just a few dozen lines. 
 
 GATE runs in four phases:
 
