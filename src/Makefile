@@ -87,3 +87,7 @@ egs:
 ~/tmp/%.out : ../data/%.csv
 	echo $@
 	lua mylo.lua -s $$RANDOM -f $^  -t rules    > $@; cat $@
+
+tex:
+	pandoc -N -s --highlight-style tango --toc -o ~/tmp/gate.pdf gate.md
+

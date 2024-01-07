@@ -1,24 +1,31 @@
 ---
+title: Notes on Gate
+author: Tim Menzies
+date: Jan 8, 2024
+geometry: margin=1in
+documentclass: article
 header-includes: |
+    \usepackage{titlesec}
+    \newcommand{\sectionbreak}{\clearpage}
+    \usepackage{inconsolata}
+    \usepackage{amssymb}
+    \usepackage{pifont}
+    \usepackage{array}
+    \usepackage[T1]{fontenc}
+    \usepackage{textcomp}
+    \usepackage{mathpazo}
     \usepackage{fancyhdr}
     \pagestyle{fancy}
-    \fancyhead[CO,CE]{This is fancy}
-    \fancyfoot[CO,CE]{So is this}
+    \fancyhead[CO,CE]{}
+    \fancyfoot[CO,CE]{}
     \fancyfoot[LE,RO]{\thepage}
-    \usepackage{etoolbox}
-    \makeatletter
-    \patchcmd{\@verbatim}
-        {\verbatim@font}
-        {\verbatim@font\scriptsize}
-        {}{}
-    \makeatother
-documentclass: book
+    \BeforeBeginEnvironment{listings}{\par\noindent\begin{minipage}{\linewidth}}
+    \AfterEndEnvironment{listings}{\end{minipage}\par\addvspace{\topskip}}
 ---
 
-# Notes on Gate.lua
+# Notes on Gate.lua1
 
-Tim Menzies  
-Jan 6 2024
+
 
 GATE  is a  simple demonstrator  of  an incremental  optimization method  called
 sequential model optimzation.  GATE assumes that (a) data divides into X and Y
@@ -34,6 +41,7 @@ Python was just dull; and I could never crack the Haskell barrier.
 all the
 support code (demo suites, library functions, etc).
 The actual incremental optimier is just a few dozen lines. 
+
 
 GATE runs in four phases:
 
@@ -54,15 +62,17 @@ _abs(b+r)/abs(b-r)_.
 That example is then evaluated and the model is extended.
 
 
-## Installation
+\newpage
 
-Install LUA
+# Installation2
+
+## Install LUA
 ```
 brew install lua5.3 # mac os/x
 sudo apt update; sudp apt install lua5.3 # debian/unix
 ```
 
-Make directories
+## Make directories
 
 ```sh
 mkdir gate
@@ -70,14 +80,14 @@ mkdir gate/data
 mkdir gate/src
 ```
 
-Load the script.
+## Load the script.
 
 ```sh
 cd gate/src
 curl https://raw.githubusercontent.com/timm/lo/6jan24/src/gate.lua
 ```
 
-Load the sample data.
+## Load the sample data.
 
 ```sh
 cd ../data
@@ -92,7 +102,7 @@ done
 (Note that the diabetes and soybean and classification data sets (only
 one symbolic goal) while the rest are optimization data sets (To test the installation install
 
-Test your installation.
+## Test your installation.
 
 ```sh
 cd ../src
@@ -101,7 +111,7 @@ lua gate.lua -t all
 
 If this works, the last line of the test output should be say "PASS 0 fail(s)".
 
-## Input Data
+# Input Data
 
 GATE reads comma-seperated files (e.g. auto93.csv) whose first row names the columns.
 
@@ -267,7 +277,7 @@ has does some _setup_ and _tearDown_:
 
 ```lua
 local function run(k,   oops,b4)
-  b4 = l.copy(the) -- set up
+  b4 = l.copy(the)          -- set up
   math.randomseed(the.seed) -- set up
   oops = eg[k]()==false
   io.stderr:write(l.fmt("# %s %s\n",oops and " FAIL" or " PASS",k))
@@ -295,3 +305,6 @@ Note that, like anything else in `eg`, `eg.all` can be called from the command l
 ```
 lua gate.lua -t all
 ```
+
+
+
