@@ -44,6 +44,24 @@ nasa93dem.csv, pom.csv.
 
 ## Inteface
 
+## Data Format
+
+GATE reads comma-seperated files (e.g. auto93.csv) whose first row names the columns.
+
+- Names starting with uppercase are numeries; e.g. `Salary`. All other names are symbolic columns.
+- Names ending with X are ignored by the reasoning; e.g. `SexM`.
+- Numeric names ending with `-` or `+` are goals to be minimized or maximized; e.g. `Weight-` and `Salary+`.
+- Symolic names ending with `!` are classes to be recognized; e.g. `happy!`.
+
+## Code Format
+
+gate.lua has sections: help text, classes, library functions, examples.
+
+### Help Text
+
+The top of gate.lua is a help string from which this code extracts the system's
+config.
+
 ```txt
 gate: guess, assess, try, expand
 (c) 2023, Tim Menzies, BSD-2
@@ -62,17 +80,15 @@ OPTIONS:
   -t --todo     start up action                 = help
 ```
 
-## Data Format
+The parser for this help is very simple (it just looks for a regular
+expression that finds a word after two dashes: 
 
-GATE reads comma-seperated files (e.g. auto93.csv) whose first row names the columns.
+       [-][-]([%S]+)[^=]+= ([%S]+)
 
-- Names starting with uppercase are numeries; e.g. `Salary`. All other names are symbolic columns.
-- Names ending with X are ignored by the reasoning; e.g. `SexM`.
-- Numeric names ending with `-` or `+` are goals to be minimized or maximized; e.g. `Weight-` and `Salary+`.
-- Symolic names ending with `!` are classes to be recognized; e.g. `happy!`.
-
-## Code Format
-
-gate.lua has sections:
-
-
+```lua
+function l.settings(s,    t,pat)
+  t,pat = {}, "[-][-]([%S]+)[^=]+= ([%S]+)"
+  for k, s1 in s:gmatch(pat) do t[k] = l.coerce(s1) end
+  t._help = s
+  return t end
+```
