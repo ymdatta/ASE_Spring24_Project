@@ -70,7 +70,7 @@ GATE reads comma-seperated files (e.g. auto93.csv) whose first row names the col
 ```
 
 The above rows are sorted by `distance to heaven`; i.e. 
-$H=\sqrt{\sum_i^n(\overline{x_i} - h_i)^2}$
+$H=\sqrt{\sum_i(\overline{x_i} - h_i)^2}$
 
 ## Code Format
 
