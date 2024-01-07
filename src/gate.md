@@ -36,11 +36,12 @@ GATE is a single file. To grab the source code:
 
 To find sample files:
 
-    curl https://github.com/timm/lo/blob/6jan24/data/x
+    curl https://github.com/timm/lo/blob/6jan24/data/x.csv
 
-where  `x`   is  one   of  auto93.csv,  china.csv,   coc1000.csv, coc10000.csv,
-healthCloseIsses12mths0001-hard.csv, healthCloseIsses12mths0011-easy.csv,
-nasa93dem.csv, pom.csv.
+where  `x`   is  one   of  
+
+|auto93|china|coc1000|coc10000|healthCloseIsses12mths0001-hard|healthCloseIsses12mths0011-easy|nasa93dem|pom|
+|------|-----|-------|--------|-------------------------------|-------------------------------|---------|---|
 
 ## Inteface
 
