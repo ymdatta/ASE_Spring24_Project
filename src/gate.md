@@ -380,7 +380,7 @@ polymorphic methods:
 [^saw]: Sawilowsky, S.S.: New effect size rules of thumb. Journal of Modern Applied Statistical
 
 ## NUMeric class
-NUMerics incrementally updates the control parameters of 
+NUMerics incrementally update the control parameters of 
 a Gaussian function [^gaussfun].
 
 [^gaussfun]: https://en.wikipedia.org/wiki/Gaussian\_function
@@ -409,7 +409,17 @@ function NUM:mid() --> num
 
 function NUM:div() --> num
   return self.n < 2 and 0 or (self.m2/(self.n - 1))^.5 end
+```
+See Finch [^finch] for a proof that the above correctly
+and incrementally calulates mean `mu` and standard
+devaition  (in `div()`). 
 
+[^finch]: Tony Finch,
+"Incremental calculation of weighted mean and variance"
+University of Cambridge Computing Service,
+February 2009, https://fanf2.user.srcf.net/hermes/doc/antiforgery/stats.pdf
+
+```
 function NUM:small() --> num
   return the.cohen*self:div() end
 
@@ -419,7 +429,7 @@ function NUM:like(x,_,      nom,denom) --> num
   denom = (sd*2.5 + 1E-30)
   return  nom/denom end
 ```
-`like` for NUMs is just a standard gaussian proability distribution function[^norm].
+`NUM:like(x)` is just a standard gaussian proability distribution function[^norm].
 
 [^norm]: https://en.wikipedia.org/wiki/Normal_distribution
 
@@ -464,8 +474,18 @@ lightly sampled regions of the data space (see `prior` and `the.m`).
 # DATA Class
 
 In order to read rows and summarize their contents in NUMeric or
-SYMbolic columns, we need three things
-```lua
+SYMbolic columns, we need three things:
+
+1. Something to read the first row of our CSV files to create the right
+   NUMs and SYMs columns. In the following, this will be the COLS object.
+2. Some struct to hold the rows.
+    In the following, this will be the ROW object.
+3. Some place to store the rows and columns generated via points 1,2.
+    In the following, this will be the DATA object.
+
+## COLS 
+read sthe first row of our CSV files and creates the right
+   NUMs and SYMs columns. ```lua
 -- ### Columns
 -- A contrainer storing multiple `NUM`s and `SYM`s.
 
