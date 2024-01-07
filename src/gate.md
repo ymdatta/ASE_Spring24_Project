@@ -48,7 +48,14 @@ nasa93dem.csv, pom.csv.
 
 GATE reads comma-seperated files (e.g. auto93.csv) whose first row names the columns.
 
-```csv
+- Names starting with uppercase are numeries; e.g. `Volume`. All
+  other names are symbolic columns (e.g. `origin`)  
+- Names ending with X are ignored by the reasoning; e.g. `HpX`.  
+- Numeric names ending with `-` or `+` are goals to be minimized or maximized; 
+  e.g. `Lbs-` and `Acc+`.  
+- Symolic names ending with `!` are classes to be recognized; e.g. `happy!`.
+
+```
           {Clndrs, Volume,HpX,   Model,  origin, Lbs-,  Acc+,  Mpg+}
 1         {4,      97,   52,     82,      2,     2130,  24.6,  40}
 2         {4,      90,   48,     80,      2,     2335,  23.7,  40}
@@ -62,24 +69,8 @@ GATE reads comma-seperated files (e.g. auto93.csv) whose first row names the col
 398       {8,      400,  175,    71,      1,     5140,  12,    10}
 ```
 
-- Names starting with uppercase are numeries; e.g. `Salary`. All
-  other names are symbolic columns.  
-- Names ending with X are ignored by the reasoning; e.g. `SexM`.  
-- Numeric names ending with `-` or `+` are goals to be minimized or maximized; 
-  e.g. `Weight-` and `Salary+`.  
-- Symolic names ending with `!` are classes to be recognized; e.g. `happy!`.
-
-          {Clndrs, Volume,HpX,   Model,  origin, Lbs-,  Acc+,  Mpg+}
-1         {4,      97,   52,     82,      2,     2130,  24.6,  40}
-2         {4,      90,   48,     80,      2,     2335,  23.7,  40}
-3         {4,      90,   48,     78,      2,     1985,  21.5,  40}
-4         {4,      90,   48,     80,      2,     2085,  21.7,  40}
-...
-394       {8,      429,  198,    73,      1,     4952,  11.5,  10}
-395       {8,      383,  180,    71,      1,     4955,  11.5,  10}
-396       {8,      440,  215,    70,      1,     4312,  8.5,   10}
-397       {8,      455,  225,    73,      1,     4951,  11,    10}
-398       {8,      400,  175,    71,      1,     5140,  12,    10}
+The above rows are sorted by `distance to heaven`; i.e. 
+$H=\sqrt{\sum_i^n(\overline{x_i} - h_i)^2}$
 
 ## Code Format
 
