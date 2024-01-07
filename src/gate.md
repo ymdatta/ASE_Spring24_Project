@@ -92,3 +92,12 @@ function l.settings(s,    t,pat)
   t._help = s
   return t end
 ```
+
+That parser needs to coerse a string:
+
+```
+function l.coerce(s1,    fun)
+  function fun(s2)
+    if s2=="nil" then return nil else return s2=="true" or (s2~="false" and s2) end end
+  return math.tointeger(s1) or tonumber(s1) or fun(s1:match'^%s*(.*%S)') end
+```
