@@ -25,8 +25,47 @@ header-includes: |
 
 # Overview
 
-GATE  is a  simple demonstrator  of  an incremental  optimization method  called
-sequential model optimization.  GATE assumes that (a) data divides into X and Y
+GATE  is a  demonstrator  of  two things:
+
+-  It is a tutorial
+on an incremental  optimization method  called
+sequential model optimization (SMO). 
+- It is also a demonstrator on how SE can help AI.
+
+<img src="../docs/cover.png" width=300 algin=right>
+
+## Sequential Model Optimization
+ Suppose we have a database of
+ examples of some function
+$X=F(Y)$:
+
+$$ \underbrace{y_1,y_2,...}_{\mathit{y,\;goals,\;dependents}} = F( \underbrace{x_1,x_2,x_3,x_4,x_5,x_6,x_7,x_8,x_9,x_{10}...}_{\mathit{x,\; independents,\; controllables,\;observables}})$$
+
+In many cases it is expensive to compute $Y$. For example:
+
+-  If humans have to do
+the assessment then pretty quickly they get tired and make mistakes, or they have
+to run off and to all their other tasks.
+-  Consider hardware/software 
+co-design of a car where "evaluation" means building the car and taking it out for
+a 10,000 mile drive.
+
+In these cases, SMO build two models _best,rest_ on a handul of  evaluated
+examples seen so far.
+It then tries to better define the  border between _best_ and _rest_ by
+applying that model to all the unevaluated examples. This procedure returns
+the _most interesting example_ which is the one with:
+
+- highest probability of being in _best_,
+- but also with a very similar _rest_ score.  
+
+This most interesting example is then evaluated; the two _best_ and
+_rest_ models are rebuilt; and the above procedure is called again. We show
+for many SE problems, SMO can build good models after seeing just a few dozen
+examples.
+
+
+cwGATE assumes that (a) data divides into X and Y
 columns, and (b) it  is expensive to access the Y values.  In that case, GATE
 learns how to recognize good Y-values, using just very few  Y values.
 
@@ -245,13 +284,7 @@ The net result is that the rows closest to the goals are shown first (lightest,
 fastest, most economical cars) and the worst cars are shown last
 (heaviest, slowest, worst MPG).
 
-Before moving on, this is as good a place as any to introduce some
-terminology. A table of data can be viewed as examples
-of input/output to some function $X=F(Y)$. Note the following synonyms::
-
-$$ \underbrace{y_1,y_2,...}_{\mathit{y,\;goals,\;dependents}} = F( \underbrace{x_1,x_2,x_3,x_4,x_5,x_6,x_7,x_8,x_9,x_{10}...}_{\mathit{x,\; independents,\; controllables,\;observables}})$$
-
-Also, sometimes, we do not know the contents of a cell. This is indicated with
+Note that  sometimes, we do not know the contents of a cell. This is indicated with
 "?". Any code processing this kind of data has to check for missing values before
 doing any other calculation.
 
