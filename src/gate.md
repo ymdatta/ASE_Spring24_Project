@@ -1,11 +1,14 @@
 ---
-title: Notes on Gate\\\includegraphics[width=5in]{cover.png}
+title: |
+  ![](../docs/cover.png){width=5.5n}\vspace{1cm}    
+  Notes on Gate.lua
 author: Tim Menzies
 date: Jan 8, 2024
 geometry: margin=1in
 documentclass: article
 font-size: 8pt
 header-includes: |
+    \usepackage{graphicx}
     \usepackage{titlesec}
     \newcommand{\sectionbreak}{\clearpage}
     \usepackage{inconsolata}
