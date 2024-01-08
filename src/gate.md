@@ -26,26 +26,35 @@ header-includes: |
 # Overview
 
 GATE  is a  simple demonstrator  of  an incremental  optimization method  called
-sequential model optimzation.  GATE assumes that (a) data divides into X and Y
+sequential model optimization.  GATE assumes that (a) data divides into X and Y
 columns, and (b) it  is expensive to access the Y values.  In that case, GATE
 learns how to recognize good Y-values, using just very few  Y values.
 
-GATE was written as a `less is more` exercise. Lua was used since
-it so simple (see the cheatsheet  at the end of this document for a quick tour or Lua)
+GATE was written as a `less is more` exercise [^lua]. Rather than start with the AI,
+I started with the data structures (the classes) that implement the under-the-hood
+tedium (e.g reading rows into a table of data, sumamrizing the rows into columns).
+What I ended up with was two things:
 
+- Some general data processing classes (NUM, SYM, ROW, COL, COLS, DATA);
+- And very tiny functions implementing the actual AI. E.g. with the above,
+  a Naive Bayes Classifier in an additional ten lines of code and 
+  sequential model optimization is just another 30.
+
+
+My conclusion is that at least some of AI can be implemented very easily,
+providing you've done your software engineering correctly in the first place.
+
+[^lua]: Lua was used it is a great `less is more` language
+(the languaage
+so simple-- see the cheat sheet  at the end of this document for a quick tour of Lua).
  Other languages were explored: LISP was too hard
 for newbies; Julia and Crystal had annoying slow start-ups; 
 Gawk functions are too limited (cannot  return structs); 
 Python was just dull; and I could never crack the Haskell barrier.
 
 
-  The resulting code is under 500 lines, but that includes
-all the
-support code (demo suites, library functions, etc).
-The actual incremental optimier is just a few dozen lines. 
 
-
-GATE runs in four phases:
+GATE itself runs in four phases:
 
 | What | Called | Notes |
 |------|--------|-------|
@@ -58,7 +67,7 @@ GATE uses _N1_ examples (picked at random) to initializes a Naive Bayes
 classifier that  distinguishes the sqrt(_N_) _best_ examples from the _rest_.
 
 Then, _N2_ times, we look for as-yet-unlabelled examples that might confuse that
-classifier.  Specfifically, if an example has probabilties _b,r_ of belonging to
+classifier.  Specifically, if an example has probabilities _b,r_ of belonging to
 _best,rest_, then the most confused example is the one that maximizes
 _abs(b+r)/abs(b-r)_.
 That example is then evaluated and the model is extended.
@@ -66,7 +75,7 @@ That example is then evaluated and the model is extended.
 The rest of this document describes GATE:
 
 - First, we talk how to install the system;
-- Second, we discuss some of the coding convetions used here.
+- Second, we discuss some of the coding conventions used here.
 - After that, we discuss the four main sections of the code
   - Help and settings
   - GATE's input data format
@@ -77,10 +86,16 @@ The rest of this document describes GATE:
   - A library of support code.  All these functions are stored inside the `l`
     table (e.g. see the`l.settings` function shown below).
 
+DATA turns out to be extraordinarily useful for many things. E.g. if clustering,
+we an give each cluster its own DATA. For classification, we can store
+information about different classes in its own seperate data. For all these
+cases, if we want seperate stats on just  one part of the data, we ensure that
+part is a DATA, then we call the `DATA:stats()` method (shown below).
+
 # Installation
 
 ## Install LUA
-```
+```sh
 brew install lua5.3 # mac os/x
 sudo apt update; sudp apt install lua5.3 # debian/unix
 ```
@@ -124,7 +139,7 @@ lua gate.lua -t all
 
 If this works, the last line of the test output should be say "PASS 0 fail(s)".
 
-# Coding Convetions
+# Coding Conventions
 
 ## Small functions
 More than six lines per function makes me nervous, five lines makes me happy,
@@ -199,7 +214,7 @@ GATE reads comma-seperated files (e.g. auto93.csv) whose first row names the col
   e.g. `Lbs-` and `Acc+`.
 - Symolic names ending with `!` are classes to be recognized; e.g. `happy!`.
 
-```
+```sh
           {Clndrs, Volume,HpX,   Model,  origin, Lbs-,  Acc+,  Mpg+}
 1         {4,      97,   52,     82,      2,     2130,  24.6,  40}
 2         {4,      90,   48,     80,      2,     2335,  23.7,  40}
@@ -227,8 +242,18 @@ find the distance to the best value ($h_i=0$ for goals we are minimizing
 and $h_i=1$ for goals we are maximizing). 
 
 The net result is that the rows closest to the goals are shown first (lightest,
-fastest, most economical cars) and the worst casrs are shown last
+fastest, most economical cars) and the worst cars are shown last
 (heaviest, slowest, worst MPG).
+
+Before moving on, this is as good a place as any to introduce some
+terminology. A table of data can be viewed as examples
+of input/output to some function $X=F(Y)$. Note the following synonyms::
+
+$$ \underbrace{y_1,y_2,...}_{\mathit{y,\;goals,\;dependents}} = F( \underbrace{x_1,x_2,x_3,x_4,x_5,x_6,x_7,x_8,x_9,x_{10}...}_{\mathit{x,\; independents,\; controllables,\;observables}})$$
+
+Also, sometimes, we do not know the contents of a cell. This is indicated with
+"?". Any code processing this kind of data has to check for missing values before
+doing any other calculation.
 
 # Help and Settings
 The top of gate.lua is a help string from which this code extracts the system's
@@ -275,10 +300,10 @@ function l.coerce(s1,    fun) --> nil or bool or int or float or string
 ```
 This code is used to generate a variable `the` storing the
 config.
-```
+```sh
 the = l.settings(help)
 ```
-Optinonally, we can update the built in defaults via 
+Optionally, we can update the built in defaults via 
 command-line flags using the `cli` function (which,
 incidently, uses `coerce` to turn command line strings
 into values):
@@ -297,7 +322,7 @@ the = l.cli(the)
 ```
 # Examples and Demos Library
 
-The code ends with a few dozen tests that test/demo differnt parts
+The code ends with a few dozen tests that test/demo different parts
 of the system. For example, here are two examples:
 
 - ``eg.oo`` tests the code for printing nested structures.
@@ -318,7 +343,7 @@ function eg.sym(      s,mode,e) --> bool
   return 1.37 < e and e < 1.38 and mode == 1 end
 ```
 All these tests can be run at the command line:
-```
+```sh
 lua gate.lua -t oo
 lua gate.lua -t sym
 ```
@@ -360,7 +385,7 @@ function eg.all(     bad) --> failure count to operating system
 
 Note that, like anything else in `eg`, `eg.all` can be called from the command line
 
-```
+```sh
 lua gate.lua -t all
 ```
 
@@ -371,8 +396,8 @@ NUMeric or SYMbolic column classes.
 These classes respond to  the same 
 polymorphic methods:
 
--  `mid()`: central tendancy (mean for NUMs and mode for SYMs);
-- `div()`: the tendancy to move away from `mid()` (standard deviation for NUMs
+-  `mid()`: central tendency (mean for NUMs and mode for SYMs);
+- `div()`: the tendency to move away from `mid()` (standard deviation for NUMs
   and entropy for SYMs);
 - `small()`: indistinguishable differences. For SYMs, NUMs, that is zero or
    .35*standard deviation [^saw];
@@ -428,9 +453,9 @@ function NUM.new(s, n) --> NUM
   return isa(NUM, 
            {txt=s or " ",                                 -- column name
             at=n or 0,                                    -- column position
-            n=0, mu=0, m2=0                               -- used to calcuate mean an sd
+            n=0, mu=0, m2=0                               -- used to calculate mean an sd
             hi=-1E30, lo=1E30,                            -- used when normalizing
-            heaven = (s or ""):find"-$" and 0 or 1}) end  -- 0,1 for min,maximizationg
+            heaven = (s or ""):find"-$" and 0 or 1}) end  -- 0,1 for min,maximization
 
 function NUM:add(x,     d) --> nil
   if x ~="?" then
@@ -448,8 +473,8 @@ function NUM:div() --> num
   return self.n < 2 and 0 or (self.m2/(self.n - 1))^.5 end
 ```
 See Finch [^finch] for a proof that the above correctly
-and incrementally calulates mean `mu` and standard
-devaition  (in `div()`). 
+and incrementally calculates mean `mu` and standard
+deviation  (in `div()`). 
 
 [^finch]: Tony Finch,
 "Incremental calculation of weighted mean and variance"
@@ -466,11 +491,11 @@ function NUM:like(x,_,      nom,denom) --> num
   denom = (sd*2.5 + 1E-30)
   return  nom/denom end
 ```
-`NUM:like(x)` is just a standard gaussian proability distribution function[^norm].
+`NUM:like(x)` is just a standard Gaussian probability distribution function[^norm].
 
 [^norm]: https://en.wikipedia.org/wiki/Normal_distribution
 
-NUMs have one specialy method called `norm(x)` that returns 0..1,
+NUMs have one ohter method called `norm(x)` that returns 0..1,
 min..max.
 ```lua
 function NUM:norm(x) --> num
@@ -493,13 +518,9 @@ and `cols`. Due to their interconnections, explaining  these
 classes have  a  bit of a  "chicken and egg" problem. But lets see how we go: 
 
 ## COLS 
-Convery a list of stings into sets of columns, according to the rules described in _GATE’s Input Data Format_.
+Converts a list of stings into sets of columns, according to the rules described in _GATE’s Input Data Format_.
 
-Note some terminology-- our data represents a function $f$:
-
-$$ \underbrace{y_1,y_2,...}_{\mathit{y,\;goals,\;dependents}} = f( \underbrace{x_1,x_2,x_3,x_4,x_5,x_6,x_7,x_8,x_9,x_{10}...}_{\mathit{x,\; independents,\; controllables,\;observables}})$$
-
-COLS divides the columns into `all,x,y,klass`:
+COLS categorizes the columns as `all,x,y,klass`:
 
 ```lua
 local COLS=is"COLS"
@@ -522,7 +543,6 @@ function COLS.new(row) --> COLS
 ```
 The  `COLS:add()` method takes a ROW and updates the `x,y` columns. 
 ```lua
--- Update
 function COLS:add(row) --> row
   for _,cols in pairs{self.x, self.y} do
     for _,col in pairs(cols) do
@@ -533,19 +553,19 @@ function COLS:add(row) --> row
 \newpage
 ## ROWs
 
-COLS store columns, ROWs stores a single record.
-
-```lua
-local ROW=is"ROW"
-function ROW.new(t) return isa(ROW, { cells = t }) end
-```
-ROWs know how to compute the distance from heaven (discussed above in
-_GATE’s Input Data Format_). To do so, uses two features of DATA
+The following ROWs
+code uses two features of DATA object
 (defined below):
 
 - `data.cols` : what comes out of the above COLS code;
 - `data.rows` : stores all the rows.
 
+
+```lua
+local ROW=is"ROW"
+function ROW.new(t) return isa(ROW, { cells = t }) end
+```
+Here's distance to heaven (as defined above in _GATE’s Input Data Format_).
 ```lua
 function ROW:d2h(data, d, n) --> num in the range 0..1
   d, n = 0, 0
@@ -554,9 +574,9 @@ function ROW:d2h(data, d, n) --> num in the range 0..1
       d = d + math.abs(col.heaven - col:norm(self.cells[col.at])) ^ 2 end
   return d ^ .5 / n ^ .5 end
 ```
-ROWs implment the likelihood calculation of Baye's rule
+ROWs implements the likelihood calculation of Baye's rule
 
--  Supppose we have rows describing
+-  Suppose we have rows describing
 `nHypotheses` number different things (dogs, horse, cats) etc. We can work out how much
 a ROW `like`s being a dog, horse, or cat.
 - The `prior` is the ratio of (e.g.)
@@ -571,8 +591,7 @@ $$\mathit{like}(H|E) = \mathit{prior} \times \sum_x \mathit{like}(E_x|H)$$
 Here $H$ is one of the hypotheses (e.g. dogs, horses, or cats);
 and $E$ is the _evidence_ seen in each hypothesis (this is just the
 distributions seen in ROWs of a DATA).
-
-This likelihood Calculation is coded as follows:
+This likelihood calculation is coded as follows:
  
 ```lua
 function ROW:like(data,n,nHypotheses,       prior,out,v,inc) --> num
@@ -588,8 +607,10 @@ function ROW:like(data,n,nHypotheses,       prior,out,v,inc) --> num
 (Aside: we use some low frequency tricks when calculating _prior_, see
 `the.k`.)
 
-Once we can find `like` for one hypothesis, we can implmeent
-a classifier that searches many hypotheses:
+Once we can find `like` for one hypothesis, we can implement
+a classifier that searches many hypotheses. Note that in this
+example `datas` contains key-value pairs where the key is a class
+name and the value is a DATA devoted just to rows from that class.
 
 ```lua
 function ROW:likes(datas,       n,nHypotheses,most,tmp,out) --> sym,num
@@ -605,45 +626,113 @@ function ROW:likes(datas,       n,nHypotheses,most,tmp,out) --> sym,num
 \newpage
 ## DATA
 
+DATA is the ringmaster than reads information
+(from disk, from another source), creates ROWs (if reading from disk),
+creates the COLS, updates the COLS, and stores the ROWs. 
+
+
+DATE's creation methods reads from disk if `src` is a filename string.
+Note the optional `fun` (a function). This is some call-back function
+that will be executed each time we see a new ROW.
 ```lua
 local DATA=is"DATA"
-function DATA.new(src,  fun,     self)
+function DATA.new(src,  fun,     self) --> DATA
   self = isa(DATA,{rows={}, cols=nil})
   if   type(src) == "string"
   then for _,x in l.csv(src)       do self:add(x, fun) end
   else for _,x in pairs(src or {}) do self:add(x, fun) end end
   return self end
 ```
-Update. First time through, assume the row defines the columns.
-Otherwise, update the columns then store the rows. If `fun` is
-defined, call it before updating anything.
+
+DATE's update method ensures that the thing being added is a row[^makerows].
+After that, there are two cases:
+
+- This is the first ROW we have ever seen. In that case, this is the row
+  of column names from which we have to create a COLS object.
+- This is after the first ROW. In this case, we need to update our COLS
+  with information from this ROW, then store the ROW.
+
+[^makerows]: When reading from disk, the infomation arrives in a raw Lua
+table and _not_ a ROW.  In that case, we create a new ROW fom that table-- see
+first line of `DATA:add()`.
+
 ```lua
-function DATA:add(t,  fun,row)
+function DATA:add(t,  fun,row) --> nil
   row = t.cells and t or ROW.new(t)
   if   self.cols
   then if fun then fun(self,row) end
        self.rows[1 + #self.rows] = self.cols:add(row)
   else self.cols = COLS.new(row) end end
+```
+Note in the above that the `fun` call-back is executed just before we update each row.
 
-function DATA:mid(cols,   u)
+### Querying DATA
+If we want seperate stats on just  one part of the data, we ensure that
+part is a DATA, then we ask from that information from DATA, as follows.
+
+Note that these stats queries are defined recursively using the `mid(), div()`
+functions of NUM, SYM (see above),
+
+Some of these stats queries are very specfic. E.g. `mid()` returns
+the centroid of a ROW
+
+```lua
+function DATA:mid(cols,   u) --> ROW
   u = {}; for _, col in pairs(cols or self.cols.all) do u[1 + #u] = col:mid() end
   return ROW.new(u) end
 
-function DATA:div(cols,    u)
+function DATA:div(cols,    u) --> ROW
   u = {}; for _, col in pairs(cols or self.cols.all) do u[1 + #u] = col:div() end;
   return ROW.new(u) end
 
-function DATA:small(    u)
+function DATA:small(    u)a --> ROW
   u = {}; for _, col in pairs(self.cols.all) do u[1 + #u] = col:small(); end
   return ROW.new(u) end
+```
+`DATA:stats()` is the most general form on these queries. It can be called
+different ways to return different stats, rounded to however many decimals you
+like, for what ever cols you like. If called with no arguments,
+it reports the `mid()` of the $y$ columns, rounded to 2 decimal places. 
 
-function DATA:stats(cols,fun,ndivs,    u)
+```lua
+---           stats(cols:str,fun:str, ndivs:int)
+function DATA:stats(  cols,fun,ndivs,    u) --> table
   u = {[".N"] = #self.rows}
   for _,col in pairs(self.cols[cols or "y"]) do
-    u[col.txt] = l.rnd(getmetatable(col)[fun or "mid"](col), ndivs) end
+    u[col.txt] = l.rnd(getmetatable(col)[fun or "mid"](col), ndivs or 2) end
   return u end
 ```
-# And Finally, GATE
+# Naive Bayes Classifier
+As promised in the introduction, once the right data structures are in place,
+the implementing AI is very simple. For example, here is a Naive Bayes Classifier,
+in eight lines. Each class of input row gets its own DATA. Classification
+is then just asking a ROW, which DATA it `likes` the most.
+
+```lua
+local function learn(data,row,  my,kl)
+  my.n = my.n + 1
+  kl   = row.cells[data.cols.klass.at]
+  if my.n > 10 then
+    my.tries = my.tries + 1
+    my.acc   = my.acc + (kl == row:likes(my.datas) and 1 or 0) end
+  my.datas[kl] = my.datas[kl] or DATA.new{data.cols.names}
+  my.datas[kl]:add(row) end
+
+function eg.bayes()
+  local wme = {acc=0,datas={},tries=0,n=0}
+   DATA.new("../data/diabetes.csv", function(data,t) learn(data,t,wme) end)
+   print(wme.acc/(wme.tries))
+   return wme.acc/(wme.tries) > .72 end
+```
+
+# Sequential Model Optimization
+Implementing a Naive Bayes CLassifier in eight lines is not so impressive--
+since it is such a simple function. A more interesting example of how SE
+can simplify AI is  the 30 lines needed to code up sequential model
+optimziation.
+
+Initially, all the ROWs are `dark`; i.e. we can see their $x$ values
+but not their $y$ values. 
 
 ```lua
 function DATA:gate(budget0,budget,some)
@@ -660,7 +749,7 @@ function DATA:gate(budget0,budget,some)
     table.insert(lite, table.remove(dark,todo)) end
   return stats,bests end
 ```
-Find the row scoring based on our acquite function.
+Find the row scoring based on our acquire function.
 ```lua
 function DATA:split(best,rest,lite,dark)
   local selected,max,out
@@ -684,10 +773,8 @@ function DATA:bestRest(rows, want, best, rest, top)
     table.sort(rows, function(a, b) return a:d2h(self) < b:d2h(self) end)
     best, rest = { self.cols.names }, { self.cols.names }
     for i, row in pairs(rows) do
-        if i <= want then best[1 + #best] = row else rest[1 + #rest] = row end
-    end
-    return DATA.new(best), DATA.new(rest)
-end
+        if i <= want then best[1 + #best] = row else rest[1 + #rest] = row end end
+    return DATA.new(best), DATA.new(rest) end
 ```
 # Appendix: A Quick Tour of Lua
 
