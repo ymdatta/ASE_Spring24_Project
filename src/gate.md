@@ -1,5 +1,5 @@
 ---
-title: Notes on Gate
+title: Notes on Gate\\\includegraphics[width=5in]{cover.png}
 author: Tim Menzies
 date: Jan 8, 2024
 geometry: margin=1in
