@@ -1,9 +1,9 @@
 ---
 title: |
   ![](../docs/cover.png){width=4in}\vspace{1cm}    
-  Notes on Gate.lua
+  AI is easy (using good SE)
 author: Tim Menzies
-date: Jan 8, 2024
+date: \today
 geometry: margin=1in
 documentclass: article
 font-size: 8pt
@@ -25,22 +25,131 @@ header-includes: |
 
 # Overview
 
-GATE  is a  demonstrator  of  two things:
+This paper is about a file `gale.lua'
+that  demonstrates  how AI can be implemented very easily,
+assuming that the software engineering is done right.
 
--  It is a tutorial
-on an incremental  optimization method  called
-sequential model optimization (SMO). 
-- It is also a demonstrator on how SE can help AI.
+The great secret is that AI software is still
+software. Hence, better software engineering means better AI.
+Measured in terms of lines of code, any AI brain is very small compared to all the software
+that it needs to make it go [^sculley]. So
+rather than start with the inference procedure:
 
-<img src="../docs/cover.png" width=300 algin=right>
+- Start with the data structures (the classes) that implement the under-the-hood
+tedium (e.g reading rows into a table of data, summarizing the rows into columns).
+- Next, run the code and do lots of testing and ablation studies (where 
+your throw
+away anything that  barely changes the performance). 
 
-## Sequential Model Optimization
+[^sculley]: D. Sculley, Gary Holt, Daniel Golovin, Eugene Davydov, Todd Phillips, Dietmar Ebner, Vinay Chaudhary, Michael Young, Jean-François Crespo, Dan Dennison
+Hidden Technical Debt in Machine Learning Systems
+Advances in Neural Information Processing Systems 28 (NIPS 2015)
+
+This approach generates two things:
+
+- Some reusable  classes (in this document, 
+  NUM, SYM, ROW, COL, COLS, DATA);
+- And some very tiny functions implementing the actual AI.
+
+ For example,
+  the DATA class defined in this document summarizes ROWs into its various 
+  NUMeric or SYMbolic columns. 
+DATA turns out to be extraordinarily reusable for many things. E.g. if clustering,
+we an give each cluster its own DATA. 
+If we want seperate stats on each cluster,
+then we call the `DATA:stats()` method (shown below).
+For classification, we  store
+information about different classes in its own seperate data. Once
+that is done, then
+  implementing a Naive Bayes Classifier takes just  eight lines of code. 
+```lua
+local function learn(data,row,  my,kl) --> nil, but updates the working memory "my"
+  my.n = my.n + 1
+  kl   = row.cells[data.cols.klass.at]
+  if my.n > 10 then -- train on at least 10 items before testing
+    my.tries = my.tries + 1
+    my.acc   = my.acc + (kl == row:likes(my.datas) and 1 or 0) end
+  my.datas[kl] = my.datas[kl] or DATA.new{data.cols.names}
+  my.datas[kl]:add(row) end
+```
+ In
+the above, ROWs from differernt classes are store in their own DATA
+instance. Also note that we test the classifier before updating the columns
+(so we are always testing on previously unseen examples). For full
+details on the above, see the rest of this paper.
+
+Here's an example usage where the  `learn()` is passed in as a call-back
+function, to be executed whenever we see new examples.
+
+```lua
+function eg.bayes()
+  local wme = {acc=0,datas={},tries=0,n=0}
+   DATA.new("../data/diabetes.csv", function(data,t) learn(data,t,wme) end)
+   print(wme.acc/(wme.tries))
+   return wme.acc/(wme.tries) > .72 end
+```
+Implementing Naive Bayes in eight lines is not so impressive
+(since the underlying algorithm is so simple).
+A more interesting example of how SE
+can simplify AAI is  the 30 lines needed to code up sequential model
+optimziation (see the rest of this paper).
+
+As for other examples where SE+AI leads to simpler SE,
+this code has not (yet0 been applied to all things
+AI. But the track record so far is pretty intereesting.
+The methods of this document have also been applied
+to clustering, data synthesis, anomaly detection, privacy,
+mutli-objective optimization, streaming, and many other 
+applications besides. 
+
+## Use of Lua
+
+Lua was used since it is a great `less is more` language [^roberto].
+Though mainly a procedural language, Lua lends itself to several 
+other paradigms, including object-oriented programming, functional programming, 
+and data-driven programming. It also offers good support for data description, in the style of JavaScript and JSON.
+Other languages were explored: LISP was too hard
+for newbies; Julia and Crystal had annoying slow start-ups; 
+Gawk functions are too limited (cannot  return structs); 
+Python was just dull; and I could never crack the Haskell barrier.
+
+
+
+[^roberto]: Roberto Ierusalimschy, Luiz Henrique De Figueiredo, Waldemar Celes
+Communications of the ACM, November 2018, Vol. 61 No. 11, Pages 114-123
+10.1145/3186277
+
+The language is great for teaching since it is very simple (only 19 keywods).
+
+     and       break     do        else      elseif
+     end       false     for       function  if
+     in        local     nil       not       or
+     repeat    return    then      true      until     while
+
+
+For more details on Lua, see the cheat sheet 
+ at the end of this document for a quick tour of Lua.
+
+Lua has the advantage of looking like a simplified Python
+(see the  
+Bayes classifier example on the last page).
+So as an
+introductory exercise, I get graduate students to port my Lua to Python.
+In exams,  I then give
+them Lua code, with typos, and ask them to recognize and
+fix the bugs. 
+This encourages them to study and understand the code
+(and not just delegate the porting task to ChatGPT).
+
+# Sequential Model Optimization
+
+This section is a quick tutorial on sequential model optimization.
  Suppose we have a database of
  examples of some function
 $X=F(Y)$:
 
 $$ \underbrace{y_1,y_2,...}_{\mathit{y,\;goals,\;dependents}} = F( \underbrace{x_1,x_2,x_3,x_4,x_5,x_6,x_7,x_8,x_9,x_{10}...}_{\mathit{x,\; independents,\; controllables,\;observables}})$$
-
+ 
 In many cases it is expensive to compute $Y$. For example:
 
 -  If humans have to do
@@ -60,77 +169,20 @@ the _most interesting example_ which is the one with:
 - but also with a very similar _rest_ score.  
 
 This most interesting example is then evaluated; the two _best_ and
-_rest_ models are rebuilt; and the above procedure is called again. We show
-for many SE problems, SMO can build good models after seeing just a few dozen
+_rest_ models are rebuilt; and the above procedure is called again. 
+
+In the experiments shown below, we see that for
+many SE problems, SMO can build good models after evaluating just a few dozen
 examples.
+Why does SMO work so well? Well:
 
+- Firstly, it does not waste time checking things it already knows (i.e. it does not
+  look at examples that fall safely into just _best_ or just _rest_);
+- Secondly, It is critical of itself. SMO finds the examples that could most confuse
+  it (those right on the border), then asks about those.
 
-cwGATE assumes that (a) data divides into X and Y
-columns, and (b) it  is expensive to access the Y values.  In that case, GATE
-learns how to recognize good Y-values, using just very few  Y values.
-
-GATE was written as a `less is more` exercise [^lua]. Rather than start with the AI,
-I started with the data structures (the classes) that implement the under-the-hood
-tedium (e.g reading rows into a table of data, sumamrizing the rows into columns).
-What I ended up with was two things:
-
-- Some general data processing classes (NUM, SYM, ROW, COL, COLS, DATA);
-- And very tiny functions implementing the actual AI. E.g. with the above,
-  a Naive Bayes Classifier in an additional ten lines of code and 
-  sequential model optimization is just another 30.
-
-
-My conclusion is that at least some of AI can be implemented very easily,
-providing you've done your software engineering correctly in the first place.
-
-[^lua]: Lua was used it is a great `less is more` language
-(the languaage
-so simple-- see the cheat sheet  at the end of this document for a quick tour of Lua).
- Other languages were explored: LISP was too hard
-for newbies; Julia and Crystal had annoying slow start-ups; 
-Gawk functions are too limited (cannot  return structs); 
-Python was just dull; and I could never crack the Haskell barrier.
-
-
-
-GATE itself runs in four phases:
-
-| What | Called | Notes |
-|------|--------|-------|
-| G    | guess  | quickly generate some examples |
-| A    | assess | using a surrogate model, assess which examples are interesting |
-| T    | test   | test if the items found during assess are actually useful |
-| E    | extend | extend the surrogate |
-
-GATE uses _N1_ examples (picked at random) to initializes a Naive Bayes
-classifier that  distinguishes the sqrt(_N_) _best_ examples from the _rest_.
-
-Then, _N2_ times, we look for as-yet-unlabelled examples that might confuse that
-classifier.  Specifically, if an example has probabilities _b,r_ of belonging to
-_best,rest_, then the most confused example is the one that maximizes
-_abs(b+r)/abs(b-r)_.
-That example is then evaluated and the model is extended.
-
-The rest of this document describes GATE:
-
-- First, we talk how to install the system;
-- Second, we discuss some of the coding conventions used here.
-- After that, we discuss the four main sections of the code
-  - Help and settings
-  - GATE's input data format
-  - The example and demo library
-  - Classes
-    - The column classes;
-    - The DATA classes.
-  - A library of support code.  All these functions are stored inside the `l`
-    table (e.g. see the`l.settings` function shown below).
-
-DATA turns out to be extraordinarily useful for many things. E.g. if clustering,
-we an give each cluster its own DATA. For classification, we can store
-information about different classes in its own seperate data. For all these
-cases, if we want seperate stats on just  one part of the data, we ensure that
-part is a DATA, then we call the `DATA:stats()` method (shown below).
-
+Note that in my code, _best_ and _rest_ are implemented via a Naive Bayes
+classifier. Other researchers prefer more complex frameworks.
 # Installation
 
 ## Install LUA
@@ -550,6 +602,12 @@ So COLS store columns, ROWs stores a single record, and DATA stores the `rows`
 and `cols`. Due to their interconnections, explaining  these
 classes have  a  bit of a  "chicken and egg" problem. But lets see how we go: 
 
+DATA turns out to be extraordinarily useful for many things. E.g. if clustering,
+we an give each cluster its own DATA. For classification, we can store
+information about different classes in its own seperate data. For all these
+cases, if we want seperate stats on just  one part of the data, we ensure that
+part is a DATA, then we call the `DATA:stats()` method (shown below).
+
 ## COLS 
 Converts a list of stings into sets of columns, according to the rules described in _GATE’s Input Data Format_.
 
@@ -735,54 +793,46 @@ function DATA:stats(  cols,fun,ndivs,    u) --> table
     u[col.txt] = l.rnd(getmetatable(col)[fun or "mid"](col), ndivs or 2) end
   return u end
 ```
-# Naive Bayes Classifier
+# Sequential Model Optimization with GATE
 As promised in the introduction, once the right data structures are in place,
-the implementing AI is very simple. For example, here is a Naive Bayes Classifier,
-in eight lines. Each class of input row gets its own DATA. Classification
-is then just asking a ROW, which DATA it `likes` the most.
+then implementing an AI is very simple. For example, here is the 
+GATE
+ Sequential Model Optimizer  in under 30 lines.
 
+termininology: lite, dark, best, rest
+
+Recall from the above, GATE tries to build a Naive Bayes Classified that
+recognizing good examples, after evaluating
+very few examples.
+Specifically,  GATE build two models _best,rest_ on a handul of  evaluated
+examples seen so far. Applying the ROW:d2h() (distance to heaven) measure,
+GATE sends the better ROWs into _best_ and the others into _rest_.
 ```lua
-local function learn(data,row,  my,kl)
-  my.n = my.n + 1
-  kl   = row.cells[data.cols.klass.at]
-  if my.n > 10 then
-    my.tries = my.tries + 1
-    my.acc   = my.acc + (kl == row:likes(my.datas) and 1 or 0) end
-  my.datas[kl] = my.datas[kl] or DATA.new{data.cols.names}
-  my.datas[kl]:add(row) end
-
-function eg.bayes()
-  local wme = {acc=0,datas={},tries=0,n=0}
-   DATA.new("../data/diabetes.csv", function(data,t) learn(data,t,wme) end)
-   print(wme.acc/(wme.tries))
-   return wme.acc/(wme.tries) > .72 end
+function DATA:bestRest(rows, want, best, rest, top) --> DATA, DATA
+    table.sort(rows, function(a, b) return a:d2h(self) < b:d2h(self) end)
+    best, rest = { self.cols.names }, { self.cols.names }
+    for i, row in pairs(rows) do
+        if i <= want then best[1 + #best] = row else rest[1 + #rest] = row end end
+    return DATA.new(best), DATA.new(rest) end
 ```
+Now what is fun here is that GATE runs on so few examples. _Best_ is
+saif to contain the top $\sqrt{N}$ examples and intially, $N$ is very small
+(just four examples).
 
-# Sequential Model Optimization
-Implementing a Naive Bayes CLassifier in eight lines is not so impressive--
-since it is such a simple function. A more interesting example of how SE
-can simplify AI is  the 30 lines needed to code up sequential model
-optimziation.
+GATE says "best" means within 
+It then tries to better define the  border between _best_ and _rest_ by
+applying that model to all the unevaluated examples. This procedure returns
+the _most interesting example_ which is the one with:
 
-Initially, all the ROWs are `dark`; i.e. we can see their $x$ values
-but not their $y$ values. 
+- highest probability of being in _best_,
+- but also with a very similar _rest_ score.  
 
-```lua
-function DATA:gate(budget0,budget,some)
-  local rows,lite,dark
-  local stats,bests = {},{}
-  rows = l.shuffle(self.rows)
-  lite = l.slice(rows,1,budget0)
-  dark = l.slice(rows, budget0+1)
-  for i=1,budget do
-    local best, rest     = self:bestRest(lite, (#lite)^some)  -- assess
-    local todo, selected = self:split(best,rest,lite,dark)
-    stats[i] = selected:mid()
-    bests[i] = best.rows[1]
-    table.insert(lite, table.remove(dark,todo)) end
-  return stats,bests end
-```
-Find the row scoring based on our acquire function.
+This most interesting example is then evaluated; the two _best_ and
+_rest_ models are rebuilt; and the above procedure is called again. 
+
+Once the _best_ and _rest_ data is known, GATE asks all the unevaluated
+examples how much they like being _best_ or _rest_. 
+all the examples that have
 ```lua
 function DATA:split(best,rest,lite,dark)
   local selected,max,out
@@ -799,30 +849,28 @@ function DATA:split(best,rest,lite,dark)
     if tmp > max then out,max = i,tmp end end
   return out,selected end
 ```
+To understand the code, first we need 
+```lua
+function DATA:gate(budget0,budget,some)
+  local rows,lite,dark
+  local stats,bests = {},{}
+  rows = l.shuffle(self.rows)
+  lite = l.slice(rows,1,budget0)
+  dark = l.slice(rows, budget0+1)
+  for i=1,budget do
+    local best, rest     = self:bestRest(lite, (#lite)^some)  -- assess
+    local todo, selected = self:split(best,rest,lite,dark)
+    stats[i] = selected:mid()
+    bests[i] = best.rows[1]
+    table.insert(lite, table.remove(dark,todo)) end
+  return stats,bests end
+```
+Find the row scoring based on our acquire function.
 Sort on distance to heaven, split off the first `want` items to return
 a `best` and `rest` data.
-```lua
-function DATA:bestRest(rows, want, best, rest, top)
-    table.sort(rows, function(a, b) return a:d2h(self) < b:d2h(self) end)
-    best, rest = { self.cols.names }, { self.cols.names }
-    for i, row in pairs(rows) do
-        if i <= want then best[1 + #best] = row else rest[1 + #rest] = row end end
-    return DATA.new(best), DATA.new(rest) end
-```
 # Appendix: A Quick Tour of Lua
 
 Source: from https://github.com/rstacruz/cheatsheets/.
-
-Lua looks like a simple language (see below) but it has some advanced features:
-
-- first-class functions, 
-- garbage collection, 
-- closures, 
-- proper tail calls, 
-- iterators,
-- coercion (automatic conversion between string and number values at run time), 
-- coroutines (cooperative multitasking) dynamic module loading.
-
 
 ## Basic examples
 
