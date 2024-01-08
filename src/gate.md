@@ -241,14 +241,84 @@ Why does SMO work so well? Well:
 
 - Firstly, it does not waste time checking things it already knows (i.e. it does not
   look at examples that fall safely into just _best_ or just _rest_);
-- Secondly, It is critical of itself. SMO finds the examples that could most confuse
+- Secondly, it is critical of itself. SMO finds the examples that could most confuse
   it (those right on the border), then asks about those.
+- Thirdly, there is some maths (shown below) suggesting that, if we make the most optimistic
+  assumptions possible, then is should be possible to find good examples within a large set,
+  using just a few examples.
 
 Note that in my code, _best_ and _rest_ are implemented via a Naive Bayes
 classifier. Other researchers prefer more complex frameworks.
 
-<img width="474" alt="image" src="https://github.com/timm/lo/assets/29195/f2aae703-32a7-4240-97bc-733cb364d064">
+## Some Maths (about Sampling)
 
+Under certain assumptions, it can  be shown that it might be possible to sample large spaces
+with just a few assumptions. While these assumptions are somewhat questionable (see below),
+they suggest that it is somewhat possible that 
+a little sampling can explore a large space.
+
+
+According to Hamlet [^hamlet], the confidence
+of seeing an event at probability $p$ after $n$  random trials
+is $C=1-(1-p)^n$d  This can be  rearranged to show the number of
+samples needed find that event (at some level of confidence) is
+$n=\log{1-C}/\log{1-p}$.
+
+There is 
+other maths that says two numbers from the same distribution are 
+insignificantly different if they differ by less than $d\times\delta$ where
+
+- $\delta$ is the difference
+between two items, divided by the
+standard deviation;
+- and  $d$ is Cohen's constant (usually .35) [^rosen] [^sawil].
+
+How big is this  region $d$?
+Well, a z-curve is a Gaussian curve with $\sigma=1$ and $\mu=0$.
+That  curve 
+ effectively runs $-3 \le x \le 3$ which means that  the position
+of a  solution that is  indistinguishable from the best solution has size
+$d/6$. Hence, for z-curves, we can to rewrite our equation.
+
+$$ n=\log{1-C}/\log{1-d/\sigma} $$
+
+
+Further, it we have some way to sort the examples, then
+a binary chop will find that region after logarithmic samples. Putting
+all that together, then we should compare all the above to randomly
+sampling
+
+$$ n=\log_2{\log{1-C}/\log{1-d/\sigma}} $$
+
+The following graphs our two equations. Note that even without the sorting assumption, a few
+dozen examples can be quite informative especially if you are willing to accept
+low levels of confidence (e.g. 75%).  And if it is possible to sort examples, then the number
+of samples required for confidence is far lower (less than dozen will get you near 100% confidence).
+These graphs go so way to explaining the strange success of human beings who, despite all their
+cognitive impairments, have managed to get to the moon, split the atom, and feed billions of people [^bias].
+ 
+
+<img width="474" alt="image" src="/docs/img/sample.png">
+
+
+[^hamlet]:  Hamlet, R. G. (1987). Probable correctness theory. Information processing letters, 25(1), 17-22. 
+[^rosen]: Rosenthal, R., Cooper, H., Hedges, L.: Parametric measures of effect size. The handbook
+of research synthesis 621(2), 231–244 (1994)
+[^sawil]: Sawilowsky, S.S.: New effect size rules of thumb. Journal of Modern Applied Statistical
+Methods 8(2), 26 (2009)
+[^bias]: For a depressing long list of ways that humans routinely get it wrong,
+see Wikipedia's [list of cognitive biases](https://en.wikipedia.org/wiki/List_of_cognitive_biases).
+
+ It should be stressed that the assumptions
+behind these equations are _extremely optimistic_ 
+For example, they assume that 
+ all solutions are spaced equally across one $x$ dimension and   all distributions conform
+to a  Gaussian (single peak, symmetrical, continuous). More importantly, they assume we are
+_optimizing_ which means we can quickly prune much of the space in our quest for  a small corner
+with more desired properties. This is not true for classification and regressions tasks
+(where we seek labels across the Whole space) or generative tasks (where we need all the association
+weights between all the labels). Nevertheless, it is good to know that for at least some tasks,
+humans have a chance of reasoning effectively about the world.
 
 # Installation
 
@@ -960,25 +1030,6 @@ Next we run GATE and report the average and optimal results
   table.sort(d.rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
   sayd(d.rows[1], #d.rows)
 ```
-Finally, we baseline against random choice. This is another
-important principle of empirical SE-- baseline against some
-reasonable random alternative.
-There's some maths that says the confidence
-of seeing an event at probability $p$ after $n$  random trials
-is $C=1-(1-p)^n$ which rearranges to $n=\log(1-C)/\log(1-p)$. There's
-other maths that says two numbers from the same distribution are 
-insignificantly different if they differ by less than $d\times\mu$ (the
-standard deviation) where $d$ is Cohen's constant (usually .35).
-The x-range of a normal curve 
-(which effectively, runs $-3 \le x \le 3$) which means that  the position
-of a  solution that is  indistinguishable from the best position at
-probability
-$d/6$. Further, it we have some way to sort the examples, then
-a binary chop will find that region after logarithmic samples. Putting
-all that together, then we should compare all the above to randomly
-sampling the following number of times
-
-$$n = \log_2\left(  \frac{1-C}{1-d/6}     \right) $$
 
 ```lua
   -- eg.gate(), continued    
