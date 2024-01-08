@@ -1,7 +1,7 @@
 ---
 title: |
   ![](../docs/cover.png){width=4in}\vspace{1cm}    
-  AI is easy (using good SE)
+  AI can be easy (using good SE)
 author: Tim Menzies
 date: \today
 geometry: margin=1in
@@ -25,31 +25,38 @@ header-includes: |
 
 # Overview
 
-This paper is about a file `gale.lua'
-that  demonstrates  how AI can be implemented very easily,
-assuming that the software engineering is done right.
+This paper discusses `gate.lua`, which is a small script
+that implements sequential model optimization (defined below)
+GATE is a demonstrator
+that
+good AI can be build easily,
+assuming that the software engineering is done right. Here, "good" means
+fast and understandable while "easy" means simple to code. 
 
 The great secret is that AI software is still
 software. Hence, better software engineering means better AI.
 Measured in terms of lines of code, any AI brain is very small compared to all the software
-that it needs to make it go [^sculley]. So
-rather than start with the inference procedure:
-
-- Start with the data structures (the classes) that implement the under-the-hood
+that it needs to make it go [^sculley] [^mesoft]. So
+rather than start with the inference procedure,
+we 
+start with the data structures (the classes) that implement the under-the-hood
 tedium (e.g reading rows into a table of data, summarizing the rows into columns).
-- Next, run the code and do lots of testing and ablation studies (where 
-your throw
+Once that is working,
+we run the code and do lots of testing and ablation studies (where 
+we throw
 away anything that  barely changes the performance). 
-
-[^sculley]: D. Sculley, Gary Holt, Daniel Golovin, Eugene Davydov, Todd Phillips, Dietmar Ebner, Vinay Chaudhary, Michael Young, Jean-François Crespo, Dan Dennison
-Hidden Technical Debt in Machine Learning Systems
-Advances in Neural Information Processing Systems 28 (NIPS 2015)
 
 This approach generates two things:
 
 - Some reusable  classes (in this document, 
   NUM, SYM, ROW, COL, COLS, DATA);
 - And some very tiny functions implementing the actual AI.
+
+[^sculley]: D. Sculley, Gary Holt, Daniel Golovin, Eugene Davydov, Todd Phillips, Dietmar Ebner, Vinay Chaudhary, Michael Young, Jean-François Crespo, Dan Dennison
+Hidden Technical Debt in Machine Learning Systems
+Advances in Neural Information Processing Systems 28 (NIPS 2015)
+
+[^mesoft]: T. Menzies, "The Five Laws of SE for AI," in IEEE Software, vol. 37, no. 1, pp. 81-85, Jan.-Feb. 2020, doi: 10.1109/MS.2019.2954841.
 
  For example,
   the DATA class defined in this document summarizes ROWs into its various 
@@ -91,7 +98,7 @@ function eg.bayes()
 Implementing Naive Bayes in eight lines is not so impressive
 (since the underlying algorithm is so simple).
 A more interesting example of how SE
-can simplify AAI is  the 30 lines needed to code up sequential model
+can simplify AI is  the 30 lines needed to code up sequential model
 optimziation (see the rest of this paper).
 
 As for other examples where SE+AI leads to simpler SE,
@@ -100,20 +107,15 @@ AI. But the track record so far is pretty intereesting.
 The methods of this document have also been applied
 to clustering, data synthesis, anomaly detection, privacy,
 mutli-objective optimization, streaming, and many other 
-applications besides. 
+applications besides. But that's another story for another time.
 
 ## Use of Lua
 
-Lua was used since it is a great `less is more` language [^roberto].
+GATE is implemented in
+Lua since that  is a great `less is more` language [^roberto].
 Though mainly a procedural language, Lua lends itself to several 
-other paradigms, including object-oriented programming, functional programming, 
-and data-driven programming. It also offers good support for data description, in the style of JavaScript and JSON.
-Other languages were explored: LISP was too hard
-for newbies; Julia and Crystal had annoying slow start-ups; 
-Gawk functions are too limited (cannot  return structs); 
-Python was just dull; and I could never crack the Haskell barrier.
-
-
+other paradigms, including OO, functional programming, 
+and data-driven programming. It also offers good support for data description, in the style of JSON.
 
 [^roberto]: Roberto Ierusalimschy, Luiz Henrique De Figueiredo, Waldemar Celes
 Communications of the ACM, November 2018, Vol. 61 No. 11, Pages 114-123
@@ -121,11 +123,8 @@ Communications of the ACM, November 2018, Vol. 61 No. 11, Pages 114-123
 
 The language is great for teaching since it is very simple (only 19 keywods).
 
-     and       break     do        else      elseif
-     end       false     for       function  if
-     in        local     nil       not       or
-     repeat    return    then      true      until     while
-
+    and   break    do    else  elseif   end     false   for   function  if        
+    in    local    nil   not   or       repeat  return  then  true      until while
 
 For more details on Lua, see the cheat sheet 
  at the end of this document for a quick tour of Lua.
@@ -140,6 +139,70 @@ them Lua code, with typos, and ask them to recognize and
 fix the bugs. 
 This encourages them to study and understand the code
 (and not just delegate the porting task to ChatGPT).
+
+My code tries to honor the following conventions (but there are lapses...):
+
+**Small functions:**
+More than six lines per function makes me nervous, five lines makes me happy,
+ less than three makes me   gleeful.
+Also, if a  line just contains `end`, the I add it to the line above.
+
+**Narrow lines:**
+90 chars/line or less (otherwise the pdf printing messes up).
+
+**Few globals:**
+_N-1_ globals is better than _N_. I just try to have one:
+- The  global config settings `the`.
+- This `the` variable is parsed from the help text listed at top of file.
+- Optionally, `the` can be updated from the command-line options.
+
+**Function arguments: **
+Two spaces denotes "start of optionals" and
+four spaces denotes "start of locals"
+
+**Tests:**
+From command line we can run one, or all tests.
+-   Before running a test, we reset the random number seed;
+-   After running a test, we reset all the settings to their defaults;
+- Each test returns `true``, `false``, or `nil`` (and   `false` means fail).
+- If we run `all``, the code returns the number of failed tests;
+    (so `$?==0` means "no errors").
+
+**Structs:**
+Classes in my Lua are defined as tables that know
+know to look up methods in themselves, before looking elsewhere:
+```lua
+local function isa(x,y) return setmetatable(y,x) end
+local function is(s,    t) t={a=s}; t.__index=t; return t end
+```
+`function ZZZ.new(...)` is a constructor that returns a new struct of type `ZZZ`.
+My structs support  encapsulation, polymorphism, but no inheritance. Why?:
+- See [^diederich12] [^hatton98] about the errors introduced by objects;
+- If you really want inheritance,   use a langua ge that
+truly supports it, like Smalltalk or Crystal).
+
+**Type hints:**
+For function argumnets (but not for locals) I try to apply the following stadards:
+
+- `zzz` (or `zzz1``) = instance of class `ZZZ`.
+- `x` is anything
+- `n` = number
+- `s` = string
+- `xs` = list of many `x`
+- `t` = table.
+- `a` = array (index 1,2,3..)
+- `h` = hash (indexed by keys)
+- `fun` = function
+
+
+[^hatton98]: Hatton, Les. “Does OO Sync with How We Think?” IEEE Softw. 15 (1
+998): 46-54.
+https://www.cs.kent.edu/~jmaletic/Prog-Comp/Papers/Hatton98.pdf
+
+[^diederich12]: Jack Diederich. "Stop Writing Classes". Youtube video. Mar 15
+, 2012.
+https://youtu.be/o9pEzgHorH0?si=KWLVXsHuD_hwGtLz
+
 
 # Sequential Model Optimization
 
@@ -183,6 +246,7 @@ Why does SMO work so well? Well:
 
 Note that in my code, _best_ and _rest_ are implemented via a Naive Bayes
 classifier. Other researchers prefer more complex frameworks.
+
 # Installation
 
 ## Install LUA
@@ -229,70 +293,6 @@ lua gate.lua -t all
 ```
 
 If this works, the last line of the test output should be say "PASS 0 fail(s)".
-
-# Coding Conventions
-
-## Small functions
-More than six lines per function makes me nervous, five lines makes me happy,
- less than three makes me   gleeful.
-Also, if a  line just contains `end`, the I add it to the line above.
-
-## Narrow lines
-90 chars/line or less (otherwise the pdf printing messes up).
-
-## Few globals
-_N-1_ globals is better than _N_. I just try to have one:
-- The  global config settings `the`.
-- This `the` variable is parsed from the help text listed at top of file.
-- Optionally, `the` can be updated from the command-line options.
-
-## Function arguments
-Two spaces denotes "start of optionals" and
-four spaces denotes "start of locals"
-
-## Tests
-From command line we can run one, or all tests.
--   Before running a test, we reset the random number seed;
--   After running a test, we reset all the settings to their defaults;
-- Each test returns `true``, `false``, or `nil``.  If `false`, then
-    we say a test fails.
-- If we run `all``, the code returns the number of failed tests;
-    (so `$?==0` means "no errors").
-
-## Structs
-Classes in my Lua are defined as tables that know
-know to look up methods in themselves, before looking elsewhere:
-```lua
-local function isa(x,y) return setmetatable(y,x) end
-local function is(s,    t) t={a=s}; t.__index=t; return t end
-```
-`function ZZZ.new(...)` is a constructor that returns a new struct of type `ZZZ`.
-My structs support  encapsulation, polymorphism, but no inheritance. Why?:
-- See [^diederich12] [^hatton98] about the errors introduced by objects;
-- If you really want inheritance,   use a langua ge that
-truly supports it, like Smalltalk or Crystal).
-
-## Type hints
-For function argumnets (but not for locals) I try to apply the following stadards:
-
-- `zzz` (or `zzz1``) = instance of class `ZZZ`.
-- `x` is anything
-- `n` = number
-- `s` = string
-- `xs` = list of many `x`
-- `t` = table.
-- `a` = array (index 1,2,3..)
-- `h` = hash (indexed by keys)
-- `fun` = function
-
-
-[^hatton98]: Hatton, Les. “Does OO Sync with How We Think?” IEEE Softw. 15 (1
-998): 46-54.
-https://www.cs.kent.edu/~jmaletic/Prog-Comp/Papers/Hatton98.pdf
-
-[^diederich12]: Jack Diederich. "Stop Writing Classes". Youtube video. Mar 15
-, 2012.
-https://youtu.be/o9pEzgHorH0?si=KWLVXsHuD_hwGtLz
 
 # GATE's Input Data Format
 
@@ -680,14 +680,14 @@ horses and cats. Then our prior belief in dogs is $\frac{100}{300}\;=\;0.33$.
 $$\mathit{like}(H|E) = \mathit{prior} \times \sum_x \mathit{like}(E_x|H)$$
 
 Here $H$ is one of the hypotheses (e.g. dogs, horses, or cats);
-and $E$ is the _evidence_ seen in each hypothesis (this is just the
+and $E$ is the _evidence_ available for  each hypothesis (this is just the
 distributions seen in ROWs of a DATA).
 This likelihood calculation is coded as follows:
  
 ```lua
 function ROW:like(data,n,nHypotheses,       prior,out,v,inc) --> num
   prior = (#data.rows + the.k) / (n + the.k * nHypotheses)
-  out   = math.log(prior)
+  out   = math.log(prior) -- use logs to handle very small numbers
   for _,col in pairs(data.cols.x) do
     v= self.cells[col.at]
     if v ~= "?" then
@@ -735,7 +735,8 @@ function DATA.new(src,  fun,     self) --> DATA
   return self end
 ```
 
-DATE's update method ensures that the thing being added is a row[^makerows].
+DATE's update method ensures that the thing being added is a row
+[^makerows].
 After that, there are two cases:
 
 - This is the first ROW we have ever seen. In that case, this is the row
@@ -799,14 +800,22 @@ then implementing an AI is very simple. For example, here is the
 GATE
  Sequential Model Optimizer  in under 30 lines.
 
-termininology: lite, dark, best, rest
+This code uses the following terminoly:
 
-Recall from the above, GATE tries to build a Naive Bayes Classified that
-recognizing good examples, after evaluating
-very few examples.
-Specifically,  GATE build two models _best,rest_ on a handul of  evaluated
-examples seen so far. Applying the ROW:d2h() (distance to heaven) measure,
-GATE sends the better ROWs into _best_ and the others into _rest_.
+- Examples are `dark` if we do not know that $Y$ values. Otherwise they
+  are `lite`. Initially, all the examples are `dark`.
+- The `lite` examples divide into two sets: `best` and `rest` where
+  `best` are closer to heaven than `rest` (where `heaven` was defined
+  above in `ROW:d2d()`).
+-  As GATE executes, the most informative
+examples are moved
+one at a time from `dark` to `lite` where they are then classified as `best` or `rest`.
+
+This means our examples divide as follows:
+
+$$ \mathit{examples} = \left(\overbrace{\underbrace{\mathit{lite}}_{\mathit{best},\mathit{rest}}}^{y=\mathit{known}},\;\;\;\;\;\; \overbrace{\mathit{dark}}^{y=\mathit{unknown}} \right) $$
+
+
 ```lua
 function DATA:bestRest(rows, want, best, rest, top) --> DATA, DATA
     table.sort(rows, function(a, b) return a:d2h(self) < b:d2h(self) end)
@@ -815,24 +824,22 @@ function DATA:bestRest(rows, want, best, rest, top) --> DATA, DATA
         if i <= want then best[1 + #best] = row else rest[1 + #rest] = row end end
     return DATA.new(best), DATA.new(rest) end
 ```
-Now what is fun here is that GATE runs on so few examples. _Best_ is
-saif to contain the top $\sqrt{N}$ examples and intially, $N$ is very small
-(just four examples).
+Now what is fun here is that GATE runs on so few examples. 
+Intially, we start with just four examples in the `lite`
+so  `DATA:bestRest()` only `wants` to move $\sqrt{4}=2$ examples into the `best` and `rest`.
 
-GATE says "best" means within 
-It then tries to better define the  border between _best_ and _rest_ by
+GATE 
+then tries to better define the  border between _best_ and _rest_ by
 applying that model to all the unevaluated examples. This procedure returns
 the _most interesting example_ which is the one with:
 
-- highest probability of being in _best_,
-- but also with a very similar _rest_ score.  
+- Highest likelihood $b$ of being in _best_,
+- But also with a very similar $r$ _rest_ likelihood.
+- Specifically, we use $\mathit{abs}(b+r)/\mathit{abs}(b-r)$
 
-This most interesting example is then evaluated; the two _best_ and
-_rest_ models are rebuilt; and the above procedure is called again. 
-
-Once the _best_ and _rest_ data is known, GATE asks all the unevaluated
-examples how much they like being _best_ or _rest_. 
-all the examples that have
+Just for the evaluation purposes, GATE returns the example that maximizes the above measure
+as well as all the _dark_ examples that would have been `selected` by the model learned to date
+(i.e. all the examples where  $b$ is greater than  $r$).
 ```lua
 function DATA:split(best,rest,lite,dark)
   local selected,max,out
@@ -849,7 +856,18 @@ function DATA:split(best,rest,lite,dark)
     if tmp > max then out,max = i,tmp end end
   return out,selected end
 ```
-To understand the code, first we need 
+
+## Main Loop
+
+The main loop of GATE (shown below) squirrels away the  `selected` rows
+ito the  `stats` list.
+This list can be used to report how well we would have found `best` and `rest` things
+if we'd stopped after a budget of $B$ evaluations.
+
+The main loop also show the sequential optimization process. 
+At each iteration of that loop, one more example is removed from `dark` and moved
+into the `lite`. Them, in the next iteration, the `lite` is
+our `best,rest` model is rebuilt and the process repeats. 
 ```lua
 function DATA:gate(budget0,budget,some)
   local rows,lite,dark
@@ -865,9 +883,93 @@ function DATA:gate(budget0,budget,some)
     table.insert(lite, table.remove(dark,todo)) end
   return stats,bests end
 ```
-Find the row scoring based on our acquire function.
-Sort on distance to heaven, split off the first `want` items to return
-a `best` and `rest` data.
+Rebuilding the model for each loop seems like a slow thing to do, but there are two things to remember here.
+First, we are using Naive Bayes classifiers here so rebuilding just means adding some numbers to some
+frequency counts.
+Secondly, we are rebuilding using very small data sets. In the runs shown below, `lite` ever grows
+to more than 20 examples so the whole process is very fast.
+
+Before showing this running, one last comment:
+
+- In   `DATA:gate()` the line `stats[i] = selected:mid()` collects the 
+the median of the values selected at this iteration;
+- While the line    `bests[i] = best.rows[1]` collects the best row seen at each
+  iteration
+
+`bests` reports the best performance seen on the current data while `stats` reports
+a prediction for how well this model might perfrom, on avewrage, on new data
+(from the same source
+as the `lite,dark` used for this training). The different between "best performance"
+and "on average" is the different between optimism and realism: 
+
+- Optimistically we expect the best;
+- But realistically, we think we will see the average.
+
+## Running the code
+
+Here's the function that runs GATE. Its a bit of mess (all report drivers usually are)
+but it can be simplified into four parts:
+
+First we set the control parameters:
+```lua
+function eg.gate(stats, bests, d, say,sayd)
+  local budget0,budget,some = 4,10,.5
+```
+That is, our intial `lite` sample will be 4 and after that we will
+iterate 10 times (total evaluations = 14). At each step, the `lite`
+examples will be divided into $|\mathit{lite}|^{0.5}$ (i.e. square
+root) best and the _rest_.
+
+Next we do some intiial set up. We report the random seed we
+are using (useful for reproduction) and print statistics that
+baseline our
+data. Reporting such baselines is an important principle
+of experimental SE: always comapre your supposesldy better system
+against some baseline:
+
+```lua
+  -- eg.gate(), continued    
+  print(the.seed)
+  d = DATA.new("../data/auto93.csv")
+  function sayd(row, txt) print(l.o(row.cells), txt, l.rnd(row:d2h(d))) end
+  function say( row,txt)  print(l.o(row.cells), txt) end
+  print(l.o(d.cols.names),"about","d2h")
+  print"#overall" -------------------------------------
+  sayd(d:mid(), "mid")
+  say(d:div() , "div")
+  say(d:small(),"small=div*"..the.cohen)
+```
+Note the called to `small()`. This illustrates another important
+principles. Two numbers from the same distribution are the insignificantly
+differrent if they differ by less than a small amount. This knowledge
+lets us rule out trivial results.
+
+Next we run GATE and report the average and optimal results
+(using `stats` and `bests`). 
+```lua
+  -- eg. gate(), continued    
+  print"#average" ----------------------------------
+  stats,bests = d:gate(budget0, budget, some)
+  for i,stat in pairs(stats) do sayd(stat,i+budget0) end
+  print"#iterative" ----------------------------------------------------------
+  for i,best in pairs(bests) do sayd(best,i+budget0) end
+  print"#optimum" ------------------------------------------------------
+  table.sort(d.rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
+  sayd(d.rows[1], #d.rows)
+```
+Finally, we baseline against random choice. This is another
+important principle of empirical SE-- baseline against the dumbest
+thing you know.  There's some maths that says the probability
+of 
+```lua
+  -- eg.gate(), continued    
+  print"#random" ------------------------------------------------------
+  local rows=l.shuffle(d.rows)
+  rows = l.slice(rows,1,math.log(.05)/math.log(1-the.cohen/6))
+  table.sort(rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
+  sayd(rows[1]) end
+```
+
 # Appendix: A Quick Tour of Lua
 
 Source: from https://github.com/rstacruz/cheatsheets/.
