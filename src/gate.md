@@ -247,6 +247,9 @@ Why does SMO work so well? Well:
 Note that in my code, _best_ and _rest_ are implemented via a Naive Bayes
 classifier. Other researchers prefer more complex frameworks.
 
+<img width="474" alt="image" src="https://github.com/timm/lo/assets/29195/f2aae703-32a7-4240-97bc-733cb364d064">
+
+
 # Installation
 
 ## Install LUA
