@@ -9,8 +9,7 @@ documentclass: article
 font-size: 8pt
 header-includes: |
     \usepackage{graphicx}
-    \usepackage{titlesec}
-    \newcommand{\sectionbreak}{\clearpage}
+    \usepackage{titlesec}\newcommand{\sectionbreak}{\clearpage}
     \usepackage{inconsolata}
     \usepackage{amssymb}
     \usepackage{pifont}
@@ -18,17 +17,13 @@ header-includes: |
     \usepackage[T1]{fontenc}
     \usepackage{textcomp}
     \usepackage{mathpazo}
-    \usepackage{fancyhdr}
-    \pagestyle{fancy}
-    \fancyhead[CO,CE]{}
-    \fancyfoot[CO,CE]{}
-    \fancyfoot[LE,RO]{\thepage}
+    \usepackage{fancyhdr}\pagestyle{fancy}
+    \fancyhead[CO,CE]{}\fancyfoot[CO,CE]{}\fancyfoot[LE,RO]{\thepage}
     \BeforeBeginEnvironment{listings}{\par\noindent\begin{minipage}{\linewidth}}
     \AfterEndEnvironment{listings}{\end{minipage}\par\addvspace{\topskip}}
 ---
 
 # Overview
-
 
 GATE  is a  simple demonstrator  of  an incremental  optimization method  called
 sequential model optimzation.  GATE assumes that (a) data divides into X and Y
