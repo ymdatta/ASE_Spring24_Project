@@ -947,7 +947,7 @@ lets us rule out trivial results.
 Next we run GATE and report the average and optimal results
 (using `stats` and `bests`). 
 ```lua
-  -- eg. gate(), continued    
+  -- eg.gate(), continued    
   print"#average" ----------------------------------
   stats,bests = d:gate(budget0, budget, some)
   for i,stat in pairs(stats) do sayd(stat,i+budget0) end
@@ -958,9 +958,25 @@ Next we run GATE and report the average and optimal results
   sayd(d.rows[1], #d.rows)
 ```
 Finally, we baseline against random choice. This is another
-important principle of empirical SE-- baseline against the dumbest
-thing you know.  There's some maths that says the probability
-of 
+important principle of empirical SE-- baseline against some
+reasonable random alternative.
+There's some maths that says the confidence
+of seeing an event at probability $p$ after $n$  random trials
+is $C=1-(1-p)^n$ which rearranges to $n=\log(1-C)/\log(1-p)$. There's
+other maths that says two numbers from the same distribution are 
+insignificantly different if they differ by less than $d\times\mu$ (the
+standard deviation) where $d$ is Cohen's constant (usually .35).
+The x-range of a normal curve 
+(which effectively, runs $-3 \le x \le 3$) which means that  the position
+of a  solution that is  indistinguishable from the best position at
+probability
+$d/6$. Further, it we have some way to sort the examples, then
+a binary chop will find that region after logarithmic samples. Putting
+all that together, then we should compare all the above to randomly
+sampling the following number of times
+
+$$n = \log_2\left(  \frac{1-C}{1-d/6}     \right) $$
+
 ```lua
   -- eg.gate(), continued    
   print"#random" ------------------------------------------------------
