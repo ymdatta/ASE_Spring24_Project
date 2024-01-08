@@ -89,5 +89,4 @@ egs:
 	lua mylo.lua -s $$RANDOM -f $^  -t rules    > $@; cat $@
 
 tex:
-	pandoc --metadata=cover-image:"cover1.png"  -N -s --highlight-style tango --toc -o ~/tmp/gate.pdf gate.md
-
+	pandoc --toc-depth=2 --metadata=cover-image:"cover1.png"  -N -s --highlight-style tango --toc -o ~/tmp/gate.pdf gate.md
