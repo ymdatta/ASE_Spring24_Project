@@ -459,13 +459,25 @@ function eg.gate(stats, bests, d, say,sayd)
   table.sort(rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
   sayd(rows[1]) end
 
-function eg.gate20(    d,stats,bests,stat,best)
-  print("#best, mid")
+function eg.gate20(    ss,bs,rs,d,stats,bests,rows,stat,best)
+  print("#average, #optimistic,#random")
+  ss,bs,rs=NUM.new(),NUM.new(),NUM.new()
   for i=1,20 do
-    d=DATA.new("../data/auto93.csv")
+    io.write(i," "); io.flush()
+    d=DATA.new(the.file)
+    d.rows = l.shuffle(d.rows)
     stats,bests = d:gate(4, 16, .5)
-    stat,best = stats[#stats], bests[#bests]
-    print(l.rnd(best:d2h(d)), l.rnd(stat:d2h(d))) end end
+    ss:add(stats[#stats]:d2h(d))
+    bs:add(bests[#bests]:d2h(d))
+    stat,best = stats[#stats]:d2h(d), bests[#bests]:d2h(d)
+    rows=l.shuffle(d.rows)
+    rows = l.slice(rows,1,math.log(.05)/math.log(1-the.cohen/6))
+    table.sort(rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
+    rs:add(rows[1]:d2h(d)) end 
+  print""
+  print(l.rnd(ss:mid(),2), l.rnd(bs:mid(),2), l.rnd(rs:mid(),2)) 
+  print(l.rnd(2*ss:div(),2), l.rnd(2*bs:div(),2), l.rnd(2*rs:div(),2)) 
+  end
 
 -- ----------------------------------------------------------------------------
 -- ## Start-up

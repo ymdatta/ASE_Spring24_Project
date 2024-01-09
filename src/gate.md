@@ -26,12 +26,11 @@ header-includes: |
 # Overview
 
 This paper discusses `gate.lua`, which is a small script
-that implements sequential model optimization (defined below)
+that implements sequential model optimization (defined below).
 GATE is a demonstrator
 that
-good AI can be build easily,
-assuming that the software engineering is done right. Here, "good" means
-fast and understandable while "easy" means simple to code. 
+good AI (i.e. that is fast and understandable) can be build easily (i.e. that is simple to code)
+assuming that the software engineering is done right. 
 
 The great secret is that AI software is still
 software. Hence, better software engineering means better AI.
@@ -63,10 +62,10 @@ Advances in Neural Information Processing Systems 28 (NIPS 2015)
   NUMeric or SYMbolic columns. 
 DATA turns out to be extraordinarily reusable for many things. E.g. if clustering,
 we an give each cluster its own DATA. 
-If we want seperate stats on each cluster,
+If we want separate stats on each cluster,
 then we call the `DATA:stats()` method (shown below).
 For classification, we  store
-information about different classes in its own seperate data. Once
+information about different classes in its own separate data. Once
 that is done, then
   implementing a Naive Bayes Classifier takes just  eight lines of code. 
 ```lua
@@ -80,10 +79,11 @@ local function learn(data,row,  my,kl) --> nil, but updates the working memory "
   my.datas[kl]:add(row) end
 ```
  In
-the above, ROWs from differernt classes are store in their own DATA
+the above, ROWs from different classes are store in their own DATA
 instance. Also note that we test the classifier before updating the columns
 (so we are always testing on previously unseen examples). For full
 details on the above, see the rest of this paper.
+
 
 Here's an example usage where the  `learn()` is passed in as a call-back
 function, to be executed whenever we see new examples.
@@ -99,17 +99,17 @@ Implementing Naive Bayes in eight lines is not so impressive
 (since the underlying algorithm is so simple).
 A more interesting example of how SE
 can simplify AI is  the 30 lines needed to code up sequential model
-optimziation (see the rest of this paper).
+optimization (see the rest of this paper).
 
 As for other examples where SE+AI leads to simpler SE,
-this code has not (yet0 been applied to all things
-AI. But the track record so far is pretty intereesting.
+this code has not (yet) been applied to all things
+AI. But the track record so far is pretty interesting.
 The methods of this document have also been applied
 to clustering, data synthesis, anomaly detection, privacy,
-mutli-objective optimization, streaming, and many other 
+multi-objective optimization, streaming, and many other 
 applications besides. But that's another story for another time.
 
-## Use of Lua
+# Use of Lua
 
 GATE is implemented in
 Lua since that  is a great `less is more` language [^roberto].
@@ -151,10 +151,11 @@ Also, if a  line just contains `end`, the I add it to the line above.
 90 chars/line or less (otherwise the pdf printing messes up).
 
 **Few globals:**
-_N-1_ globals is better than _N_. I just try to have one:
-- The  global config settings `the`.
-- This `the` variable is parsed from the help text listed at top of file.
-- Optionally, `the` can be updated from the command-line options.
+_N-1_ globals is better than _N_. I just try to have one, 
+the  global config settings `the`
+(and I build this variable
+from the help text listed top of file).
+Optionally, `the` can be updated from the command-line options.
 
 **Function arguments: **
 Two spaces denotes "start of optionals" and
@@ -206,7 +207,7 @@ https://youtu.be/o9pEzgHorH0?si=KWLVXsHuD_hwGtLz
 
 # Sequential Model Optimization
 
-This section is a quick tutorial on sequential model optimization.
+Using Lua, this code implements  sequential model optimization.
  Suppose we have a database of
  examples of some function
 $X=F(Y)$:
@@ -243,8 +244,8 @@ Why does SMO work so well? Well:
   look at examples that fall safely into just _best_ or just _rest_);
 - Secondly, it is critical of itself. SMO finds the examples that could most confuse
   it (those right on the border), then asks about those.
-- Thirdly, there is some maths (shown below) suggesting that, if we make the most optimistic
-  assumptions possible, then is should be possible to find good examples within a large set,
+- Thirdly, there is maths (see below) saying that, under some  optimistic
+  assumptions, then it is  possible to find good examples within a large set,
   using just a few examples.
 
 Note that in my code, _best_ and _rest_ are implemented via a Naive Bayes
@@ -260,11 +261,16 @@ a little sampling can explore a large space.
 
 According to Hamlet [^hamlet], the confidence
 of seeing an event at probability $p$ after $n$  random trials
-is $C=1-(1-p)^n$d  This can be  rearranged to show the number of
-samples needed find that event (at some level of confidence) is
-$n=\log{1-C}/\log{1-p}$.
+is 
 
-There is 
+$$C=1-(1-p)^n$$  
+
+This can be  rearranged to show the number of
+samples needed find that event (at some level of confidence) is
+$n=\log(1-C)/\log(1-p)$.
+
+An estimate for $p$ can be derived
+using
 other maths that says two numbers from the same distribution are 
 insignificantly different if they differ by less than $d\times\delta$ where
 
@@ -280,25 +286,29 @@ That  curve
 of a  solution that is  indistinguishable from the best solution has size
 $d/6$. Hence, for z-curves, we can to rewrite our equation.
 
-$$ n=\log{1-C}/\log{1-d/\sigma} $$
+$$n=\log(1-C)/\log(1-d/6a)$$
 
+An important aspect of this equation is that it does it mentions standard deviation,
+but not the  size
+of the data. Hence, this maths works for  100 or 1,000,000 options, and tells
+us that as long as the variance is small, we do very much with just a little effort.
 
 Further, it we have some way to sort the examples, then
 a binary chop will find that region after logarithmic samples. Putting
 all that together, then we should compare all the above to randomly
 sampling
 
-$$ n=\log_2{\log{1-C}/\log{1-d/\sigma}} $$
+$$n=\log_2\left(\log(1-C)/\log(1-d/6)\right)$$
+
 
 The following graphs our two equations. Note that even without the sorting assumption, a few
 dozen examples can be quite informative especially if you are willing to accept
 low levels of confidence (e.g. 75%).  And if it is possible to sort examples, then the number
 of samples required for confidence is far lower (less than dozen will get you near 100% confidence).
 These graphs go so way to explaining the strange success of human beings who, despite all their
-cognitive impairments, have managed to get to the moon, split the atom, and feed billions of people [^bias].
+cognitive impairments, have managed to get to the moon, split the atom, and feed billions of people [^bias]. eg
  
-
-<img width="474" alt="image" src="/docs/img/sample.png">
+![](samples.png)
 
 
 [^hamlet]:  Hamlet, R. G. (1987). Probable correctness theory. Information processing letters, 25(1), 17-22. 
@@ -309,16 +319,26 @@ Methods 8(2), 26 (2009)
 [^bias]: For a depressing long list of ways that humans routinely get it wrong,
 see Wikipedia's [list of cognitive biases](https://en.wikipedia.org/wiki/List_of_cognitive_biases).
 
- It should be stressed that the assumptions
-behind these equations are _extremely optimistic_ 
-For example, they assume that 
- all solutions are spaced equally across one $x$ dimension and   all distributions conform
-to a  Gaussian (single peak, symmetrical, continuous). More importantly, they assume we are
-_optimizing_ which means we can quickly prune much of the space in our quest for  a small corner
-with more desired properties. This is not true for classification and regressions tasks
-(where we seek labels across the Whole space) or generative tasks (where we need all the association
-weights between all the labels). Nevertheless, it is good to know that for at least some tasks,
-humans have a chance of reasoning effectively about the world.
+It should be stressed that the assumptions behind these equations
+are _extremely optimistic_. For example, they assume that
+
+- all solutions are spaced equally across decision space and objective space;
+- all  distributions conform to a Gaussian (single peak, symmetrical, continuous). 
+
+More
+importantly, they assume that
+
+- we are _optimizing_ which means we can
+quickly prune much of the space in our quest for  a small corner
+with more desired properties.
+-  This is not true for classification
+and regressions tasks (where we seek labels across the Whole space)
+or generative tasks (where we need all the association weights
+between all the labels).
+
+Nevertheless, it is good to know that for
+at least some tasks, humans have a chance of reasoning effectively
+about the world.
 
 # Installation
 
@@ -810,14 +830,12 @@ function DATA.new(src,  fun,     self) --> DATA
 
 DATE's update method ensures that the thing being added is a row
 [^makerows].
-After that, there are two cases:
-
-- This is the first ROW we have ever seen. In that case, this is the row
-  of column names from which we have to create a COLS object.
-- This is after the first ROW. In this case, we need to update our COLS
+After that, there are two cases. Firstly,
+if this is the first ROW we have seen, then we need to create a COLS object.
+Otherwise,  we need to update our COLS
   with information from this ROW, then store the ROW.
 
-[^makerows]: When reading from disk, the infomation arrives in a raw Lua
+[^makerows]: When reading from disk, the information arrives in a raw Lua
 table and _not_ a ROW.  In that case, we create a new ROW fom that table-- see
 first line of `DATA:add()`.
 
@@ -831,29 +849,10 @@ function DATA:add(t,  fun,row) --> nil
 ```
 Note in the above that the `fun` call-back is executed just before we update each row.
 
-### Querying DATA
-If we want seperate stats on just  one part of the data, we ensure that
-part is a DATA, then we ask from that information from DATA, as follows.
-
-Note that these stats queries are defined recursively using the `mid(), div()`
+One use of DATA is to report stats from different parts of the data.
+Those stats
+are computed recursively using the `mid(), div()`
 functions of NUM, SYM (see above),
-
-Some of these stats queries are very specfic. E.g. `mid()` returns
-the centroid of a ROW
-
-```lua
-function DATA:mid(cols,   u) --> ROW
-  u = {}; for _, col in pairs(cols or self.cols.all) do u[1 + #u] = col:mid() end
-  return ROW.new(u) end
-
-function DATA:div(cols,    u) --> ROW
-  u = {}; for _, col in pairs(cols or self.cols.all) do u[1 + #u] = col:div() end;
-  return ROW.new(u) end
-
-function DATA:small(    u)a --> ROW
-  u = {}; for _, col in pairs(self.cols.all) do u[1 + #u] = col:small(); end
-  return ROW.new(u) end
-```
 `DATA:stats()` is the most general form on these queries. It can be called
 different ways to return different stats, rounded to however many decimals you
 like, for what ever cols you like. If called with no arguments,
@@ -866,6 +865,20 @@ function DATA:stats(  cols,fun,ndivs,    u) --> table
   for _,col in pairs(self.cols[cols or "y"]) do
     u[col.txt] = l.rnd(getmetatable(col)[fun or "mid"](col), ndivs or 2) end
   return u end
+```
+The other queries are more specific:
+```lua
+function DATA:mid(cols,   u) --> ROW
+  u = {}; for _, col in pairs(cols or self.cols.all) do u[1 + #u] = col:mid() end
+  return ROW.new(u) end
+
+function DATA:div(cols,    u) --> ROW
+  u = {}; for _, col in pairs(cols or self.cols.all) do u[1 + #u] = col:div() end;
+  return ROW.new(u) end
+
+function DATA:small(    u)a --> ROW
+  u = {}; for _, col in pairs(self.cols.all) do u[1 + #u] = col:small(); end
+  return ROW.new(u) end
 ```
 # Sequential Model Optimization with GATE
 As promised in the introduction, once the right data structures are in place,
@@ -988,16 +1001,16 @@ First we set the control parameters:
 function eg.gate(stats, bests, d, say,sayd)
   local budget0,budget,some = 4,10,.5
 ```
-That is, our intial `lite` sample will be 4 and after that we will
+That is, our initial `lite` sample will be 4 and after that we will
 iterate 10 times (total evaluations = 14). At each step, the `lite`
 examples will be divided into $|\mathit{lite}|^{0.5}$ (i.e. square
-root) best and the _rest_.
+root) _best_ and the _rest_.
 
-Next we do some intiial set up. We report the random seed we
+Next we do some initial set up. We report the random seed we
 are using (useful for reproduction) and print statistics that
 baseline our
 data. Reporting such baselines is an important principle
-of experimental SE: always comapre your supposesldy better system
+of experimental SE: always compare your supposedly better system
 against some baseline:
 
 ```lua
@@ -1014,7 +1027,7 @@ against some baseline:
 ```
 Note the called to `small()`. This illustrates another important
 principles. Two numbers from the same distribution are the insignificantly
-differrent if they differ by less than a small amount. This knowledge
+different if they differ by less than a small amount. This knowledge
 lets us rule out trivial results.
 
 Next we run GATE and report the average and optimal results
@@ -1030,6 +1043,15 @@ Next we run GATE and report the average and optimal results
   table.sort(d.rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
   sayd(d.rows[1], #d.rows)
 ```
+Finally, we compare our results against the simple sampling
+policy we know (random, no ordering). This implies selecting
+$n$ examples at random an evaluation them all:
+
+
+ $$n=\log(1-(C=.95))/\log(1-(d=.35)/6)= 49$$
+
+This is also good empirical practice: compare your results against some reasonable
+(but simple) search.
 
 ```lua
   -- eg.gate(), continued    
@@ -1039,6 +1061,57 @@ Next we run GATE and report the average and optimal results
   table.sort(rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
   sayd(rows[1]) end
 ```
+
+\newpage
+
+## Output
+
+![](gateout.png)
+
+Here's the out from the above code, annotated with some colors.
+
+- Yellow denotes the goal columns; 
+- Blue shows results from the centroid of our data. Here  we see that,
+  on average our unoptimized data isa round 0.54 away from heaven.
+  In that unoptimized data,
+   we see weights, acceleartions and miles per hour in our
+cars of  around (3000,16,24).
+- Gray cells denote optimization results where the new values
+are only a small difference from the original. When intepreting these results,
+we cannot make conclusions from these gray cells.
+- Red cells shows the optimum results; i.e.
+   how well we can do if we evaluate all the data. Here we see that  after
+  398 evaluations we can find 
+ weights, acceleartions and miles per hour in our
+cars of  around (2300, 25,40).
+- In the optimistic case (shown in the green rows), afer 14 evaluations,
+   we can reach 
+ weights, acceleartions and miles per hour 
+of (2100, 25,40).
+- More realistically (in the orange rows) we after 14 evaluations, 
+ we can reach 
+ weights, acceleartions and miles per hour 
+of (2000,17,31). While this is clearly not as good as the optimal case,
+its not bad after jsut 14 evaluations.
+- Black results shows what happens  if we just evalauted 49 examples. It
+  do not perform as well as the red optimal but does better than the green.
+
+The above results suggest we might want to think more about our stopping 
+rules:
+
+- The black results suggest we might want to reflect  on our
+stopping rules (since our results after 14 evaluations) are close,
+but not as good as after 49 evalautions.
+- On the other hand, the results after 7 evalautions are not necessirily
+  better than than what we see after 14. So we might be able to stop
+  even earlier than 14.
+
+Finally, the results seen from one run in one data set really need to be 
+checked using (say) 10 to 20 data sets and
+say 20 runs (with different random number seeds). But that is
+another story for another time.
+
+
 
 # Appendix: A Quick Tour of Lua
 
