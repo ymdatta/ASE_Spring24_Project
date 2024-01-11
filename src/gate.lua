@@ -46,7 +46,19 @@ function NUM:mid() return self.mu end
 
 function NUM:div() return self.n < 2 and 0 or (self.m2/(self.n - 1))^.5 end
 
-function NUM:small() return the.cohen*self:div() end
+function NUM:small() 
+  return the.cohen*self:div() end
+
+function NUM:same(other)
+ -- from Cohen, J. 1998. Statistical Power Analysis for the Behavioral Sciences. 2nd ed. 
+ -- Hillsdale, NJ: Lawrence Erlbaum Associates.
+  pooledSd = ((self:div()^2 + other:div()^2)/2)^.5
+  n12      = self.n+other.n
+  -- correction from Hedges, Larry, and Ingram Olkin. 1985. 
+  -- “Statistical Methods in Meta-Analysis.” Stat Med. Vol. 20.
+  correction = n12  >= 50 and 1 or (n12-3)/(n12-2.25) 
+  print(pooledSd,n12,correction)
+  return math.abs(self.mu - other.mu)/pooledSd * correction <= the.cohen end
 
 function NUM:norm(x)
   return x=="?" and x or (x - self.lo) / (self.hi - self.lo + 1E-30) end
@@ -79,7 +91,7 @@ function SYM:mid() return self.mode end
 function SYM:div(    e) 
   e=0; for _,v in pairs(self.has) do e=e-v/self.n*math.log(v/self.n,2) end; return e end
 
-function SYM:small() return 0 end
+function SYM:small(_) return 0 end
 
 -- Likelihood
 function SYM:like(x, prior)
@@ -478,6 +490,23 @@ function eg.gate20(    ss,bs,rs,d,stats,bests,rows,stat,best)
   print(l.rnd(ss:mid(),2), l.rnd(bs:mid(),2), l.rnd(rs:mid(),2)) 
   print(l.rnd(2*ss:div(),2), l.rnd(2*bs:div(),2), l.rnd(2*rs:div(),2)) 
   end
+
+local function gauss(mu,sd,    R)
+  R=math.random
+  return (mu or 0) + (sd or 1) * math.sqrt(-2 * math.log(R()))
+                               * math.cos(2 * math.pi * R()) end
+
+function eg.tut()
+  for i=1,1 do
+    print""
+    local j=2
+      local n1,n2=NUM.new(),NUM.new()
+      for _=1,10 do n1:add(gauss(10,1)) end
+      for _=1,10 do n2:add(gauss(10*j,1)) end
+      print(j,math.abs(n1:mid()- n2:mid()))
+      print(l.rnd(j,2), n1:same(n2)) 
+      j=j*1.1 end end 
+
 
 -- ----------------------------------------------------------------------------
 -- ## Start-up
