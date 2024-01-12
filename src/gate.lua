@@ -49,7 +49,7 @@ function NUM:div() return self.n < 2 and 0 or (self.m2/(self.n - 1))^.5 end
 function NUM:small() 
   return the.cohen*self:div() end
 
-function NUM:same(other)
+function NUM:same(other,  pooledSd,n12,correction)
  -- from Cohen, J. 1998. Statistical Power Analysis for the Behavioral Sciences. 2nd ed. 
  -- Hillsdale, NJ: Lawrence Erlbaum Associates.
   pooledSd = ((self:div()^2 + other:div()^2)/2)^.5
@@ -202,6 +202,10 @@ function DATA:stats(cols,fun,ndivs,    u)
     u[col.txt] = l.rnd(getmetatable(col)[fun or "mid"](col), ndivs) end
   return u end
 
+function DATA:clone(rows,    new)
+  new = DATA.new{self.cols.names}
+  for _,row in pairs(rows or {}) do new:add(row) end
+  return new end
 -- Gate.
 function DATA:gate(budget0,budget,some)
   local rows,lite,dark
@@ -217,16 +221,31 @@ function DATA:gate(budget0,budget,some)
     table.insert(lite, table.remove(dark,todo)) end 
   return stats,bests end
 
+function DATA:gate2(budget0,budget,some)
+  local rows,liteRows,darkRows
+  local stats,bests = {},{}
+  rows = l.shuffle(self.rows)
+  liteRows = l.slice(rows,1,budget0)
+  darkRows = l.slice(rows, budget0+1)
+  for i=1,budget do
+    local lite = self:clone(liteRows)
+    local best, rest     = lite:bestRest(liteRows, (#liteRows)^some)  -- assess
+    local todo, selected = lite:split(best,rest,liteRows,darkRows)
+    stats[i] = selected:mid()
+    bests[i] = best.rows[1]
+    table.insert(liteRows, table.remove(darkRows,todo)) end 
+  return stats,bests end
+
 -- Find the row scoring based on our acquite function.
-function DATA:split(best,rest,lite,dark)
+function DATA:split(best,rest,liteRows,darkRows)
   local selected,max,out
   selected = DATA.new{self.cols.names}
   max = 1E30
   out = 1
-  for i,row in pairs(dark) do
+  for i,row in pairs(darkRows) do
     local b,r,tmp
-    b = row:like(best, #lite, 2)
-    r = row:like(rest, #lite, 2)
+    b = row:like(best, #liteRows, 2)
+    r = row:like(rest, #liteRows, 2)
     if b>r then selected:add(row) end
     tmp = math.abs(b+r) / math.abs(b-r+1E-300)
     --print(b,r,tmp) 
@@ -235,7 +254,7 @@ function DATA:split(best,rest,lite,dark)
 
 -- Sort on distance to heaven, split off the first `want` items to return
 -- a `best` and `rest` data.
-function DATA:bestRest(rows, want, best, rest, top)
+function DATA:bestRest(rows, want,     best,rest,top)
     table.sort(rows, function(a, b) return a:d2h(self) < b:d2h(self) end)
     best, rest = { self.cols.names }, { self.cols.names }
     for i, row in pairs(rows) do
@@ -453,23 +472,31 @@ function eg.gate(stats, bests, d, say,sayd)
   function sayd(row, txt) print(l.o(row.cells), txt, l.rnd(row:d2h(d))) end
   function say( row,txt)  print(l.o(row.cells), txt) end
   print(l.o(d.cols.names),"about","d2h")
-  print"#overall" -------------------------------------
+  print"#before" -------------------------------------
   sayd(d:mid(), "mid")
   say(d:div() , "div")
   say(d:small(),"small=div*"..the.cohen)
-  print"#generality" ----------------------------------
-  stats,bests = d:gate(budget0, budget, some)
-  for i,stat in pairs(stats) do sayd(stat,i+budget0) end
-  print"#specifically" ----------------------------------------------------------
+  -- print"#generality" ----------------------------------
+  stats,bests = d:gate2(budget0, budget, some)
+  -- for i,stat in pairs(stats) do sayd(stat,i+budget0) end
+  print"#best(n)" ----------------------------------------------------------
   for i,best in pairs(bests) do sayd(best,i+budget0) end
-  print"#optimum" ------------------------------------------------------
+  print"#best(all)" ------------------------------------------------------
   table.sort(d.rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
   sayd(d.rows[1], #d.rows)
-  print"#random" ------------------------------------------------------
+  local n = math.log(.05)/math.log(1-the.cohen/6) // 1
+  print(l.fmt("best(%s)",n)) ------------------------------------------------------
   local rows=l.shuffle(d.rows)
-  rows = l.slice(rows,1,math.log(.05)/math.log(1-the.cohen/6))
+  rows = l.slice(rows,1,n)
   table.sort(rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
-  sayd(rows[1]) end
+  sayd(rows[1]) 
+  n=math.log(n,2) //1
+  print(l.fmt("best(%s)",n)) ------------------------------------------------------
+  rows = l.slice(rows,1,n)
+  table.sort(rows, function(a,b) return a:d2h(d) < b:d2h(d) end)
+  sayd(rows[1]) 
+
+end
 
 function eg.gate20(    ss,bs,rs,d,stats,bests,rows,stat,best)
   print("#average, #optimistic,#random")
