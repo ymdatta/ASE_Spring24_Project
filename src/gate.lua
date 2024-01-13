@@ -52,12 +52,12 @@ function NUM:small()
 function NUM:same(other,  pooledSd,n12,correction)
  -- from Cohen, J. 1998. Statistical Power Analysis for the Behavioral Sciences. 2nd ed. 
  -- Hillsdale, NJ: Lawrence Erlbaum Associates.
-  pooledSd = ((self:div()^2 + other:div()^2)/2)^.5
-  n12      = self.n+other.n
+ n12      = self.n + other.n
+ pooledSd = (( (self.n-1)*self:div()^2 + (other.n -1)*other:div()^2 )/(n12-2))^.5
   -- correction from Hedges, Larry, and Ingram Olkin. 1985. 
   -- “Statistical Methods in Meta-Analysis.” Stat Med. Vol. 20.
   correction = n12  >= 50 and 1 or (n12-3)/(n12-2.25) 
-  print(pooledSd,n12,correction)
+ --print(pooledSd,n12,correction)
   return math.abs(self.mu - other.mu)/pooledSd * correction <= the.cohen end
 
 function NUM:norm(x)
@@ -166,13 +166,15 @@ function ROW:like(data,n,nHypotheses,       prior,out,v,inc)
 
 -- Create from either a file name or a list of rows
 local DATA=is"DATA"
-function DATA.new(src,  fun,     self)
-  self = isa(DATA,{rows={}, cols=nil})
+function DATA.new(src,  fun)
+  return isa(DATA,{rows={}, cols=nil}):adds(src,fun) end 
+
+function DATA:adds(src,fun)
   if   type(src) == "string"
   then for _,x in l.csv(src)       do self:add(x, fun) end
   else for _,x in pairs(src or {}) do self:add(x, fun) end end
   return self end
-
+    
 -- Update. First time through, assume the row defines the columns.
 -- Otherwise, update the columns then store the rows. If `fun` is
 -- defined, call it before updating anything.
@@ -182,6 +184,8 @@ function DATA:add(t,  fun,row)
   then if fun then fun(self,row) end
        self.rows[1 + #self.rows] = self.cols:add(row)
   else self.cols = COLS.new(row) end end
+
+
 
 -- Query
 function DATA:mid(cols,   u) 
@@ -526,14 +530,15 @@ local function gauss(mu,sd,    R)
 function eg.tut()
   for i=1,1 do
     print""
-    local j=2
-      local n1,n2=NUM.new(),NUM.new()
-      for _=1,10 do n1:add(gauss(10,1)) end
-      for _=1,10 do n2:add(gauss(10*j,1)) end
-      print(j,math.abs(n1:mid()- n2:mid()))
-      print(l.rnd(j,2), n1:same(n2)) 
-      j=j*1.1 end end 
-
+    local inc=1
+    while inc < 1.2 do
+      n1,n2 = NUM.new(), NUM.new()
+      local t1={}; for _=1,100 do t1[1+#t1]= gauss(10,3) end
+      local t2={}; for k=1,100 do t2[k]    = t1[k]*inc end
+      for _,x in pairs(t1) do n1:add(x) end
+      for _,x in pairs(t2) do n2:add(x) end
+      print(l.rnd(inc,2), n1:same(n2), n1:mid()-n2:mid()) 
+      inc=inc+0.05 end end end
 
 -- ----------------------------------------------------------------------------
 -- ## Start-up
