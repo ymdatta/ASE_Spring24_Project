@@ -3,11 +3,12 @@
 local the = { cohen = 0.35, file = "../data/auto93.csv", 
               k = 1, m = 2, seed = 31210 }
 
-local map,kap,keys,sort,shuffle
-function map(t,f,   u) u={}; for _,x in pairs(t) do u[1+#u]=f(x)   end; return u end
-function kap(t,f,   u) u={}; for k,x in pairs(t) do u[1+#u]=f(k,x) end; return u end
-function keys(t)       return kap(t, function(k,_) return k end) end
+local map,map2,keys,sort,shuffle
+function map(t,f,    u) u={}; for _,x in pairs(t) do u[1+#u]=f(x)   end; return u end
+function map2(t,f,   u) u={}; for k,x in pairs(t) do u[1+#u]=f(k,x) end; return u end
+function keys(t)       return map2(t, function(k,_) return k end) end
 function sort(t,f)     table.sort(t,f) return t end
+
 function shuffle(t,    u,j)
   u={}; for _,x in pairs(t) do u[1+#u]=x; end;
   for i = #u,2,-1 do j=math.random(i); u[i],u[j] = u[j],u[i] end
@@ -37,28 +38,41 @@ function cli(t)
 local cat,fmt,show
 cat=table.concat
 fmt=string.format
-function show(t,    fun)    
-  fun = function(k) print(k,t[k]); return fmt(":%s %s",k,t[k]) end
-  return (t._isa or "") .. '('.. cat(sort(map(keys(t),fun))," ") .. ')' end
+
+function o(t, ndecs,    f,u)    
+  f="%."..n.."f"
+  if type(x) == "number" then return math.floor(x)==x and tostring(x) or fmt(f, x) end
+  if type(x) ~= "table"  then return tostring(x) end
+  u = map(keys(t), function(k,y) y=o(t[k],n); return t>0 and y or fmt(":%s %s",k,y) end)
+  return (t._isa or "") .. '('.. cat(#t==0 and sort(u) or u," ") .. ')' end
 
 local isa,obj
 function isa(x,y)    return setmetatable(y,x) end
 function obj(s,   t) t={_isa=s, __tostring=show}; t.__index=t; return t end
 
 local ROW=obj"ROW"
-function ROW.new(cols) return isa(ROW,{cols=cols, x={}, y={}}) end
+function ROW.new(cols) return isa(ROW,{cols=cols, evaluated=false,_x={}, _y={}}) end
+function ROW:x(n) return self._x[n] endf
+function ROW:y(n) 
+  if not self.evaluated then self:eval() end
+  self.evaluated = true
+  return self._y[n] end
 
-function ROW:read(t) 
+function ROW:eval(): return true -- ie need to compute _y from _x, include that code here
+
+function ROW:read(t)  -- is missing values, skip that item
   for _,xy in pairs{self.cols.x, self.cols.y} do
     for at,_ in pairs(xy) do
       self.x[at] = t[at] end end -- nil if not there.
   return t end
 
-function ROW:d2h(t,ys,    d,n)
+function ROW:d2h(t,nums,    d,n)
   d,n = 0,0
-  for at,ys in pairs(ys) do
+  for at,num in pairs(nums) do
     n = n + 1
-    d = d + math.abs(heaven - 
+    d = d + math.abs(self.cols.y[at]  - num:norm(self.y[at]))^2 end
+  return (d/n)^.5 end
+
 local COLS=obj"COLS"
 function COLS.new(t,   x,y) 
   x,y={},{}

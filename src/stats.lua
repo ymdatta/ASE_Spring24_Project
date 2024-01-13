@@ -108,10 +108,10 @@ function eg.three()
   for i=1,1 do
     print""
     local j=1
-    while j < 5 do
-      local t={}; for _=1,100 do t[1+#t] = gauss(10,2) end
+    while j < 2 do
+      local t={}; for _=1,100 do t[1+#t] = gauss(10,2)^.5 end
       local u={}; for k,x in pairs(t) do u[k] = x *j end
       print(i,j, mwu(t,u),cliffsDelta(t,u))
-      j=j+0.1 end end end 
+      j=j+0.05 end end end 
 
 eg.three()
