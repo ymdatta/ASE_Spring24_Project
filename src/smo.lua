@@ -1,13 +1,28 @@
 -- vim: set ts=2 sw=2 sts=2 et
+local the,help={},[[
 
-local the = { best = .5,    cohen = 0.35, file = "../data/auto93.csv",
-              go = 4, k = 1, m = 2, seed = 31210, stop=4}
+smo: simple sequential model optimzation (naive bayes as the model)
+(c)2024 Tim Menzies timm@ieee.org, BSD (2 clause)
+
+USAGE: lua smo.lua [OPTIONS}
+
+OPTIONS:
+  -b --best   size of best: n^best                 = .5
+  -c --cohen  indistinguishable if under sd*coehn  = .35
+  -f --file   csv file (to be read in)             = ../data/auto93.csv
+  -n --n      start by evaluating n items          = 4
+  -N --N      stop after evaliation N items        = 10
+  -k --k      a Bayes low frequency hack           = 1
+  -m --m      a Bayes low frequency hack           = 2
+  -s --seed   random number seed                   = 31210 ]]
+
+local b4={}; for k,_ in pairs(_ENV) do b4[k]=k end
 -----------------------------------------------------------------------------------------
 local map,map2,keys,sort,shuffle,slice,alls -- list utils
 function map(t,f,    u) u={}; for _,x in pairs(t) do u[1+#u]=f(x)   end; return u end
 function map2(t,f,   u) u={}; for k,x in pairs(t) do u[1+#u]=f(k,x) end; return u end
-function keys(t)       return map2(t, function(k,_) return k end) end
-function sort(t,f)     table.sort(t,f) return t end
+function keys(t)   return map2(t, function(k,_) return k end) end
+function sort(t,f) table.sort(t,f) return t end
 
 function shuffle(t,    u,j)
   u={}; for _,x in pairs(t) do u[1+#u]=x; end;
@@ -24,18 +39,22 @@ function slice(t, go, stop, inc,    u)
 function alls(x,t)
   for _,y in pairs(t) do x:add(y) end; return x end
 -----------------------------------------------------------------------------------------
-local is,is1,csv -- coerce strings from file to some tupe
-function is(s)  return math.tointeger(s) or tonumber(s) or is1(s:match'^%s*(.*%S)') end
-function is1(s) return s=="true" or (s~="false" and s) end 
+local as,as1,csv,settings -- coerce strings to some type
+function as(s)  return math.tointeger(s) or tonumber(s) or as1(s:match'^%s*(.*%S)') end
+function as1(s) return s=="true" or (s~="false" and s) end -- or false
 
 function csv(src,    i,cells)
-  function fun(s,t) for x in s:gmatch("([^,]+)") do t[1+#t]=is(x) end; return t end
+  function fun(s,t) for x in s:gmatch("([^,]+)") do t[1+#t]=as(x) end; return t end
   i,src = 0,src=="-" and io.stdin or io.input(src)
   return function(      s)
     s=io.read()
     if s then i=i+1; return i,fun(s,{}) else io.close(src) end end end
------------------------------------------------------------------------------------------
-local cli -- update a table from command line flags
+
+function settings(s,    t)
+  t={}; for k, s1 in s:gmatch("[-][-]([%S]+)[^=]+=[\s]*([%S]+)") do t[k]=as(s1) end
+  return t end
+---------------------------------------------------------------------------------------
+local cli -- update a table from command line flags. bools need no values (just flip'em)
 function cli(t)
   for k, v in pairs(t) do
     v = tostring(v)
@@ -79,13 +98,13 @@ function ROW:d2h(data,    d,n,norm)
   return (d/n)^.5 end
 
 function ROW:likes(datas,       n,nHypotheses,most,tmp,out)
-  n,nHypotheses = 0,0
+  n, nHypotheses = 0, 0
   for k,data in pairs(datas) do
     n = n + #data.rows
-  nHypotheses = 1 + nHypotheses end
+    nHypotheses = 1 + nHypotheses end
   for k,data in pairs(datas) do
     tmp = self:like(data,n,nHypotheses)
-  if most==nil or tmp > most then most,out = tmp,k end end
+    if most==nil or tmp > most then most,out = tmp,k end end
   return out,most end
 
 function ROW:like(data,n,nHypotheses,       prior,out,v,inc)
@@ -156,11 +175,13 @@ function COLS:add(row)
   for _,xy in pairs{self.x, self.y} do
     for _,col in pairs(xy) do
       v = row.cells[col.at] 
-      if v then col:add(v) end end end
+      if v~=nil then col:add(v) end end end
   return row end
 -----------------------------------------------------------------------------------------
 local DATA=obj"DATA"
 function DATA.new(src) return isa(DATA,{rows={},cols=nil}):adds(src) end
+
+function DATA:clone(src) return DATA{self.cols.names}:adds(src) end
 
 function DATA:adds(src)
   if   type(src) == "string"
@@ -178,7 +199,7 @@ function DATA:sorter()
   return function(a,b) return a:d2h(self) > b:d2h(self) end  end
 
 function DATA:bestRest(want,     best,rest)
-  best,rest=DATA{self.cols.names}, DATA{self.cols.names}
+  best,rest=self:clone(), self:clone()
   for i,row in pairs(sort(self.rows,self:sorter())) do
     (i<= want and best or rest):add(row) end
   return best,rest end
@@ -187,27 +208,27 @@ function DATA:smo()
   local mids,tops = {},{}
   local rows,lite,dark
   rows = shuffle(self.rows)
-  lite = DATA{self.cols.names}:adds(slice(self.rows,1,the.go))
-  dark = DATA{self.cols.names}:adds(slice(self.rows,the.go+1))
-  for i=1,the.stop do
-    local todo,selected = lite:smo1(dark)
-    mids[i]      = selected:mid()
-    tops[i]      = best.rows[1]
-    table.insert(lite, table.remove(dark,i)) end 
+  lite = self:clone( slice(rows, 1, the.n) )
+  dark = self:clone( slice(rows, the.n+1) )
+  for i=1,the.N do
+    local todo,selected = lite:what2lookAtNext(dark)
+    mids[i] = selected:mid()
+    tops[i] = best.rows[1]
+    table.insert(lite, table.remove(dark,todo)) end 
   return mids,tops end
 
-function DATA:smo1(dark)
-  local b,r,tmp,out,max,best,rest,selected
+function DATA:what2lookatNext(dark)
+  local b,r,tmp,max,todo,best,rest,selected
   best,rest = self:besRest(self.rows^the.best)
-  selected  = DATA{self.cols.names}
-  out, max  = 1, 1E30
+  selected  = self:clone()
+  todo, max  = 1, 1E30
   for i,row in pairs(dark.rows) do
     b = row:like(best, #self.rows, 2)
     r = row:like(rest, #self.rows, 2)
     if b>r then selected:add(row) end
     tmp = maths.abs(b + r) / maths.abs(b - r + 1E-300)
-    if tmp>max then out,max = i,tmp end end
-  return out,selected end
+    if tmp>max then todo,max = i,tmp end end
+  return todo,selected end
 
 function DATA:mid()
   u={}; for _,col in pairs(self.cols.all) do u[col.txt] = col:mid() end
@@ -217,6 +238,8 @@ function DATA:stats(  f)
   u={}; for _,c in pairs(self.cols.y) do u[c.txt] = getmetatable(c)[f or "mid"](c) end
   return u end
 -----------------------------------------------------------------------------------------
+the=settings(help)
+
 local function main(src)
   print(the.seed)
   d = DATA.new(src)
@@ -225,3 +248,4 @@ local function main(src)
   mids, tops = d:smo()
   mids[#mids]
 end
+for k,v in pairs(_ENV) do if not b4[k] then print("-- ??", k,type(v)) end end 
