@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>smo.lua</title>
+  <link rel="stylesheet" href="pycco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div class='section'>
+    <div class='docs'><h1>smo.lua</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      vim: set ts=2 sw=2 sts=2 et</p><center>
+<a href="http://github.com/timm/lo"><img align=center  height=25 src="github.png"></a>
+:: <a href="https://timm.github.io/lo/index.html">home</a>
+:: <a href="https://github.com/timm/lo/blob/main/CONTRIBUTE.md">doc</a>
+:: <a href="https://github.com/timm/lo/issues">issues</a><hr>
+<a href="https://github.com/timm/lo/blob/main/LICENSE.md">&copy; 2023</a> 
+Tim Menzies, <a href="mailto:timm@ieee.org">timm@ieee.org</a>
+  </center>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span></span><span class="kd">local</span> <span class="n">the</span><span class="p">,</span><span class="n">help</span><span class="o">=</span><span class="p">{},</span><span class="s">[[</span>
+
+<span class="s">smo: simple sequential model optimzation (naive bayes as the model)</span>
+<span class="s">(c)2024 Tim Menzies timm@ieee.org, BSD (2 clause)</span>
+
+<span class="s">USAGE: lua smo.lua [OPTIONS}</span>
+
+<span class="s">OPTIONS:</span>
+<span class="s">  -b --best   size of best: n^best                 = .5</span>
+<span class="s">  -c --cohen  indistinguishable if under sd*coehn  = .35</span>
+<span class="s">  -f --file   csv file (to be read in)             = ../data/auto93.csv</span>
+<span class="s">  -h --help   show help                            = false</span>
+<span class="s">  -n --n      start by evaluating n items          = 4</span>
+<span class="s">  -N --N      stop after evaliation N items        = 10</span>
+<span class="s">  -k --k      a Bayes low frequency hack           = 1</span>
+<span class="s">  -m --m      a Bayes low frequency hack           = 2</span>
+<span class="s">  -s --seed   random number seed                   = 31210 ]]</span>
+
+<span class="kd">local</span> <span class="n">b4</span> <span class="o">=</span> <span class="p">{};</span> <span class="kr">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">_</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">_ENV</span><span class="p">)</span> <span class="kr">do</span> <span class="n">b4</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span> <span class="kr">end</span>
+<span class="kd">local</span> <span class="kr">function</span> <span class="nf">rogues</span><span class="p">()</span>
+  <span class="kr">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">_ENV</span><span class="p">)</span> <span class="kr">do</span> <span class="kr">if</span> <span class="ow">not</span> <span class="n">b4</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="kr">then</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-- ??&quot;</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="kr">end</span> <span class="kr">end</span> <span class="kr">end</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      <hr />
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kd">local</span> <span class="n">map</span><span class="p">,</span><span class="n">map2</span><span class="p">,</span><span class="n">keys</span><span class="p">,</span><span class="n">sort</span><span class="p">,</span><span class="n">shuffle</span><span class="p">,</span><span class="n">slice</span> <span class="c1">-- list utils</span>
+<span class="kr">function</span> <span class="nf">map</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">f</span><span class="p">,</span>    <span class="n">u</span><span class="p">)</span> <span class="n">u</span><span class="o">=</span><span class="p">{};</span> <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">x</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="kr">do</span> <span class="n">u</span><span class="p">[</span><span class="mi">1</span><span class="o">+#</span><span class="n">u</span><span class="p">]</span><span class="o">=</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>   <span class="kr">end</span><span class="p">;</span> <span class="kr">return</span> <span class="n">u</span> <span class="kr">end</span>
+<span class="kr">function</span> <span class="nf">map2</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">f</span><span class="p">,</span>   <span class="n">u</span><span class="p">)</span> <span class="n">u</span><span class="o">=</span><span class="p">{};</span> <span class="kr">for</span> <span class="n">k</span><span class="p">,</span><span class="n">x</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="kr">do</span> <span class="n">u</span><span class="p">[</span><span class="mi">1</span><span class="o">+#</span><span class="n">u</span><span class="p">]</span><span class="o">=</span><span class="n">f</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">x</span><span class="p">)</span> <span class="kr">end</span><span class="p">;</span> <span class="kr">return</span> <span class="n">u</span> <span class="kr">end</span>
+<span class="kr">function</span> <span class="nf">keys</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>   <span class="kr">return</span> <span class="n">map2</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="kr">function</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">_</span><span class="p">)</span> <span class="kr">return</span> <span class="n">k</span> <span class="kr">end</span><span class="p">)</span> <span class="kr">end</span>
+<span class="kr">function</span> <span class="nf">sort</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">f</span><span class="p">)</span> <span class="nb">table.sort</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">f</span><span class="p">)</span> <span class="kr">return</span> <span class="n">t</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nf">shuffle</span><span class="p">(</span><span class="n">t</span><span class="p">,</span>    <span class="n">u</span><span class="p">,</span><span class="n">j</span><span class="p">)</span>
+  <span class="n">u</span><span class="o">=</span><span class="p">{};</span> <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">x</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="kr">do</span> <span class="n">u</span><span class="p">[</span><span class="mi">1</span><span class="o">+#</span><span class="n">u</span><span class="p">]</span><span class="o">=</span><span class="n">x</span><span class="p">;</span> <span class="kr">end</span><span class="p">;</span>
+  <span class="kr">for</span> <span class="n">i</span> <span class="o">=</span> <span class="o">#</span><span class="n">u</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span> <span class="kr">do</span> <span class="n">j</span><span class="o">=</span><span class="nb">math.random</span><span class="p">(</span><span class="n">i</span><span class="p">);</span> <span class="n">u</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">u</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span><span class="p">[</span><span class="n">j</span><span class="p">],</span><span class="n">u</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="kr">end</span>
+  <span class="kr">return</span> <span class="n">u</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nf">slice</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">go</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">inc</span><span class="p">,</span>    <span class="n">u</span><span class="p">)</span>
+  <span class="kr">if</span> <span class="n">go</span>   <span class="ow">and</span> <span class="n">go</span>   <span class="o">&lt;</span> <span class="mi">0</span> <span class="kr">then</span> <span class="n">go</span><span class="o">=#</span><span class="n">t</span><span class="o">+</span><span class="n">go</span>     <span class="kr">end</span>
+  <span class="kr">if</span> <span class="n">stop</span> <span class="ow">and</span> <span class="n">stop</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="kr">then</span> <span class="n">stop</span><span class="o">=#</span><span class="n">t</span><span class="o">+</span><span class="n">stop</span> <span class="kr">end</span>
+  <span class="n">u</span><span class="o">=</span><span class="p">{}</span>
+  <span class="kr">for</span> <span class="n">j</span><span class="o">=</span><span class="p">(</span><span class="n">go</span> <span class="ow">or</span> <span class="mi">1</span><span class="p">)</span><span class="o">//</span><span class="mi">1</span><span class="p">,(</span><span class="n">stop</span> <span class="ow">or</span> <span class="o">#</span><span class="n">t</span><span class="p">)</span><span class="o">//</span><span class="mi">1</span><span class="p">,(</span><span class="n">inc</span> <span class="ow">or</span> <span class="mi">1</span><span class="p">)</span><span class="o">//</span><span class="mi">1</span> <span class="kr">do</span> <span class="n">u</span><span class="p">[</span><span class="mi">1</span><span class="o">+#</span><span class="n">u</span><span class="p">]</span><span class="o">=</span><span class="n">t</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="kr">end</span>
+  <span class="kr">return</span> <span class="n">u</span> <span class="kr">end</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      <hr />
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kd">local</span> <span class="n">as</span><span class="p">,</span><span class="n">as1</span><span class="p">,</span><span class="n">csv</span><span class="p">,</span><span class="n">settings</span> <span class="c1">-- coerce strings to some type</span>
+<span class="kr">function</span> <span class="nf">as</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>  <span class="kr">return</span> <span class="nb">math.tointeger</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">tonumber</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="ow">or</span> <span class="n">as1</span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="n">match</span><span class="s1">&#39;^%s*(.*%S)&#39;</span><span class="p">)</span> <span class="kr">end</span>
+<span class="kr">function</span> <span class="nf">as1</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="kr">return</span> <span class="n">s</span><span class="o">==</span><span class="s2">&quot;true&quot;</span> <span class="ow">or</span> <span class="p">(</span><span class="n">s</span><span class="o">~=</span><span class="s2">&quot;false&quot;</span> <span class="ow">and</span> <span class="n">s</span><span class="p">)</span> <span class="kr">end</span> <span class="c1">-- or false</span>
+
+<span class="kr">function</span> <span class="nf">csv</span><span class="p">(</span><span class="n">src</span><span class="p">,</span>    <span class="n">i</span><span class="p">,</span><span class="n">fun</span><span class="p">)</span>
+  <span class="kr">function</span> <span class="nf">fun</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">t</span><span class="p">)</span> <span class="kr">for</span> <span class="n">x</span> <span class="kr">in</span> <span class="n">s</span><span class="p">:</span><span class="n">gmatch</span><span class="p">(</span><span class="s2">&quot;([^,]+)&quot;</span><span class="p">)</span> <span class="kr">do</span> <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="o">+#</span><span class="n">t</span><span class="p">]</span><span class="o">=</span><span class="n">as</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="kr">end</span><span class="p">;</span> <span class="kr">return</span> <span class="n">t</span> <span class="kr">end</span>
+  <span class="n">i</span><span class="p">,</span><span class="n">src</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span><span class="n">src</span><span class="o">==</span><span class="s2">&quot;-&quot;</span> <span class="ow">and</span> <span class="nb">io.stdin</span> <span class="ow">or</span> <span class="nb">io.input</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+  <span class="kr">return</span> <span class="kr">function</span><span class="p">(</span>      <span class="n">s</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">=</span><span class="nb">io.read</span><span class="p">()</span>
+    <span class="kr">if</span> <span class="n">s</span> <span class="kr">then</span> <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="kr">return</span> <span class="n">i</span><span class="p">,</span><span class="n">fun</span><span class="p">(</span><span class="n">s</span><span class="p">,{})</span> <span class="kr">else</span> <span class="nb">io.close</span><span class="p">(</span><span class="n">src</span><span class="p">)</span> <span class="kr">end</span> <span class="kr">end</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nf">settings</span><span class="p">(</span><span class="n">s</span><span class="p">,</span>    <span class="n">t</span><span class="p">)</span>
+  <span class="n">t</span><span class="o">=</span><span class="p">{};</span> <span class="kr">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">s1</span> <span class="kr">in</span> <span class="n">s</span><span class="p">:</span><span class="n">gmatch</span><span class="p">(</span><span class="s2">&quot;[-][-]([%S]+)[^=]+=[%s]*([%S]+)&quot;</span><span class="p">)</span> <span class="kr">do</span> <span class="n">t</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">as</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span> <span class="kr">end</span>
+  <span class="kr">return</span> <span class="n">t</span> <span class="kr">end</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      <hr />
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kd">local</span> <span class="n">cli</span> <span class="c1">-- update a table from command line flags. bools need no values (just flip&#39;em)</span>
+<span class="kr">function</span> <span class="nf">cli</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">help</span><span class="p">)</span>
+  <span class="kr">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="kr">do</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="nb">tostring</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="kr">for</span> <span class="n">argv</span><span class="p">,</span><span class="n">s</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="kr">do</span>
+      <span class="kr">if</span> <span class="n">s</span><span class="o">==</span><span class="s2">&quot;-&quot;</span><span class="o">..</span><span class="p">(</span><span class="n">k</span><span class="p">:</span><span class="n">sub</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span> <span class="ow">or</span> <span class="n">s</span><span class="o">==</span><span class="s2">&quot;--&quot;</span><span class="o">..</span><span class="n">k</span> <span class="kr">then</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">==</span><span class="s2">&quot;true&quot;</span> <span class="ow">and</span> <span class="s2">&quot;false&quot;</span> <span class="ow">or</span> <span class="n">v</span><span class="o">==</span><span class="s2">&quot;false&quot;</span> <span class="ow">and</span> <span class="s2">&quot;true&quot;</span> <span class="ow">or</span> <span class="n">arg</span><span class="p">[</span><span class="n">argv</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">t</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">as</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="kr">end</span> <span class="kr">end</span> <span class="kr">end</span>
+  <span class="kr">if</span> <span class="n">t</span><span class="p">.</span><span class="n">help</span> <span class="kr">then</span> <span class="nb">os.exit</span><span class="p">(</span><span class="nb">print</span><span class="p">(</span><span class="n">help</span><span class="p">))</span> <span class="kr">end</span>
+  <span class="kr">return</span> <span class="n">t</span> <span class="kr">end</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-4'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-4'>#</a>
+      </div>
+      <hr />
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kd">local</span> <span class="n">cat</span><span class="p">,</span><span class="n">fmt</span><span class="p">,</span><span class="n">show</span><span class="p">,</span><span class="n">o</span><span class="p">,</span><span class="n">oo</span> <span class="c1">-- pretty print functions</span>
+<span class="n">cat</span><span class="o">=</span><span class="nb">table.concat</span>
+<span class="n">fmt</span><span class="o">=</span><span class="nb">string.format</span>
+
+<span class="kr">function</span> <span class="nf">oo</span><span class="p">(</span><span class="n">t</span><span class="p">,</span>   <span class="n">n</span><span class="p">)</span> <span class="nb">print</span><span class="p">(</span><span class="n">o</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">n</span><span class="p">));</span> <span class="kr">return</span> <span class="n">t</span> <span class="kr">end</span>
+<span class="kr">function</span> <span class="nf">o</span><span class="p">(</span><span class="n">x</span><span class="p">,</span>  <span class="n">n</span><span class="p">,</span>    <span class="n">f</span><span class="p">,</span><span class="n">u</span><span class="p">)</span>    
+  <span class="n">f</span><span class="o">=</span><span class="s2">&quot;%.&quot;</span><span class="o">..</span><span class="p">(</span><span class="n">n</span> <span class="ow">or</span> <span class="mi">3</span><span class="p">)</span><span class="o">..</span><span class="s2">&quot;f&quot;</span>
+  <span class="kr">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;number&quot;</span> <span class="kr">then</span> <span class="kr">return</span> <span class="nb">math.floor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">==</span><span class="n">x</span> <span class="ow">and</span> <span class="nb">tostring</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">or</span> <span class="n">fmt</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="kr">end</span>
+  <span class="kr">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">~=</span> <span class="s2">&quot;table&quot;</span>  <span class="kr">then</span> <span class="kr">return</span> <span class="nb">tostring</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="kr">end</span>
+  <span class="n">u</span> <span class="o">=</span> <span class="n">map2</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="kr">function</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="n">v</span><span class="o">=</span><span class="n">o</span><span class="p">(</span><span class="n">v</span><span class="p">,</span><span class="n">n</span><span class="p">);</span> <span class="kr">return</span> <span class="n">x</span><span class="o">&gt;</span><span class="mi">0</span> <span class="ow">and</span> <span class="nb">tostring</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">or</span> <span class="n">fmt</span><span class="p">(</span><span class="s2">&quot;:%s %s&quot;</span><span class="p">,</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="kr">end</span><span class="p">)</span>
+  <span class="kr">return</span> <span class="p">(</span><span class="n">x</span><span class="p">.</span><span class="n">_isa</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">..</span> <span class="s1">&#39;(&#39;</span><span class="o">..</span> <span class="n">cat</span><span class="p">(</span><span class="o">#</span><span class="n">x</span><span class="o">&gt;</span><span class="mi">0</span> <span class="ow">and</span> <span class="n">u</span> <span class="ow">or</span> <span class="n">sort</span><span class="p">(</span><span class="n">u</span><span class="p">),</span><span class="s2">&quot; &quot;</span><span class="p">)</span> <span class="o">..</span> <span class="s1">&#39;)&#39;</span> <span class="kr">end</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-5'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-5'>#</a>
+      </div>
+      <hr />
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kd">local</span> <span class="n">isa</span><span class="p">,</span><span class="n">obj</span>
+<span class="kr">function</span> <span class="nf">isa</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>    <span class="kr">return</span> <span class="nb">setmetatable</span><span class="p">(</span><span class="n">y</span><span class="p">,</span><span class="n">x</span><span class="p">)</span> <span class="kr">end</span>
+<span class="kr">function</span> <span class="nf">obj</span><span class="p">(</span><span class="n">s</span><span class="p">,</span>   <span class="n">t</span><span class="p">)</span> <span class="n">t</span><span class="o">=</span><span class="p">{</span><span class="n">_isa</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">__tostring</span><span class="o">=</span><span class="n">show</span><span class="p">};</span> <span class="n">t</span><span class="p">.</span><span class="n">__index</span><span class="o">=</span><span class="n">t</span><span class="p">;</span> <span class="kr">return</span> <span class="n">t</span> <span class="kr">end</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-6'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-6'>#</a>
+      </div>
+      <hr />
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kd">local</span> <span class="n">SYM</span><span class="o">=</span><span class="n">obj</span><span class="s2">&quot;SYM&quot;</span>
+<span class="kr">function</span> <span class="nc">SYM</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+  <span class="kr">return</span> <span class="n">isa</span><span class="p">(</span><span class="n">SYM</span><span class="p">,{</span><span class="n">txt</span><span class="o">=</span><span class="n">s</span> <span class="ow">or</span> <span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">at</span><span class="o">=</span><span class="n">n</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">has</span><span class="o">=</span><span class="p">{},</span> <span class="n">mode</span><span class="o">=</span><span class="kc">nil</span><span class="p">,</span> <span class="n">most</span><span class="o">=</span><span class="mi">0</span><span class="p">})</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">SYM</span><span class="p">:</span><span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+  <span class="kr">if</span> <span class="n">x</span> <span class="o">~=</span> <span class="s2">&quot;?&quot;</span> <span class="kr">then</span>
+    <span class="n">self</span><span class="p">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">self</span><span class="p">.</span><span class="n">has</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">has</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="kr">if</span> <span class="n">self</span><span class="p">.</span><span class="n">has</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">self</span><span class="p">.</span><span class="n">most</span> <span class="kr">then</span>
+      <span class="n">self</span><span class="p">.</span><span class="n">most</span><span class="p">,</span><span class="n">self</span><span class="p">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">has</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="n">x</span> <span class="kr">end</span> <span class="kr">end</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">SYM</span><span class="p">:</span><span class="nf">mid</span><span class="p">()</span> <span class="kr">return</span> <span class="n">self</span><span class="p">.</span><span class="n">mode</span> <span class="kr">end</span>
+<span class="kr">function</span> <span class="nc">SYM</span><span class="p">:</span><span class="nf">div</span><span class="p">(</span>    <span class="n">e</span><span class="p">)</span>
+  <span class="n">e</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">v</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">has</span><span class="p">)</span> <span class="kr">do</span> <span class="n">e</span><span class="o">=</span><span class="n">e</span><span class="o">-</span><span class="n">v</span><span class="o">/</span><span class="n">self</span><span class="p">.</span><span class="n">n</span><span class="o">*</span><span class="nb">math.log</span><span class="p">(</span><span class="n">v</span><span class="o">/</span><span class="n">self</span><span class="p">.</span><span class="n">n</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="kr">end</span><span class="p">;</span> <span class="kr">return</span> <span class="n">e</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">SYM</span><span class="p">:</span><span class="nf">like</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">prior</span><span class="p">)</span>
+  <span class="kr">return</span> <span class="p">((</span><span class="n">self</span><span class="p">.</span><span class="n">has</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">the</span><span class="p">.</span><span class="n">m</span><span class="o">*</span><span class="n">prior</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">n</span> <span class="o">+</span><span class="n">the</span><span class="p">.</span><span class="n">m</span><span class="p">)</span> <span class="kr">end</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-7'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-7'>#</a>
+      </div>
+      <hr />
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kd">local</span> <span class="n">NUM</span><span class="o">=</span><span class="n">obj</span><span class="s2">&quot;NUM&quot;</span>
+<span class="kr">function</span> <span class="nc">NUM</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">at</span><span class="p">,</span><span class="n">s</span><span class="p">)</span> 
+  <span class="kr">return</span> <span class="p">{</span><span class="n">at</span><span class="o">=</span><span class="n">at</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="n">s</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">lo</span><span class="o">=</span> <span class="mf">1E30</span><span class="p">,</span> <span class="n">hi</span><span class="o">=</span> <span class="o">-</span><span class="mf">1E30</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">m2</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">sd</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+          <span class="n">heaven</span><span class="o">=</span><span class="p">(</span><span class="n">s</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">):</span><span class="n">find</span><span class="s2">&quot;-$&quot;</span> <span class="ow">and</span> <span class="mi">0</span> <span class="ow">or</span> <span class="mi">1</span><span class="p">}</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">NUM</span><span class="p">:</span><span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span>    <span class="n">d</span><span class="p">)</span>
+  <span class="kr">if</span> <span class="n">x</span> <span class="o">~=</span> <span class="s2">&quot;?&quot;</span> <span class="kr">then</span>
+    <span class="n">self</span><span class="p">.</span><span class="n">n</span>  <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">self</span><span class="p">.</span><span class="n">lo</span> <span class="o">=</span> <span class="nb">math.min</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">self</span><span class="p">.</span><span class="n">lo</span><span class="p">)</span>
+    <span class="n">self</span><span class="p">.</span><span class="n">hi</span> <span class="o">=</span> <span class="nb">math.max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">self</span><span class="p">.</span><span class="n">hi</span><span class="p">)</span> 
+    <span class="n">d</span>       <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">mu</span>
+    <span class="n">self</span><span class="p">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">mu</span> <span class="o">+</span> <span class="n">d</span><span class="o">/</span><span class="n">self</span><span class="p">.</span><span class="n">n</span>
+    <span class="n">self</span><span class="p">.</span><span class="n">m2</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">m2</span> <span class="o">+</span> <span class="n">d</span><span class="o">*</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">mu</span><span class="p">)</span>
+    <span class="n">self</span><span class="p">.</span><span class="n">sd</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">m2</span><span class="o">/</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span><span class="o">^</span><span class="mf">.5</span> <span class="kr">end</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">NUM</span><span class="p">:</span><span class="nf">mid</span><span class="p">()</span> <span class="kr">return</span> <span class="n">self</span><span class="p">.</span><span class="n">mu</span> <span class="kr">end</span>
+<span class="kr">function</span> <span class="nc">NUM</span><span class="p">:</span><span class="nf">div</span><span class="p">()</span> <span class="kr">return</span> <span class="n">self</span><span class="p">.</span><span class="n">sd</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">NUM</span><span class="p">:</span><span class="nf">norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+  <span class="kr">return</span> <span class="n">x</span><span class="o">==</span><span class="s2">&quot;?&quot;</span> <span class="ow">and</span> <span class="n">x</span> <span class="ow">or</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">self</span><span class="p">.</span><span class="n">lo</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">hi</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">lo</span> <span class="o">+</span> <span class="mf">1E-30</span><span class="p">)</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">NUM</span><span class="p">:</span><span class="nf">like</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">_</span><span class="p">,</span>      <span class="n">nom</span><span class="p">,</span><span class="n">denom</span><span class="p">)</span>
+  <span class="n">nom</span>   <span class="o">=</span> <span class="mf">2.718</span><span class="o">^</span><span class="p">(</span><span class="o">-</span><span class="mf">.5</span><span class="o">*</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">self</span><span class="p">.</span><span class="n">mu</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span><span class="o">/</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">sd</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">1E-30</span><span class="p">))</span>
+  <span class="n">denom</span> <span class="o">=</span> <span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">sd</span><span class="o">*</span><span class="mf">2.5</span> <span class="o">+</span> <span class="mf">1E-30</span><span class="p">)</span>
+  <span class="kr">return</span>  <span class="n">nom</span><span class="o">/</span><span class="n">denom</span> <span class="kr">end</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-8'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-8'>#</a>
+      </div>
+      <hr />
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kd">local</span> <span class="n">COLS</span><span class="o">=</span><span class="n">obj</span><span class="s2">&quot;COLS&quot;</span>
+<span class="kr">function</span> <span class="nc">COLS</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">t</span><span class="p">,</span>   <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">all</span><span class="p">,</span><span class="n">col</span><span class="p">,</span><span class="n">u</span><span class="p">)</span> 
+  <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">all</span><span class="o">=</span><span class="p">{},{},{}</span>
+  <span class="kr">for</span> <span class="n">at</span><span class="p">,</span><span class="n">s</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="kr">do</span> 
+    <span class="n">col</span> <span class="o">=</span> <span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="n">find</span><span class="s2">&quot;^[A-Z]&quot;</span> <span class="ow">and</span> <span class="n">NUM</span> <span class="ow">or</span> <span class="n">SYM</span><span class="p">)(</span><span class="n">at</span><span class="p">,</span><span class="n">s</span><span class="p">)</span>
+    <span class="n">all</span><span class="p">[</span><span class="mi">1</span><span class="o">+#</span><span class="n">all</span><span class="p">]</span> <span class="o">=</span> <span class="n">col</span>
+    <span class="kr">if</span> <span class="ow">not</span> <span class="n">s</span><span class="p">:</span><span class="n">find</span><span class="s2">&quot;X$&quot;</span> <span class="kr">then</span>
+      <span class="nb">table.insert</span><span class="p">(</span><span class="n">s</span><span class="p">:</span><span class="n">find</span><span class="s2">&quot;[!-+]$&quot;</span> <span class="ow">and</span> <span class="n">y</span> <span class="ow">or</span> <span class="n">x</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span> <span class="kr">end</span> <span class="kr">end</span>
+  <span class="kr">return</span> <span class="n">isa</span><span class="p">(</span><span class="n">COLS</span><span class="p">,{</span><span class="n">names</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">all</span><span class="o">=</span><span class="n">all</span><span class="p">})</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">COLS</span><span class="p">:</span><span class="nf">add</span><span class="p">(</span><span class="n">row</span><span class="p">,</span>   <span class="n">v</span><span class="p">)</span>
+  <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">xy</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">{</span><span class="n">self</span><span class="p">.</span><span class="n">x</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">y</span><span class="p">}</span> <span class="kr">do</span>
+    <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">col</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">xy</span><span class="p">)</span> <span class="kr">do</span>
+      <span class="n">v</span> <span class="o">=</span> <span class="n">row</span><span class="p">.</span><span class="n">cells</span><span class="p">[</span><span class="n">col</span><span class="p">.</span><span class="n">at</span><span class="p">]</span> 
+      <span class="kr">if</span> <span class="n">v</span><span class="o">~=</span><span class="kc">nil</span> <span class="kr">then</span> <span class="n">col</span><span class="p">:</span><span class="n">add</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="kr">end</span> <span class="kr">end</span> <span class="kr">end</span>
+  <span class="kr">return</span> <span class="n">row</span> <span class="kr">end</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-9'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-9'>#</a>
+      </div>
+      <hr />
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kd">local</span> <span class="n">ROW</span><span class="o">=</span><span class="n">obj</span><span class="s2">&quot;ROW&quot;</span>
+<span class="kr">function</span> <span class="nc">ROW</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="kr">return</span> <span class="n">isa</span><span class="p">(</span><span class="n">ROW</span><span class="p">,</span> <span class="p">{</span><span class="n">evaluated</span><span class="o">=</span><span class="kc">false</span><span class="p">,</span> <span class="n">cells</span><span class="o">=</span><span class="n">t</span><span class="p">})</span> <span class="kr">end</span>
+<span class="kr">function</span> <span class="nc">ROW</span><span class="p">:</span><span class="nf">x</span><span class="p">(</span><span class="n">at</span><span class="p">)</span>  <span class="kr">return</span> <span class="n">self</span><span class="p">.</span><span class="n">cells</span><span class="p">[</span><span class="n">at</span><span class="p">]</span> <span class="kr">end</span>
+<span class="kr">function</span> <span class="nc">ROW</span><span class="p">:</span><span class="nf">y</span><span class="p">(</span><span class="n">at</span><span class="p">)</span> 
+  <span class="kr">if</span> <span class="ow">not</span> <span class="n">self</span><span class="p">.</span><span class="n">evaluated</span> <span class="kr">then</span> <span class="n">self</span><span class="p">:</span><span class="n">eval</span><span class="p">()</span> <span class="kr">end</span>
+  <span class="n">self</span><span class="p">.</span><span class="n">evaluated</span> <span class="o">=</span> <span class="kc">true</span>
+  <span class="kr">return</span> <span class="n">self</span><span class="p">.</span><span class="n">cells</span><span class="p">[</span><span class="n">at</span><span class="p">]</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">ROW</span><span class="p">:</span><span class="nf">eval</span><span class="p">()</span> <span class="kr">return</span> <span class="kc">true</span> <span class="kr">end</span> <span class="c1">-- here, we compute _y from _x</span>
+
+<span class="kr">function</span> <span class="nc">ROW</span><span class="p">:</span><span class="nf">d2h</span><span class="p">(</span><span class="n">data</span><span class="p">,</span>    <span class="n">d</span><span class="p">,</span><span class="n">n</span><span class="p">,</span><span class="n">norm</span><span class="p">)</span>
+  <span class="n">d</span><span class="p">,</span><span class="n">n</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span><span class="mi">0</span>
+  <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">col</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">cols</span><span class="p">.</span><span class="n">y</span><span class="p">)</span> <span class="kr">do</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">d</span> <span class="o">+</span> <span class="nb">math.abs</span><span class="p">(</span><span class="n">col</span><span class="p">.</span><span class="n">heaven</span> <span class="o">-</span> <span class="n">norm</span><span class="p">(</span><span class="n">self</span><span class="p">:</span><span class="n">y</span><span class="p">(</span><span class="n">col</span><span class="p">.</span><span class="n">at</span><span class="p">)))</span><span class="o">^</span><span class="mi">2</span> <span class="kr">end</span>
+  <span class="kr">return</span> <span class="p">(</span><span class="n">d</span><span class="o">/</span><span class="n">n</span><span class="p">)</span><span class="o">^</span><span class="mf">.5</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">ROW</span><span class="p">:</span><span class="nf">likes</span><span class="p">(</span><span class="n">datas</span><span class="p">,</span>       <span class="n">n</span><span class="p">,</span><span class="n">nHypotheses</span><span class="p">,</span><span class="n">most</span><span class="p">,</span><span class="n">tmp</span><span class="p">,</span><span class="n">out</span><span class="p">)</span>
+  <span class="n">n</span><span class="p">,</span> <span class="n">nHypotheses</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+  <span class="kr">for</span> <span class="n">k</span><span class="p">,</span><span class="n">data</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">datas</span><span class="p">)</span> <span class="kr">do</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="o">#</span><span class="n">data</span><span class="p">.</span><span class="n">rows</span>
+    <span class="n">nHypotheses</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">nHypotheses</span> <span class="kr">end</span>
+  <span class="kr">for</span> <span class="n">k</span><span class="p">,</span><span class="n">data</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">datas</span><span class="p">)</span> <span class="kr">do</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">self</span><span class="p">:</span><span class="n">like</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">n</span><span class="p">,</span><span class="n">nHypotheses</span><span class="p">)</span>
+    <span class="kr">if</span> <span class="n">most</span><span class="o">==</span><span class="kc">nil</span> <span class="ow">or</span> <span class="n">tmp</span> <span class="o">&gt;</span> <span class="n">most</span> <span class="kr">then</span> <span class="n">most</span><span class="p">,</span><span class="n">out</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">,</span><span class="n">k</span> <span class="kr">end</span> <span class="kr">end</span>
+  <span class="kr">return</span> <span class="n">out</span><span class="p">,</span><span class="n">most</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">ROW</span><span class="p">:</span><span class="nf">like</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">n</span><span class="p">,</span><span class="n">nHypotheses</span><span class="p">,</span>       <span class="n">prior</span><span class="p">,</span><span class="n">out</span><span class="p">,</span><span class="n">v</span><span class="p">,</span><span class="n">inc</span><span class="p">)</span>
+  <span class="n">prior</span> <span class="o">=</span> <span class="p">(</span><span class="o">#</span><span class="n">data</span><span class="p">.</span><span class="n">rows</span> <span class="o">+</span> <span class="n">the</span><span class="p">.</span><span class="n">k</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="n">the</span><span class="p">.</span><span class="n">k</span> <span class="o">*</span> <span class="n">nHypotheses</span><span class="p">)</span>
+  <span class="n">out</span>   <span class="o">=</span> <span class="nb">math.log</span><span class="p">(</span><span class="n">prior</span><span class="p">)</span>
+  <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">col</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">cols</span><span class="p">.</span><span class="n">x</span><span class="p">)</span> <span class="kr">do</span>
+    <span class="n">v</span><span class="o">=</span> <span class="n">self</span><span class="p">:</span><span class="n">x</span><span class="p">(</span><span class="n">col</span><span class="p">.</span><span class="n">at</span><span class="p">)</span>
+    <span class="kr">if</span> <span class="n">v</span> <span class="o">~=</span> <span class="s2">&quot;?&quot;</span> <span class="kr">then</span>
+      <span class="n">inc</span> <span class="o">=</span> <span class="n">col</span><span class="p">:</span><span class="n">like</span><span class="p">(</span><span class="n">v</span><span class="p">,</span><span class="n">prior</span><span class="p">)</span>
+      <span class="n">out</span> <span class="o">=</span> <span class="n">out</span> <span class="o">+</span> <span class="nb">math.log</span><span class="p">(</span><span class="n">inc</span><span class="p">)</span> <span class="kr">end</span> <span class="kr">end</span>
+  <span class="kr">return</span> <span class="nb">math.exp</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">^</span><span class="n">out</span> <span class="kr">end</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-10'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-10'>#</a>
+      </div>
+      <hr />
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="kd">local</span> <span class="n">DATA</span><span class="o">=</span><span class="n">obj</span><span class="s2">&quot;DATA&quot;</span>
+<span class="kr">function</span> <span class="nc">DATA</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">src</span><span class="p">)</span> <span class="kr">return</span> <span class="n">isa</span><span class="p">(</span><span class="n">DATA</span><span class="p">,{</span><span class="n">rows</span><span class="o">=</span><span class="p">{},</span><span class="n">cols</span><span class="o">=</span><span class="kc">nil</span><span class="p">}):</span><span class="n">adds</span><span class="p">(</span><span class="n">src</span><span class="p">)</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">DATA</span><span class="p">:</span><span class="nf">clone</span><span class="p">(</span><span class="n">src</span><span class="p">)</span> <span class="kr">return</span> <span class="n">DATA</span><span class="p">{</span><span class="n">self</span><span class="p">.</span><span class="n">cols</span><span class="p">.</span><span class="n">names</span><span class="p">}:</span><span class="n">adds</span><span class="p">(</span><span class="n">src</span><span class="p">)</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">DATA</span><span class="p">:</span><span class="nf">adds</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+  <span class="kr">if</span>   <span class="nb">type</span><span class="p">(</span><span class="n">src</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;string&quot;</span>
+  <span class="kr">then</span> <span class="kr">for</span>   <span class="n">row</span> <span class="kr">in</span> <span class="n">csv</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>         <span class="kr">do</span> <span class="n">self</span><span class="p">:</span><span class="n">add</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="kr">end</span>
+  <span class="kr">else</span> <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">row</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">src</span> <span class="ow">or</span> <span class="p">{})</span> <span class="kr">do</span> <span class="n">self</span><span class="p">:</span><span class="n">add</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="kr">end</span> <span class="kr">end</span>
+  <span class="kr">return</span> <span class="n">self</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">DATA</span><span class="p">:</span><span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span>    <span class="n">row</span><span class="p">)</span>
+  <span class="n">row</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="n">cells</span> <span class="ow">and</span> <span class="n">x</span> <span class="ow">or</span> <span class="n">ROW</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+  <span class="kr">if</span>   <span class="n">self</span><span class="p">.</span><span class="n">cols</span>
+  <span class="kr">then</span> <span class="n">self</span><span class="p">.</span><span class="n">rows</span><span class="p">[</span><span class="mi">1</span><span class="o">+#</span><span class="n">self</span><span class="p">.</span><span class="n">rows</span><span class="p">]</span> <span class="o">=</span> <span class="n">ROW</span><span class="p">(</span><span class="n">row</span><span class="p">.</span><span class="n">cells</span><span class="p">)</span> 
+  <span class="kr">else</span> <span class="n">self</span><span class="p">.</span><span class="n">cols</span> <span class="o">=</span> <span class="n">COLS</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="kr">end</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">DATA</span><span class="p">:</span><span class="nf">sorter</span><span class="p">()</span>
+  <span class="kr">return</span> <span class="kr">function</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)</span> <span class="kr">return</span> <span class="n">a</span><span class="p">:</span><span class="n">d2h</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">b</span><span class="p">:</span><span class="n">d2h</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="kr">end</span>  <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">DATA</span><span class="p">:</span><span class="nf">bestRest</span><span class="p">(</span><span class="n">want</span><span class="p">,</span>     <span class="n">best</span><span class="p">,</span><span class="n">rest</span><span class="p">)</span>
+  <span class="n">best</span><span class="p">,</span><span class="n">rest</span><span class="o">=</span> <span class="p">{},{}</span>
+  <span class="kr">for</span> <span class="n">i</span><span class="p">,</span><span class="n">row</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">sort</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">rows</span><span class="p">,</span><span class="n">self</span><span class="p">:</span><span class="n">sorter</span><span class="p">()))</span> <span class="kr">do</span>
+    <span class="p">(</span><span class="n">i</span><span class="o">&lt;=</span> <span class="n">want</span> <span class="ow">and</span> <span class="n">best</span> <span class="ow">or</span> <span class="n">rest</span><span class="p">):</span><span class="n">add</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="kr">end</span>
+  <span class="kr">return</span> <span class="n">best</span><span class="p">,</span><span class="n">rest</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">DATA</span><span class="p">:</span><span class="nf">smo</span><span class="p">()</span>
+  <span class="kd">local</span> <span class="n">mids</span><span class="p">,</span><span class="n">tops</span> <span class="o">=</span> <span class="p">{},{}</span>
+  <span class="kd">local</span> <span class="n">rows</span><span class="p">,</span> <span class="n">liteRows</span><span class="p">,</span> <span class="n">darkRows</span>
+  <span class="n">rows</span> <span class="o">=</span> <span class="n">shuffle</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">rows</span><span class="p">)</span>
+  <span class="n">liteRows</span> <span class="o">=</span>  <span class="n">slice</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">the</span><span class="p">.</span><span class="n">n</span><span class="p">)</span>
+  <span class="n">darkRows</span> <span class="o">=</span>  <span class="n">slice</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">the</span><span class="p">.</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+  <span class="kr">for</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">the</span><span class="p">.</span><span class="n">N</span> <span class="kr">do</span>
+    <span class="kd">local</span> <span class="n">lite</span><span class="o">=</span><span class="n">self</span><span class="p">:</span><span class="n">clone</span><span class="p">(</span><span class="n">liteRows</span><span class="p">)</span>
+    <span class="kd">local</span> <span class="n">dark</span><span class="o">=</span><span class="n">self</span><span class="p">:</span><span class="n">clone</span><span class="p">(</span><span class="n">darkRows</span><span class="p">)</span>
+    <span class="kd">local</span> <span class="n">todo</span><span class="p">,</span><span class="n">selected</span> <span class="o">=</span> <span class="n">lite</span><span class="p">:</span><span class="n">what2lookAtNext</span><span class="p">(</span><span class="n">dark</span><span class="p">)</span>
+    <span class="n">mids</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">selected</span><span class="p">:</span><span class="n">mid</span><span class="p">()</span>
+    <span class="n">tops</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">best</span><span class="p">.</span><span class="n">rows</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="nb">table.insert</span><span class="p">(</span><span class="n">liteRows</span><span class="p">,</span> <span class="nb">table.remove</span><span class="p">(</span><span class="n">darkRows</span><span class="p">,</span><span class="n">todo</span><span class="p">))</span> <span class="kr">end</span> 
+  <span class="kr">return</span> <span class="n">mids</span><span class="p">,</span><span class="n">tops</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">DATA</span><span class="p">:</span><span class="nf">what2lookatNext</span><span class="p">(</span><span class="n">dark</span><span class="p">)</span>
+  <span class="kd">local</span> <span class="n">b</span><span class="p">,</span><span class="n">r</span><span class="p">,</span><span class="n">tmp</span><span class="p">,</span><span class="n">max</span><span class="p">,</span><span class="n">todo</span><span class="p">,</span><span class="n">best</span><span class="p">,</span><span class="n">rest</span><span class="p">,</span><span class="n">selected</span>
+  <span class="n">best</span><span class="p">,</span><span class="n">rest</span> <span class="o">=</span> <span class="n">self</span><span class="p">:</span><span class="n">besRest</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">rows</span><span class="o">^</span><span class="n">the</span><span class="p">.</span><span class="n">best</span><span class="p">)</span>
+  <span class="n">selected</span>  <span class="o">=</span> <span class="n">self</span><span class="p">:</span><span class="n">clone</span><span class="p">()</span>
+  <span class="n">todo</span><span class="p">,</span> <span class="n">max</span>  <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">1E30</span>
+  <span class="kr">for</span> <span class="n">i</span><span class="p">,</span><span class="n">row</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">dark</span><span class="p">.</span><span class="n">rows</span><span class="p">)</span> <span class="kr">do</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">row</span><span class="p">:</span><span class="n">like</span><span class="p">(</span><span class="n">best</span><span class="p">,</span> <span class="o">#</span><span class="n">self</span><span class="p">.</span><span class="n">rows</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">row</span><span class="p">:</span><span class="n">like</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="o">#</span><span class="n">self</span><span class="p">.</span><span class="n">rows</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="kr">if</span> <span class="n">b</span><span class="o">&gt;</span><span class="n">r</span> <span class="kr">then</span> <span class="n">selected</span><span class="p">:</span><span class="n">add</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="kr">end</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="nb">math.abs</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">r</span><span class="p">)</span> <span class="o">/</span> <span class="nb">math.abs</span><span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="n">r</span> <span class="o">+</span> <span class="mf">1E-300</span><span class="p">)</span>
+    <span class="kr">if</span> <span class="n">tmp</span><span class="o">&gt;</span><span class="n">max</span> <span class="kr">then</span> <span class="n">todo</span><span class="p">,</span><span class="n">max</span> <span class="o">=</span> <span class="n">i</span><span class="p">,</span><span class="n">tmp</span> <span class="kr">end</span> <span class="kr">end</span>
+  <span class="kr">return</span> <span class="n">todo</span><span class="p">,</span><span class="n">selected</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">DATA</span><span class="p">:</span><span class="nf">mid</span><span class="p">(</span>      <span class="n">u</span><span class="p">)</span>
+  <span class="n">u</span><span class="o">=</span><span class="p">{};</span> <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">col</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">cols</span><span class="p">.</span><span class="n">all</span><span class="p">)</span> <span class="kr">do</span> <span class="n">u</span><span class="p">[</span><span class="n">col</span><span class="p">.</span><span class="n">txt</span><span class="p">]</span> <span class="o">=</span> <span class="n">col</span><span class="p">:</span><span class="n">mid</span><span class="p">()</span> <span class="kr">end</span>
+  <span class="kr">return</span> <span class="n">ROW</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="kr">end</span>
+
+<span class="kr">function</span> <span class="nc">DATA</span><span class="p">:</span><span class="nf">stats</span><span class="p">(</span>      <span class="n">u</span><span class="p">,</span><span class="n">f</span><span class="p">)</span>
+  <span class="n">u</span><span class="o">=</span><span class="p">{};</span> <span class="kr">for</span> <span class="n">_</span><span class="p">,</span><span class="n">c</span> <span class="kr">in</span> <span class="nb">pairs</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">cols</span><span class="p">.</span><span class="n">y</span><span class="p">)</span> <span class="kr">do</span> <span class="n">u</span><span class="p">[</span><span class="n">c</span><span class="p">.</span><span class="n">txt</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getmetatable</span><span class="p">(</span><span class="n">c</span><span class="p">)[</span><span class="n">f</span> <span class="ow">or</span> <span class="s2">&quot;mid&quot;</span><span class="p">](</span><span class="n">c</span><span class="p">)</span> <span class="kr">end</span>
+  <span class="kr">return</span> <span class="n">u</span> <span class="kr">end</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-11'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-11'>#</a>
+      </div>
+      <hr />
+<p>local function main(src)
+  print(the.seed)
+  d = DATA.new(src)
+  b4  = d.cols.y
+  b4.d2hs = add(NUM(), map(d.rows, function(row) return row:d2h(d) end))
+  mids, tops = d:smo()
+  mids[#mids]
+end</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="n">the</span> <span class="o">=</span> <span class="n">settings</span><span class="p">(</span><span class="n">the</span><span class="p">,</span><span class="n">help</span><span class="p">)</span>
+<span class="kr">if</span>   <span class="nb">pcall</span><span class="p">(</span><span class="nb">debug.getlocal</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="c1">-- we&#39;re being loaded by another lua scriot via &quot;require&quot;</span>
+<span class="kr">then</span> <span class="kr">return</span> <span class="p">{</span><span class="n">the</span><span class="o">=</span><span class="n">the</span><span class="p">,</span> <span class="n">COLS</span><span class="o">=</span><span class="n">COLS</span><span class="p">,</span> <span class="n">DATA</span><span class="o">=</span><span class="n">DATA</span><span class="p">,</span> <span class="n">NUM</span><span class="o">=</span><span class="n">NUM</span><span class="p">,</span> <span class="n">ROW</span><span class="o">=</span><span class="n">ROW</span><span class="p">,</span> <span class="n">SYM</span><span class="o">=</span><span class="n">SYM</span><span class="p">}</span>
+<span class="kr">else</span> <span class="n">the</span> <span class="o">=</span> <span class="n">cli</span><span class="p">(</span><span class="n">the</span><span class="p">,</span><span class="n">help</span><span class="p">);</span> <span class="n">rogues</span><span class="p">()</span>  <span class="c1">-- otherwise, we the the top-level script</span>
+<span class="kr">end</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>

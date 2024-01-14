@@ -17,9 +17,11 @@ OPTIONS:
   -m --m      a Bayes low frequency hack           = 2
   -s --seed   random number seed                   = 31210 ]]
 
-local b4={}; for k,_ in pairs(_ENV) do b4[k]=k end
+local b4 = {}; for k, _ in pairs(_ENV) do b4[k] = k end
+local function rogues()
+  for k,v in pairs(_ENV) do if not b4[k] then print("-- ??", k,type(v)) end end end
 -----------------------------------------------------------------------------------------
-local map,map2,keys,sort,shuffle,slice,alls -- list utils
+local map,map2,keys,sort,shuffle,slice -- list utils
 function map(t,f,    u) u={}; for _,x in pairs(t) do u[1+#u]=f(x)   end; return u end
 function map2(t,f,   u) u={}; for k,x in pairs(t) do u[1+#u]=f(k,x) end; return u end
 function keys(t)   return map2(t, function(k,_) return k end) end
@@ -36,9 +38,6 @@ function slice(t, go, stop, inc,    u)
   u={}
   for j=(go or 1)//1,(stop or #t)//1,(inc or 1)//1 do u[1+#u]=t[j] end
   return u end
-
-function alls(x,t)
-  for _,y in pairs(t) do x:add(y) end; return x end
 -----------------------------------------------------------------------------------------
 local as,as1,csv,settings -- coerce strings to some type
 function as(s)  return math.tointeger(s) or tonumber(s) or as1(s:match'^%s*(.*%S)') end
@@ -52,19 +51,18 @@ function csv(src,    i,fun)
     if s then i=i+1; return i,fun(s,{}) else io.close(src) end end end
 
 function settings(s,    t)
-  t = {}; for k, s1 in s:gmatch("[-][-]([%S]+)[^=]+=[%s]*([%S]+)") do t[k] = as(s1) end
-  t._help = s
+  t={}; for k, s1 in s:gmatch("[-][-]([%S]+)[^=]+=[%s]*([%S]+)") do t[k] = as(s1) end
   return t end
 ---------------------------------------------------------------------------------------
 local cli -- update a table from command line flags. bools need no values (just flip'em)
-function cli(t)
+function cli(t, help)
   for k, v in pairs(t) do
     v = tostring(v)
     for argv,s in pairs(arg) do
       if s=="-"..(k:sub(1,1)) or s=="--"..k then
         v = v=="true" and "false" or v=="false" and "true" or arg[argv + 1]
         t[k] = as(v) end end end
-  if t.help then print(t._help) end
+  if t.help then os.exit(print(help)) end
   return t end
 -----------------------------------------------------------------------------------------
 local cat,fmt,show,o,oo -- pretty print functions
@@ -82,7 +80,6 @@ function o(x,  n,    f,u)
 local isa,obj
 function isa(x,y)    return setmetatable(y,x) end
 function obj(s,   t) t={_isa=s, __tostring=show}; t.__index=t; return t end
-
 -----------------------------------------------------------------------------------------
 local SYM=obj"SYM"
 function SYM.new(s,n)
@@ -208,33 +205,35 @@ function DATA:bestRest(want,     best,rest)
     (i<= want and best or rest):add(row) end
   return best,rest end
 
-function DATA:smo()
-  local mids,tops = {},{}
-  local rows, liteRows, darkRows
-  rows = shuffle(self.rows)
-  liteRows =  slice(rows, 1, the.n)
-  darkRows =  slice(rows, the.n+1)
-  for i=1,the.N do
-    local lite=self:clone(liteRows)
-    local dark=self:clone(darkRows)
-    local todo,selected = lite:what2lookAtNext(dark)
-    mids[i] = selected:mid()
-    tops[i] = best.rows[1]
+function DATA:smo(    testing)
+  local mids,tops,rows,liteRows,darkRows
+  mids,tops = {},{}
+  rows     = shuffle(self.rows)
+  liteRows = slice(rows, 1, the.n)
+  darkRows = slice(rows, the.n+1)
+  for i = 1, the.N do
+    local lite,best,rest,todo,selected
+    lite          = self:clone(liteRows)
+    best,rest     = lite:besRest(lite.rows^the.best)
+    todo, selected = lite:what2lookAtNext(darkRows, best, rest)
+    if testing then 
+      table.sort(selected.rows, self:sorter())
+      mids[i] = selected:mid()
+      tops[i] = selected.rows[1] end
     table.insert(liteRows, table.remove(darkRows,todo)) end 
-  return mids,tops end
+  return liteRows,mids,tops end
 
-function DATA:what2lookatNext(dark)
-  local b,r,tmp,max,todo,best,rest,selected
-  best,rest = self:besRest(self.rows^the.best)
-  selected  = self:clone()
-  todo, max  = 1, 1E30
-  for i,row in pairs(dark.rows) do
+function DATA:what2lookatNext(darkRows, best,rest)
+  local b,r,tmp,max,what2do,selected
+  selected = self:clone()
+  what2do, max = 1, 1E30
+  for i,row in pairs(darkRows) do
     b = row:like(best, #self.rows, 2)
     r = row:like(rest, #self.rows, 2)
     if b>r then selected:add(row) end
     tmp = math.abs(b + r) / math.abs(b - r + 1E-300)
-    if tmp>max then todo,max = i,tmp end end
-  return todo,selected end
+    if tmp>max then what2do,max = i,tmp end end
+  return what2do,selected end
 
 function DATA:mid(      u)
   u={}; for _,col in pairs(self.cols.all) do u[col.txt] = col:mid() end
@@ -244,8 +243,6 @@ function DATA:stats(      u,f)
   u={}; for _,c in pairs(self.cols.y) do u[c.txt] = getmetatable(c)[f or "mid"](c) end
   return u end
 -----------------------------------------------------------------------------------------
-the = settings(help)
- 
 -- local function main(src)
 --   print(the.seed)
 --   d = DATA.new(src)
@@ -254,9 +251,9 @@ the = settings(help)
 --   mids, tops = d:smo()
 --   mids[#mids]
 -- end
- 
-if   not pcall(debug.getlocal,4,1)
-then the = cli(the) 
-     for k,v in pairs(_ENV) do if not b4[k] then print("-- ??", k,type(v)) end end end
 
-return {the=the, COLS=COLS, DATA=DATA, NUM=NUM, ROW=ROW, SYM=SYM} 
+the = settings(the,help)
+if   pcall(debug.getlocal,4,1) -- we're being loaded by another lua scriot via "require"
+then return {the=the, COLS=COLS, DATA=DATA, NUM=NUM, ROW=ROW, SYM=SYM}
+else the = cli(the,help); rogues()  -- otherwise, we the the top-level script
+end
