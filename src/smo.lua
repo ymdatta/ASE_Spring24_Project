@@ -80,7 +80,7 @@ function o(x,  n,    f,u)
 local isa,obj
 function isa(x,y)    return setmetatable(y,x) end
 function obj(s,   t) t={_isa=s, __tostring=show}; t.__index=t; return t end
------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
 local SYM=obj"SYM"
 function SYM.new(s,n)
   return isa(SYM,{txt=s or " ", at=n or 0, n=0, has={}, mode=nil, most=0}) end
@@ -124,7 +124,7 @@ function NUM:like(x,_,      nom,denom)
   nom   = 2.718^(-.5*(x - self.mu)^2/(self.sd^2 + 1E-30))
   denom = (self.sd*2.5 + 1E-30)
   return  nom/denom end
------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
 local COLS=obj"COLS"
 function COLS.new(t,   x,y,all,col,u) 
   x,y,all={},{},{}
@@ -198,13 +198,7 @@ function DATA:add(x,    row)
 
 function DATA:sorter()
   return function(a,b) return a:d2h(self) > b:d2h(self) end  end
-
-function DATA:bestRest(want,     best,rest)
-  best,rest= {},{}
-  for i,row in pairs(sort(self.rows,self:sorter())) do
-    (i<= want and best or rest):add(row) end
-  return best,rest end
-
+-----------------------------------------------------------------------------------------
 function DATA:smo(    testing)
   local mids,tops,rows,liteRows,darkRows
   mids,tops = {},{}
@@ -223,6 +217,12 @@ function DATA:smo(    testing)
     table.insert(liteRows, table.remove(darkRows,todo)) end 
   return liteRows,mids,tops end
 
+function DATA:bestRest(want,     best,rest)
+  best,rest= {},{}
+  for i,row in pairs(sort(self.rows,self:sorter())) do
+    (i<= want and best or rest):add(row) end
+  return best,rest end
+    
 function DATA:what2lookatNext(darkRows, best,rest)
   local b,r,tmp,max,what2do,selected
   selected = self:clone()
@@ -242,7 +242,7 @@ function DATA:mid(      u)
 function DATA:stats(      u,f)
   u={}; for _,c in pairs(self.cols.y) do u[c.txt] = getmetatable(c)[f or "mid"](c) end
   return u end
------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
 -- local function main(src)
 --   print(the.seed)
 --   d = DATA.new(src)
