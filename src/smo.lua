@@ -17,7 +17,7 @@ OPTIONS:
   -m --m      a Bayes low frequency hack           = 2
   -s --seed   random number seed                   = 31210
   -t --todo   startup action                       = help]]
---
+-----------------------------------------------------------------------------------------
 --              _     _   _      
 --       _  _  | |_  (_) | |  ___
 --      | || | |  _| | | | | (_-<
