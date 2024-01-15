@@ -225,7 +225,7 @@ function DATA:bestRest(want,     best,rest)
   for i,row in pairs(sort(self.rows,self:sorter())) do
     (i<= want and best or rest):add(row) end
   return best,rest end
-    
+
 function DATA:what2lookatNext(darkRows, best,rest)
   local b,r,tmp,max,what2do,selected
   selected = self:clone()
