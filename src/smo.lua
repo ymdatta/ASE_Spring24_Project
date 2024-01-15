@@ -38,6 +38,10 @@ function shuffle(t,    u,j)
   for i = #u,2,-1 do j=math.random(i); u[i],u[j] = u[j],u[i] end
   return u end
 
+function copy(t,    u)
+  if type(t) ~= "table" then return t end
+  u={}; for k,v in pairs(t) do u[copy(k)] = copy(v) end; return u end 
+
 function slice(t, go, stop, inc,    u)
   if go   and go   < 0 then go=#t+go     end
   if stop and stop < 0 then stop=#t+stop end
@@ -264,28 +268,28 @@ function DATA:stats(      u,f)
 --      |  _| / -_) (_-< |  _| (_-<
 --       \__| \___| /__/  \__| /__/
 
-local eg,run,runs = {}
+local eg,failure={}
 
-function run(key,       saved,status,err)
-  if the.help then es.exit(print(help)) end
-  saved={}; for k,v in pairs(the) do saved[k] = v end
-  math.randomseed(the.seed or 1234567890)
-  status, err = pcall(eg[key])
-  if status==false then print(err) end
-  for k,v in pairs(saved) do the[k]=v end 
-  return status end
+function failure(k,   failed,saved) 
+  saved = copy(the) -- set up
+  math.randomseed(the.seed) -- set up
+  failed = eg[k]()==false
+  io.stderr:write(fmt("# %s %s\n",failed and "❌ FAIL" or "✅ PASS",k))
+  for k,v in pairs(saved) do the[k]=v end -- tear down
+  return failed end
 
-function runs(    fails,err,show)
-  function show(x) if the.todo=="all" then print(x) end end
-  fails = 0
-  for _,key in pairs(sort(keys(eg))) do
-    if the.todo=="all" or the.todo==key then
-      if   run(key) == false 
-      then show(fmt("❌ %s ",key)); fails=fails+1 
-      else show(fmt("✅ %s ",key)) end end end 
-  rogues()
-  show(fails==0 and "✅  0 errors" or fmt("❌ %s error(s)",fails)) 
-  os.exit(fails) end
+-- Run all examples
+function eg.all(     bad)
+  bad=0
+  for _,k in pairs(keys(eg)) do 
+    if k ~= "all" then 
+      if failure(k) then bad=bad+1 end end end
+  io.stderr:write(fmt("# %s %s fail(s)\n",bad>0 and "❌ FAIL" or "✅ PASS",bad))
+  os.exit(bad) end
+
+-- List all example names
+function eg.egs()
+  for _,k in pairs(l.keys(eg)) do print(l.fmt("lua gate.lua -t %s",k)) end end
 
 function eg.help() 
   print(help) end
@@ -317,8 +321,8 @@ function eg.fail2()
 ----------------------------------------------------------------------------------------
 the = settings(the,help)
 
-if   pcall(debug.getlocal,4,1) -- we're being loaded by another lua script
+if   pcall(debug.getlocal,4,1) 
 then return {the=the, COLS=COLS, DATA=DATA, NUM=NUM, ROW=ROW, SYM=SYM}
-else the = cli(the)
-     runs() -- otherwise, we the the top-level script
+else run(cli(the).todo) 
+     rogues() 
 end
