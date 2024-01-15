@@ -1,5 +1,5 @@
 -- vim: set ts=2 sw=2 sts=2 et
-local the,help={},[[
+local eg,the,help={},{},[[
 
 smo: simple sequential model optimzation (naive bayes as the model)
 (c)2024 Tim Menzies timm@ieee.org, BSD (2 clause)
@@ -21,7 +21,7 @@ local b4 = {}; for k, _ in pairs(_ENV) do b4[k] = k end
 local function rogues()
   for k,v in pairs(_ENV) do if not b4[k] then print("-- ??", k,type(v)) end end end
 -----------------------------------------------------------------------------------------
-local map,map2,keys,sort,shuffle,slice -- list utils
+local map,map2,keys,sort,shuffle,slice,adds -- list utils
 function map(t,f,    u) u={}; for _,x in pairs(t) do u[1+#u]=f(x)   end; return u end
 function map2(t,f,   u) u={}; for k,x in pairs(t) do u[1+#u]=f(k,x) end; return u end
 function keys(t)   return map2(t, function(k,_) return k end) end
@@ -38,6 +38,20 @@ function slice(t, go, stop, inc,    u)
   u={}
   for j=(go or 1)//1,(stop or #t)//1,(inc or 1)//1 do u[1+#u]=t[j] end
   return u end
+
+function adds(col,t) for _,x in pairs(t) do col:add(x) end; return col end
+-----------------------------------------------------------------------------------------
+local cat,fmt,show,o,oo -- pretty print functions
+cat=table.concat
+fmt=string.format
+
+function oo(t,   n) print(o(t,n)); return t end
+function o(x,  n,    f,u)    
+  f="%."..(n or 3).."f"
+  if type(x) == "number" then return math.floor(x)==x and tostring(x) or fmt(f, x) end
+  if type(x) ~= "table"  then return tostring(x) end
+  u = map2(x, function(k,v) v=o(v,n); return #x>0 and tostring(v) or fmt(":%s %s",k,v) end)
+  return (x._isa or "") .. '{'.. cat(#x>0 and u or sort(u)," ") .. '}' end
 -----------------------------------------------------------------------------------------
 local as,as1,csv,settings -- coerce strings to some type
 function as(s)  return math.tointeger(s) or tonumber(s) or as1(s:match'^%s*(.*%S)') end
@@ -50,36 +64,25 @@ function csv(src,    i,fun)
     s=io.read()
     if s then i=i+1; return i,fun(s,{}) else io.close(src) end end end
 
-function settings(s,    t)
-  t={}; for k, s1 in s:gmatch("[-][-]([%S]+)[^=]+=[%s]*([%S]+)") do t[k] = as(s1) end
+function settings(t,s)
+  for k, s1 in s:gmatch("[-][-]([%S]+)[^=]+=[%s]*([%S]+)") do t[k] = as(s1) end
   return t end
 ---------------------------------------------------------------------------------------
 local cli -- update a table from command line flags. bools need no values (just flip'em)
-function cli(t, help)
+function cli(eg,t,help)
   for k, v in pairs(t) do
     v = tostring(v)
     for argv,s in pairs(arg) do
+      if eg[s] then os.exit(eg[s]()) end
       if s=="-"..(k:sub(1,1)) or s=="--"..k then
         v = v=="true" and "false" or v=="false" and "true" or arg[argv + 1]
         t[k] = as(v) end end end
   if t.help then os.exit(print(help)) end
   return t end
 -----------------------------------------------------------------------------------------
-local cat,fmt,show,o,oo -- pretty print functions
-cat=table.concat
-fmt=string.format
-
-function oo(t,   n) print(o(t,n)); return t end
-function o(x,  n,    f,u)    
-  f="%."..(n or 3).."f"
-  if type(x) == "number" then return math.floor(x)==x and tostring(x) or fmt(f, x) end
-  if type(x) ~= "table"  then return tostring(x) end
-  u = map2(x, function(k,v) v=o(v,n); return x>0 and tostring(v) or fmt(":%s %s",k,v) end)
-  return (x._isa or "") .. '('.. cat(#x>0 and u or sort(u)," ") .. ')' end
------------------------------------------------------------------------------------------
 local isa,obj
 function isa(x,y)    return setmetatable(y,x) end
-function obj(s,   t) t={_isa=s, __tostring=show}; t.__index=t; return t end
+function obj(s,   t) t={_isa=s, __tostring=o}; t.__index=t; return t end
 -----------------------------------------------------------------------------------------
 local SYM=obj"SYM"
 function SYM.new(s,n)
@@ -101,8 +104,8 @@ function SYM:like(x, prior)
 -----------------------------------------------------------------------------------------
 local NUM=obj"NUM"
 function NUM.new(at,s) 
-  return {at=at or 0, s=s or "", lo= 1E30, hi= -1E30, mu=0, m2=0, n=0,sd=0,
-          heaven=(s or ""):find"-$" and 0 or 1} end
+  return isa(NUM, {at=at or 0, s=s or "", lo= 1E30, hi= -1E30, mu=0, m2=0, n=0,sd=0,
+                   heaven=(s or ""):find"-$" and 0 or 1}) end
 
 function NUM:add(x,    d)
   if x ~= "?" then
@@ -129,7 +132,7 @@ local COLS=obj"COLS"
 function COLS.new(t,   x,y,all,col,u) 
   x,y,all={},{},{}
   for at,s in pairs(t) do 
-    col = (s:find"^[A-Z]" and NUM or SYM)(at,s)
+    col = (s:find"^[A-Z]" and NUM or SYM).new(at,s)
     all[1+#all] = col
     if not s:find"X$" then
       table.insert(s:find"[!-+]$" and y or x, col) end end
@@ -182,7 +185,7 @@ function ROW:like(data,n,nHypotheses,       prior,out,v,inc)
 local DATA=obj"DATA"
 function DATA.new(src) return isa(DATA,{rows={},cols=nil}):adds(src) end
 
-function DATA:clone(src) return DATA{self.cols.names}:adds(src) end
+function DATA:clone(src) return (DATA{self.cols.names}):adds(src) end
 
 function DATA:adds(src)
   if   type(src) == "string"
@@ -243,6 +246,12 @@ function DATA:stats(      u,f)
   u={}; for _,c in pairs(self.cols.y) do u[c.txt] = getmetatable(c)[f or "mid"](c) end
   return u end
 -----------------------------------------------------------------------------------------
+function eg.the()  oo(the) end
+function eg.num()  print(adds(NUM.new(),{1,2,2,3,3,3,3,4,4,5})) end
+function eg.sym()  print(adds(SYM.new(),{"a","b","b","c","c","c","c","d","d","e"})) end
+function eg.cols() map( COLS.new({"name","Age","Salary-"}).all,print) end
+function eg.data() print(DATA.new(the.file)) end
+
 -- local function main(src)
 --   print(the.seed)
 --   d = DATA.new(src)
@@ -255,5 +264,5 @@ function DATA:stats(      u,f)
 the = settings(the,help)
 if   pcall(debug.getlocal,4,1) -- we're being loaded by another lua scriot via "require"
 then return {the=the, COLS=COLS, DATA=DATA, NUM=NUM, ROW=ROW, SYM=SYM}
-else the = cli(the,help); rogues()  -- otherwise, we the the top-level script
+else the = cli(eg,the,help); rogues()  -- otherwise, we the the top-level script
 end
