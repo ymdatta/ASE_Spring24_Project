@@ -17,6 +17,11 @@ OPTIONS:
   -m --m      a Bayes low frequency hack           = 2
   -s --seed   random number seed                   = 31210
   -t --todo   startup action                       = help]]
+--
+--              _     _   _      
+--       _  _  | |_  (_) | |  ___
+--      | || | |  _| | | | | (_-<
+--       \_,_|  \__| |_| |_| /__/
 
 local b4 = {}; for k, _ in pairs(_ENV) do b4[k] = k end
 local function rogues()
@@ -41,12 +46,12 @@ function slice(t, go, stop, inc,    u)
 
 function adds(col,t) for _,x in pairs(t) do col:add(x) end; return col end
 -----------------------------------------------------------------------------------------
-local cat,fmt,show,o,oo,oos -- pretty print functions
+local cat,fmt,show,o,oo,ooo -- pretty print functions
 cat=table.concat
 fmt=string.format
 
-function oos(t)     for _,x in pairs(t) do oo(x) end end 
-function oo(t,   n) print(o(t,n)); return t end
+function ooo(t)    map(t,oo) end
+function oo(t, n)  print(o(t,n)); return t end
 function o(x,  n,    f,u)    
   f="%."..(n or 3).."f"
   if type(x) == "number" then return math.floor(x)==x and tostring(x) or fmt(f, x) end
@@ -82,7 +87,12 @@ function cli(t)
 local isa,obj
 function isa(x,y)    return setmetatable(y,x) end
 function obj(s,   t) t={_isa=s, __tostring=o}; t.__index=t; return t end
------------------------------------------------------------------------------------------
+
+--            _                             
+--       __  | |  __ _   ___  ___  ___   ___
+--      / _| | | / _` | (_-< (_-< / -_) (_-<
+--      \__| |_| \__,_| /__/ /__/ \___| /__/
+
 local SYM=obj"SYM"
 function SYM.new(s,n)
   return isa(SYM,{txt=s or " ", at=n or 0, n=0, has={}, mode=nil, most=0}) end
@@ -126,7 +136,7 @@ function NUM:like(x,_,      nom,denom)
   nom   = 2.718^(-.5*(x - self.mu)^2/(self.sd^2 + 1E-30))
   denom = (self.sd*2.5 + 1E-30)
   return  nom/denom end
------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
 local COLS=obj"COLS"
 function COLS.new(t,   x,y,all,col,u) 
   x,y,all={},{},{}
@@ -200,7 +210,11 @@ function DATA:add(x,    row)
 
 function DATA:sorter()
   return function(a,b) return a:d2h(self) > b:d2h(self) end  end
------------------------------------------------------------------------------------------
+
+--       __   ___   _ _   ___ 
+--      / _| / _ \ | '_| / -_)
+--      \__| \___/ |_|   \___|
+
 function DATA:smo(    testing)
   local mids,tops,rows,liteRows,darkRows
   mids,tops = {},{}
@@ -244,7 +258,12 @@ function DATA:mid(      u)
 function DATA:stats(      u,f)
   u={}; for _,c in pairs(self.cols.y) do u[c.txt] = getmetatable(c)[f or "mid"](c) end
   return u end
------------------------------------------------------------------------------------------
+
+--       _                _        
+--      | |_   ___   ___ | |_   ___
+--      |  _| / -_) (_-< |  _| (_-<
+--       \__| \___| /__/  \__| /__/
+
 local eg,run,runs = {}
 
 function run(key,       saved,status,err)
@@ -281,13 +300,13 @@ function eg.sym()
   print(adds(SYM.new(),{"a","b","b","c","c","c","c","d","d","e"})) end
 
 function eg.cols() 
-  oos(COLS.new(ROW.new{"name","Age","Salary-"}).all) end
+  ooo(COLS.new(ROW.new{"name","Age","Salary-"}).all) end
 
 function eg.data() 
-  oos(DATA.new(the.file).cols.all) end
+  ooo(DATA.new(the.file).cols.all) end
 
 function eg.shuffle()
-  oos(shuffle{10,20,30,40,50,60,70,80,90}) end
+  ooo(shuffle{10,20,30,40,50,60,70,80,90}) end
 
 function eg.fail1() 
   print(1)
