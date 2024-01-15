@@ -1,5 +1,5 @@
 -- vim: set ts=2 sw=2 sts=2 et
-local eg,the,help={},{},[[
+local the,help={},[[
 
 smo: simple sequential model optimzation (naive bayes as the model)
 (c)2024 Tim Menzies timm@ieee.org, BSD (2 clause)
@@ -15,17 +15,18 @@ OPTIONS:
   -N --N      stop after evaliation N items        = 10
   -k --k      a Bayes low frequency hack           = 1
   -m --m      a Bayes low frequency hack           = 2
-  -s --seed   random number seed                   = 31210 ]]
+  -s --seed   random number seed                   = 31210
+  -t --todo   startup action                       = help]]
 
 local b4 = {}; for k, _ in pairs(_ENV) do b4[k] = k end
 local function rogues()
   for k,v in pairs(_ENV) do if not b4[k] then print("-- ??", k,type(v)) end end end
 -----------------------------------------------------------------------------------------
 local map,map2,keys,sort,shuffle,slice,adds -- list utils
-function map(t,f,    u) u={}; for _,x in pairs(t) do u[1+#u]=f(x)   end; return u end
-function map2(t,f,   u) u={}; for k,x in pairs(t) do u[1+#u]=f(k,x) end; return u end
-function keys(t)   return map2(t, function(k,_) return k end) end
-function sort(t,f) table.sort(t,f) return t end
+function map(t,f)   local u={}; for _,x in pairs(t) do u[1+#u]=f(x)   end; return u end
+function map2(t,f)  local u={}; for k,x in pairs(t) do u[1+#u]=f(k,x) end; return u end
+function keys(t)    return map2(t, function(k,_) return k end) end
+function sort(t,f)  table.sort(t,f); return t end
 
 function shuffle(t,    u,j)
   u={}; for _,x in pairs(t) do u[1+#u]=x; end;
@@ -35,16 +36,16 @@ function shuffle(t,    u,j)
 function slice(t, go, stop, inc,    u)
   if go   and go   < 0 then go=#t+go     end
   if stop and stop < 0 then stop=#t+stop end
-  u={}
-  for j=(go or 1)//1,(stop or #t)//1,(inc or 1)//1 do u[1+#u]=t[j] end
+  u={}; for j=(go or 1)//1,(stop or #t)//1,(inc or 1)//1 do u[1+#u]=t[j] end
   return u end
 
 function adds(col,t) for _,x in pairs(t) do col:add(x) end; return col end
 -----------------------------------------------------------------------------------------
-local cat,fmt,show,o,oo -- pretty print functions
+local cat,fmt,show,o,oo,oos -- pretty print functions
 cat=table.concat
 fmt=string.format
 
+function oos(t)     for _,x in pairs(t) do oo(x) end end 
 function oo(t,   n) print(o(t,n)); return t end
 function o(x,  n,    f,u)    
   f="%."..(n or 3).."f"
@@ -59,25 +60,23 @@ function as1(s) return s=="true" or (s~="false" and s) end -- or false
 
 function csv(src,    i,fun)
   function fun(s,t) for x in s:gmatch("([^,]+)") do t[1+#t]=as(x) end; return t end
-  i,src = 0,src=="-" and io.stdin or io.input(src)
+  src = src=="-" and io.stdin or io.input(src)
   return function(      s)
     s=io.read()
-    if s then i=i+1; return i,fun(s,{}) else io.close(src) end end end
+    if s then return fun(s,{}) else io.close(src) end end end
 
 function settings(t,s)
   for k, s1 in s:gmatch("[-][-]([%S]+)[^=]+=[%s]*([%S]+)") do t[k] = as(s1) end
   return t end
 ---------------------------------------------------------------------------------------
 local cli -- update a table from command line flags. bools need no values (just flip'em)
-function cli(eg,t,help)
+function cli(t)
   for k, v in pairs(t) do
     v = tostring(v)
     for argv,s in pairs(arg) do
-      if eg[s] then os.exit(eg[s]()) end
       if s=="-"..(k:sub(1,1)) or s=="--"..k then
         v = v=="true" and "false" or v=="false" and "true" or arg[argv + 1]
         t[k] = as(v) end end end
-  if t.help then os.exit(print(help)) end
   return t end
 -----------------------------------------------------------------------------------------
 local isa,obj
@@ -131,7 +130,7 @@ function NUM:like(x,_,      nom,denom)
 local COLS=obj"COLS"
 function COLS.new(t,   x,y,all,col,u) 
   x,y,all={},{},{}
-  for at,s in pairs(t) do 
+  for at,s in pairs(t.cells) do 
     col = (s:find"^[A-Z]" and NUM or SYM).new(at,s)
     all[1+#all] = col
     if not s:find"X$" then
@@ -194,10 +193,10 @@ function DATA:adds(src)
   return self end
 
 function DATA:add(x,    row)
-  row = x.cells and x or ROW(x)
+  row = x.cells and x or ROW.new(x)
   if   self.cols
-  then self.rows[1+#self.rows] = ROW(row.cells) 
-  else self.cols = COLS(row) end end
+  then self.rows[1 + #self.rows] = self.cols:add(row)
+  else self.cols = COLS.new(row) end end
 
 function DATA:sorter()
   return function(a,b) return a:d2h(self) > b:d2h(self) end  end
@@ -246,23 +245,61 @@ function DATA:stats(      u,f)
   u={}; for _,c in pairs(self.cols.y) do u[c.txt] = getmetatable(c)[f or "mid"](c) end
   return u end
 -----------------------------------------------------------------------------------------
-function eg.the()  oo(the) end
-function eg.num()  print(adds(NUM.new(),{1,2,2,3,3,3,3,4,4,5})) end
-function eg.sym()  print(adds(SYM.new(),{"a","b","b","c","c","c","c","d","d","e"})) end
-function eg.cols() map( COLS.new({"name","Age","Salary-"}).all,print) end
-function eg.data() print(DATA.new(the.file)) end
+local eg,run,runs = {}
 
--- local function main(src)
---   print(the.seed)
---   d = DATA.new(src)
---   b4  = d.cols.y
---   b4.d2hs = add(NUM(), map(d.rows, function(row) return row:d2h(d) end))
---   mids, tops = d:smo()
---   mids[#mids]
--- end
+function run(key,       saved,status,err)
+  if the.help then es.exit(print(help)) end
+  saved={}; for k,v in pairs(the) do saved[k] = v end
+  math.randomseed(the.seed or 1234567890)
+  status, err = pcall(eg[key])
+  if status==false then print(err) end
+  for k,v in pairs(saved) do the[k]=v end 
+  return status end
 
+function runs(    fails,err,show)
+  function show(x) if the.todo=="all" then print(x) end end
+  fails = 0
+  for _,key in pairs(sort(keys(eg))) do
+    if the.todo=="all" or the.todo==key then
+      if   run(key) == false 
+      then show(fmt("❌ %s ",key)); fails=fails+1 
+      else show(fmt("✅ %s ",key)) end end end 
+  rogues()
+  show(fails==0 and "✅  0 errors" or fmt("❌ %s error(s)",fails)) 
+  os.exit(fails) end
+
+function eg.help() 
+  print(help) end
+
+function eg.the()  
+  oo(the) end
+
+function eg.num()  
+  oo(adds(NUM.new(),{1,2,2,3,3,3,3,4,4,5})) end
+
+function eg.sym()  
+  print(adds(SYM.new(),{"a","b","b","c","c","c","c","d","d","e"})) end
+
+function eg.cols() 
+  oos(COLS.new(ROW.new{"name","Age","Salary-"}).all) end
+
+function eg.data() 
+  oos(DATA.new(the.file).cols.all) end
+
+function eg.shuffle()
+  oos(shuffle{10,20,30,40,50,60,70,80,90}) end
+
+function eg.fail1() 
+  print(1)
+  assert(false,"oops 1") end
+
+function eg.fail2() 
+  assert(false,"oops 2") end
+----------------------------------------------------------------------------------------
 the = settings(the,help)
-if   pcall(debug.getlocal,4,1) -- we're being loaded by another lua scriot via "require"
+
+if   pcall(debug.getlocal,4,1) -- we're being loaded by another lua script
 then return {the=the, COLS=COLS, DATA=DATA, NUM=NUM, ROW=ROW, SYM=SYM}
-else the = cli(eg,the,help); rogues()  -- otherwise, we the the top-level script
+else the = cli(the)
+     runs() -- otherwise, we the the top-level script
 end
