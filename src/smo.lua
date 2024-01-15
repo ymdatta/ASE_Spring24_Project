@@ -27,7 +27,7 @@ local b4 = {}; for k, _ in pairs(_ENV) do b4[k] = k end
 local function rogues()
   for k,v in pairs(_ENV) do if not b4[k] then print("-- ??", k,type(v)) end end end
 -----------------------------------------------------------------------------------------
-local map,map2,keys,sort,shuffle,slice,adds -- list utils
+local map,map2,keys,sort,shuffle,slice,copy,adds -- list utils
 function map(t,f)   local u={}; for _,x in pairs(t) do u[1+#u]=f(x)   end; return u end
 function map2(t,f)  local u={}; for k,x in pairs(t) do u[1+#u]=f(k,x) end; return u end
 function keys(t)    return map2(t, function(k,_) return k end) end
@@ -84,8 +84,7 @@ function cli(t)
     v = tostring(v)
     for argv,s in pairs(arg) do
       if s=="-"..(k:sub(1,1)) or s=="--"..k then
-        v = v=="true" and "false" or v=="false" and "true" or arg[argv + 1]
-        t[k] = as(v) end end end
+        t[k]=as(v=="true" and "false" or v=="false" and "true" or arg[argv+1]) end end end
   return t end
 -----------------------------------------------------------------------------------------
 local isa,obj
