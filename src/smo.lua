@@ -117,7 +117,7 @@ function SYM:like(x, prior)
 -----------------------------------------------------------------------------------------
 local NUM=obj"NUM"
 function NUM.new(at,s) 
-  return isa(NUM, {at=at or 0, s=s or "", lo= 1E30, hi= -1E30, mu=0, m2=0, n=0,sd=0,
+  return isa(NUM, {at=at or 0, txt=s or "", lo= 1E30, hi= -1E30, mu=0, m2=0, n=0,sd=0,
                    heaven=(s or ""):find"-$" and 0 or 1}) end
 
 function NUM:add(x,    d)
@@ -216,7 +216,15 @@ function DATA:add(x,  fun,    row)
 
 function DATA:sorter()
   return function(a,b) return a:d2h(self) > b:d2h(self) end  end
---               _                    _    __   _            
+
+function DATA:mid(      t)
+  t={}; for _,col in pairs(self.cols.all) do t[col.txt]=col:mid() end
+  return ROW.new(t) end
+
+function DATA:stats(      t,f)
+  t={}; for _,c in pairs(self.cols.y) do t[c.txt] = getmetatable(c)[f or "mid"](c) end
+  return t end
+--               _                    _    __   _            
 --          __  | |  __ _   ___  ___ (_)  / _| (_)  ___   _ _ 
 --         / _| | | / _` | (_-< (_-< | | |  _| | | / -_) | '_|
 --         \__| |_| \__,_| /__/ /__/ |_| |_|   |_| \___| |_|  
@@ -246,19 +254,17 @@ function DATA:smo(    testing)
   mids,tops = {},{}
   rows     = shuffle(self.rows)
   liteRows = slice(rows, 1, the.n)
-  darkRows = slice(rows, the.n+1)
-  print(100,#liteRows,#darkRows)
+  darkRows = slice(rows, the.n+1) 
   for i = 1, the.N do
     local lite,best,rest,todo,selected
-    lite          = self:clone(liteRows)
-    print(200,(#lite.rows)^the.best)
-    best,rest     = lite:bestRest((#lite.rows)^the.best)
-    print(300, #best.rows, #rest.rows)
+    lite          = self:clone(liteRows) 
+    best,rest     = lite:bestRest((#lite.rows)^the.best) 
     todo,selected = lite:what2lookAtNext(darkRows, best, rest)
     if testing then 
       table.sort(selected.rows, self:sorter())
       mids[i] = selected:mid()
-      tops[i] = selected.rows[1] end
+      tops[i] = selected.rows[1] 
+      print(oo(tops[i].cells)) end
     table.insert(liteRows, table.remove(darkRows,todo)) end 
   return liteRows,mids,tops end
 
@@ -280,13 +286,7 @@ function DATA:what2lookAtNext(darkRows, best,rest)
     if tmp>max then what2do,max = i,tmp end end
   return what2do,selected end
 
-function DATA:mid(      t)
-  t={}; for _,col in pairs(self.cols.all) do print(400,col); t[col.txt] = col:mid() end
-  return ROW(t) end
 
-function DATA:stats(      t,f)
-  t={}; for _,c in pairs(self.cols.y) do t[c.txt] = getmetatable(c)[f or "mid"](c) end
-  return t end
 
 --       _                _        
 --      | |_   ___   ___ | |_   ___
