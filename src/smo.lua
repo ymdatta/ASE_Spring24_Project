@@ -258,7 +258,7 @@ function DATA:what2lookAtNext(darkRows, best,rest)
   return what2do,selected end
 
 function DATA:mid(      t)
-  t={}; for _,col in pairs(self.cols.all) do print(col); t[col.txt] = col:mid() end
+  t={}; for _,col in pairs(self.cols.all) do print(400,col); t[col.txt] = col:mid() end
   return ROW(t) end
 
 function DATA:stats(      t,f)
@@ -270,9 +270,9 @@ function DATA:stats(      t,f)
 --      |  _| / -_) (_-< |  _| (_-<
 --       \__| \___| /__/  \__| /__/
 
-local eg,try = {}
+local eg = {}
 
-function try(k,   failed,saved) 
+local function try(k,   failed,saved) 
   saved = copy(the) -- set up
   math.randomseed(the.seed) -- set up
   failed = eg[k]()==false
@@ -319,8 +319,9 @@ function eg.like(     d)
   d= DATA.new(the.file)
   for _,row in pairs(d.rows) do print(math.log(row:like(d,1000,2))) end end
 
-function eg.mid()
-  oo(DATA.new(the.file):mid()) end
+function eg.mid(      d)
+   d=DATA.new(the.file)
+   oo(d.cols.all[5]) end
 
 function eg.smo()
   DATA.new(the.file):smo(true) end
