@@ -7,16 +7,16 @@ smo: simple sequential model optimzation (naive bayes as the model)
 USAGE: lua smo.lua [OPTIONS}
 
 OPTIONS:
-  -b --best   size of best: n^best                 = .5
-  -c --cohen  indistinguishable if under sd*coehn  = .35
-  -f --file   csv file (to be read in)             = ../data/auto93.csv
-  -h --help   show help                            = false
-  -n --n      start by evaluating n items          = 4
-  -N --N      stop after evaliation N items        = 10
-  -k --k      a Bayes low frequency hack           = 1
-  -m --m      a Bayes low frequency hack           = 2
-  -s --seed   random number seed                   = 31210
-  -t --todo   startup action                       = help]]
+  -b --best  size of best: n^best                = .5
+  -c --cohen indistinguishable if under sd*coehn = .35
+  -f --file  csv file (to be read in)            = ../data/auto93.csv
+  -h --help  show help                           = false
+  -n --n     start by evaluating n items         = 4
+  -N --N     stop after evaliation N items       = 10
+  -k --k     a Bayes low frequency hack          = 1
+  -m --m     a Bayes low frequency hack          = 2
+  -s --seed  random number seed                  = 31210
+  -t --todo  startup action                      = help]]
 -----------------------------------------------------------------------------------------
 --              _     _   _      
 --       _  _  | |_  (_) | |  ___
