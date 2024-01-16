@@ -133,7 +133,7 @@ function NUM:mid() return self.mu end
 function NUM:div() return self.sd end
 
 function NUM:norm(x)
-  return x=="?" and x or (x - self.self.lo)/(self.hi - self.lo + 1E-30) end
+  return x=="?" and x or (x - self.lo)/(self.hi - self.lo + 1E-30) end
 
 function NUM:like(x,_,      nom,denom)
   nom   = 2.718^(-.5*(x - self.mu)^2/(self.sd^2 + 1E-30))
@@ -169,9 +169,9 @@ function ROW:eval() return true end -- here, we compute _y from _x
 
 function ROW:d2h(data,    d,n,norm)
   d,n = 0,0
-  for _,col in pairs(self.cols.y) do
+  for _,col in pairs(data.cols.y) do
     n = n + 1
-    d = d + math.abs(col.heaven - norm(self:y(col.at)))^2 end
+    d = d + math.abs(col.heaven - col:norm(self:y(col.at)))^2 end
   return (d/n)^.5 end
 
 function ROW:likes(datas,       n,nHypotheses,most,tmp,out)
@@ -197,7 +197,7 @@ function ROW:like(data,n,nHypotheses,       prior,out,v,inc)
 local DATA=obj"DATA"
 function DATA.new(src) return isa(DATA,{rows={},cols=nil}):adds(src) end
 
-function DATA:clone(src) return (DATA{self.cols.names}):adds(src) end
+function DATA:clone(src) return (DATA.new{self.cols.names}):adds(src) end
 
 function DATA:adds(src)
   if   type(src) == "string"
@@ -227,7 +227,7 @@ function DATA:smo(    testing)
   for i = 1, the.N do
     local lite,best,rest,todo,selected
     lite          = self:clone(liteRows)
-    best,rest     = lite:besRest(lite.rows^the.best)
+    best,rest     = lite:bestRest((#lite.rows)^the.best)
     todo, selected = lite:what2lookAtNext(darkRows, best, rest)
     if testing then 
       table.sort(selected.rows, self:sorter())
@@ -237,12 +237,12 @@ function DATA:smo(    testing)
   return liteRows,mids,tops end
 
 function DATA:bestRest(want,     best,rest)
-  best,rest= {},{}
+  best,rest= self:clone(), self:clone()
   for i,row in pairs(sort(self.rows,self:sorter())) do
     (i<= want and best or rest):add(row) end
   return best,rest end
 
-function DATA:what2lookatNext(darkRows, best,rest)
+function DATA:what2lookAtNext(darkRows, best,rest)
   local b,r,tmp,max,what2do,selected
   selected = self:clone()
   what2do, max = 1, 1E30
@@ -254,22 +254,22 @@ function DATA:what2lookatNext(darkRows, best,rest)
     if tmp>max then what2do,max = i,tmp end end
   return what2do,selected end
 
-function DATA:mid(      u)
-  u={}; for _,col in pairs(self.cols.all) do u[col.txt] = col:mid() end
-  return ROW(u) end
+function DATA:mid(      t)
+  t={}; for _,col in pairs(self.cols.all) do print(col); t[col.txt] = col:mid() end
+  return ROW(t) end
 
-function DATA:stats(      u,f)
-  u={}; for _,c in pairs(self.cols.y) do u[c.txt] = getmetatable(c)[f or "mid"](c) end
-  return u end
+function DATA:stats(      t,f)
+  t={}; for _,c in pairs(self.cols.y) do t[c.txt] = getmetatable(c)[f or "mid"](c) end
+  return t end
 
 --       _                _        
 --      | |_   ___   ___ | |_   ___
 --      |  _| / -_) (_-< |  _| (_-<
 --       \__| \___| /__/  \__| /__/
 
-local eg,failure={}
+local eg,try = {}
 
-function failure(k,   failed,saved) 
+function try(k,   failed,saved) 
   saved = copy(the) -- set up
   math.randomseed(the.seed) -- set up
   failed = eg[k]()==false
@@ -282,13 +282,14 @@ function eg.all(     bad)
   bad=0
   for _,k in pairs(keys(eg)) do 
     if k ~= "all" then 
-      if failure(k) then bad=bad+1 end end end
+      if try(k) then bad=bad+1 end end end
   io.stderr:write(fmt("# %s %s fail(s)\n",bad>0 and "❌ FAIL" or "✅ PASS",bad))
+  rogues()
   os.exit(bad) end
 
 -- List all example names
 function eg.egs()
-  for _,k in pairs(l.keys(eg)) do print(l.fmt("lua gate.lua -t %s",k)) end end
+  for _,k in pairs(keys(eg)) do print(fmt("lua gate.lua -t %s",k)) end end
 
 function eg.help() 
   print(help) end
@@ -311,17 +312,18 @@ function eg.data()
 function eg.shuffle()
   ooo(shuffle{10,20,30,40,50,60,70,80,90}) end
 
-function eg.fail1() 
-  print(1)
-  assert(false,"oops 1") end
+function eg.like(     d)
+  d= DATA.new(the.file)
+  for _,row in pairs(d.rows) do print(math.log(row:like(d,1000,2))) end end
 
-function eg.fail2() 
-  assert(false,"oops 2") end
+function eg.smo()
+  DATA.new(the.file):smo(true) end
+  
 ----------------------------------------------------------------------------------------
 the = settings(the,help)
 
 if   pcall(debug.getlocal,4,1) 
 then return {the=the, COLS=COLS, DATA=DATA, NUM=NUM, ROW=ROW, SYM=SYM}
-else run(cli(the).todo) 
+else try(cli(the).todo) 
      rogues() 
 end
