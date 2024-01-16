@@ -216,7 +216,11 @@ function DATA:add(x,  fun,    row)
 
 function DATA:sorter()
   return function(a,b) return a:d2h(self) > b:d2h(self) end  end
-
+--               _                    _    __   _            
+--          __  | |  __ _   ___  ___ (_)  / _| (_)  ___   _ _ 
+--         / _| | | / _` | (_-< (_-< | | |  _| | | / -_) | '_|
+--         \__| |_| \__,_| /__/ /__/ |_| |_|   |_| \___| |_|  
+--                                                            
 local NB=obj"NB"
 function NB.new(src,     self)
   self = isa(NB,{correct=0, datas={}, all=0, n=0})
@@ -231,9 +235,11 @@ function NB:add(cols,row,    kl)
     if kl == row:likes(self.datas) then self.correct=self.correct + 1 end end
   self.datas[kl] = self.datas[kl] or DATA.new{cols.names}
   self.datas[kl]:add(row) end
---       __   ___   _ _   ___ 
---      / _| / _ \ | '_| / -_)
---      \__| \___/ |_|   \___|
+--                       _     _           _                  
+--          ___   _ __  | |_  (_)  _ __   (_)  ___  ___   _ _ 
+--         / _ \ | '_ \ |  _| | | | '  \  | | |_ / / -_) | '_|
+--         \___/ | .__/  \__| |_| |_|_|_| |_| /__| \___| |_|  
+--               |_|                                          
 
 function DATA:smo(    testing)
   local mids,tops,rows,liteRows,darkRows
