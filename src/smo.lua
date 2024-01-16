@@ -16,7 +16,8 @@ OPTIONS:
   -k --k     a Bayes low frequency hack          = 1
   -m --m     a Bayes low frequency hack          = 2
   -s --seed  random number seed                  = 31210
-  -t --todo  startup action                      = help]]
+  -t --todo  startup action                      = help
+  -w --wait  for classification, wait 'w' times  = 10]]
 -----------------------------------------------------------------------------------------
 --              _     _   _      
 --       _  _  | |_  (_) | |  ___
@@ -141,14 +142,15 @@ function NUM:like(x,_,      nom,denom)
   return  nom/denom end
 -----------------------------------------------------------------------------------------
 local COLS=obj"COLS"
-function COLS.new(t,   x,y,all,col,u) 
+function COLS.new(t,   x,y,all,col,klass) 
   x,y,all={},{},{}
   for at,s in pairs(t.cells) do 
     col = (s:find"^[A-Z]" and NUM or SYM).new(at,s)
     all[1+#all] = col
     if not s:find"X$" then
+      if s:find"!$" then klass=col end
       table.insert(s:find"[!-+]$" and y or x, col) end end
-  return isa(COLS,{names=t, x=x, y=y, all=all}) end
+  return isa(COLS,{names=t, x=x, y=y, klass=klass, all=all}) end
 
 function COLS:add(row,   v)
   for _,xy in pairs{self.x, self.y} do
@@ -195,25 +197,40 @@ function ROW:like(data,n,nHypotheses,       prior,out,v,inc)
   return math.exp(1)^out end
 -----------------------------------------------------------------------------------------
 local DATA=obj"DATA"
-function DATA.new(src) return isa(DATA,{rows={},cols=nil}):adds(src) end
+function DATA.new(src,  fun) return isa(DATA,{rows={},cols=nil}):adds(src,fun) end
 
-function DATA:clone(src) return (DATA.new{self.cols.names}):adds(src) end
+function DATA:clone(src, fun) return (DATA.new{self.cols.names}):adds(src,fun) end
 
-function DATA:adds(src)
+function DATA:adds(src,  fun)
   if   type(src) == "string"
-  then for   row in csv(src)         do self:add(row) end
-  else for _,row in pairs(src or {}) do self:add(row) end end
+  then for   row in csv(src)         do self:add(row, fun) end
+  else for _,row in pairs(src or {}) do self:add(row, fun) end end
   return self end
 
-function DATA:add(x,    row)
+function DATA:add(x,  fun,    row)
   row = x.cells and x or ROW.new(x)
   if   self.cols
-  then self.rows[1 + #self.rows] = self.cols:add(row)
+  then if fun then fun(self,row) end
+       self.rows[1 + #self.rows] = self.cols:add(row)
   else self.cols = COLS.new(row) end end
 
 function DATA:sorter()
   return function(a,b) return a:d2h(self) > b:d2h(self) end  end
 
+local NB=obj"NB"
+function NB.new(src,     self)
+  self = isa(NB,{correct=0, datas={}, all=0, n=0})
+  DATA.new(src, function(data,row) self:add(data.cols,row) end) 
+  return self.correct/self.all end
+
+function NB:add(cols,row,    kl)
+  self.n = self.n + 1
+  kl = row.cells[cols.klass.at]
+  if self.n > the.wait then
+    self.all = self.all + 1
+    if kl == row:likes(self.datas) then self.correct=self.correct + 1 end end
+  self.datas[kl] = self.datas[kl] or DATA.new{cols.names}
+  self.datas[kl]:add(row) end
 --       __   ___   _ _   ___ 
 --      / _| / _ \ | '_| / -_)
 --      \__| \___/ |_|   \___|
@@ -300,6 +317,9 @@ function eg.help()
 function eg.the()  
   oo(the) end
 
+function eg.shuffle()
+  ooo(shuffle{10,20,30,40,50,60,70,80,90}) end
+  
 function eg.num()  
   oo(adds(NUM.new(),{1,2,2,3,3,3,3,4,4,5})) end
 
@@ -312,16 +332,13 @@ function eg.cols()
 function eg.data() 
   ooo(DATA.new(the.file).cols.all) end
 
-function eg.shuffle()
-  ooo(shuffle{10,20,30,40,50,60,70,80,90}) end
+function eg.mid(      d)
+  d=DATA.new(the.file)
+  oo(d.cols.all[5]) end
 
 function eg.like(     d)
   d= DATA.new(the.file)
-  for _,row in pairs(d.rows) do print(math.log(row:like(d,1000,2))) end end
-
-function eg.mid(      d)
-   d=DATA.new(the.file)
-   oo(d.cols.all[5]) end
+  oo(sort(map(d.rows, function(row) return math.log(row:like(d,1000,2)) end))) end  
 
 function eg.smo()
   DATA.new(the.file):smo(true) end
