@@ -224,11 +224,14 @@ function DATA:smo(    testing)
   rows     = shuffle(self.rows)
   liteRows = slice(rows, 1, the.n)
   darkRows = slice(rows, the.n+1)
+  print(100,#liteRows,#darkRows)
   for i = 1, the.N do
     local lite,best,rest,todo,selected
     lite          = self:clone(liteRows)
+    print(200,(#lite.rows)^the.best)
     best,rest     = lite:bestRest((#lite.rows)^the.best)
-    todo, selected = lite:what2lookAtNext(darkRows, best, rest)
+    print(300, #best.rows, #rest.rows)
+    todo,selected = lite:what2lookAtNext(darkRows, best, rest)
     if testing then 
       table.sort(selected.rows, self:sorter())
       mids[i] = selected:mid()
@@ -315,6 +318,9 @@ function eg.shuffle()
 function eg.like(     d)
   d= DATA.new(the.file)
   for _,row in pairs(d.rows) do print(math.log(row:like(d,1000,2))) end end
+
+function eg.mid()
+  oo(DATA.new(the.file):mid()) end
 
 function eg.smo()
   DATA.new(the.file):smo(true) end
