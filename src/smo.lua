@@ -260,6 +260,7 @@ function DATA:smo(    testing)
     lite          = self:clone(liteRows) 
     best,rest     = lite:bestRest((#lite.rows)^the.best) 
     todo,selected = lite:what2lookAtNext(darkRows, best, rest)
+    print(#selected.rows)
     if testing then 
       table.sort(selected.rows, self:sorter())
       mids[i] = selected:mid()
@@ -277,16 +278,15 @@ function DATA:bestRest(want,     best,rest)
 function DATA:what2lookAtNext(darkRows, best,rest)
   local b,r,tmp,max,what2do,selected
   selected = self:clone()
-  what2do, max = 1, 1E30
+  what2do, max = 1, -1E30
   for i,row in pairs(darkRows) do
     b = row:like(best, #self.rows, 2)
     r = row:like(rest, #self.rows, 2)
     if b>r then selected:add(row) end
     tmp = math.abs(b + r) / math.abs(b - r + 1E-300)
+    print(tmp,b,r,#best.rows,#rest.rows)
     if tmp>max then what2do,max = i,tmp end end
   return what2do,selected end
-
-
 
 --       _                _        
 --      | |_   ___   ___ | |_   ___
