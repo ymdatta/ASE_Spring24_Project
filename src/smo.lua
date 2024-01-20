@@ -1,11 +1,12 @@
--- vim: set ts=2 sw=2 sts=2 et
+---- vim: set ts=2 sw=2 sts=2 et
+--- Intro
 local the,help={},[[
-
+  
 smo: simple sequential model optimzation (naive bayes as the model)
 (c)2024 Tim Menzies timm@ieee.org, BSD (2 clause)
-
+  
 USAGE: lua smo.lua [OPTIONS}
-
+  
 OPTIONS:
   -b --best  size of best: n^best                = .5
   -c --cohen indistinguishable if under sd*coehn = .35
@@ -18,17 +19,17 @@ OPTIONS:
   -s --seed  random number seed                  = 31210
   -t --todo  startup action                      = help
   -w --wait  for classification, wait 'w' times  = 10]]
------------------------------------------------------------------------------------------
---              _     _   _      
---       _  _  | |_  (_) | |  ___
---      | || | |  _| | | | | (_-<
---       \_,_|  \__| |_| |_| /__/
 
+---- Utils ------------------------------------------------------------------------------
+
+--- gap
+-- lint
 local b4 = {}; for k, _ in pairs(_ENV) do b4[k] = k end
 local function rogues()
   for k,v in pairs(_ENV) do if not b4[k] then print("-- ??", k,type(v)) end end end
------------------------------------------------------------------------------------------
-local map,map2,keys,sort,shuffle,slice,copy,adds -- list utils
+
+-- Lists
+local map,map2,keys,sort,shuffle,slice,copy,adds 
 function map(t,f)   local u={}; for _,x in pairs(t) do u[1+#u]=f(x)   end; return u end
 function map2(t,f)  local u={}; for k,x in pairs(t) do u[1+#u]=f(k,x) end; return u end
 function keys(t)    return map2(t, function(k,_) return k end) end
@@ -50,8 +51,9 @@ function slice(t, go, stop, inc,    u)
   return u end
 
 function adds(col,t) for _,x in pairs(t) do col:add(x) end; return col end
------------------------------------------------------------------------------------------
-local cat,fmt,show,o,oo,ooo -- pretty print functions
+
+-- pretty print function
+local cat,fmt,show,o,oo,ooo 
 cat=table.concat
 fmt=string.format
 
@@ -63,8 +65,9 @@ function o(x,  n,    f,u)
   if type(x) ~= "table"  then return tostring(x) end
   u = map2(x, function(k,v) v=o(v,n); return #x>0 and tostring(v) or fmt(":%s %s",k,v) end)
   return (x._isa or "") .. '{'.. cat(#x>0 and u or sort(u)," ") .. '}' end
------------------------------------------------------------------------------------------
-local as,as1,csv,settings -- coerce strings to some type
+
+-- coerce strings to some tupe
+local as,as1,csv,settings 
 function as(s)  return math.tointeger(s) or tonumber(s) or as1(s:match'^%s*(.*%S)') end
 function as1(s) return s=="true" or (s~="false" and s) end -- or false
 
@@ -78,7 +81,8 @@ function csv(src,    i,fun)
 function settings(t,s)
   for k, s1 in s:gmatch("[-][-]([%S]+)[^=]+=[%s]*([%S]+)") do t[k] = as(s1) end
   return t end
----------------------------------------------------------------------------------------
+
+-- cli
 local cli -- update a table from command line flags. bools need no values (just flip'em)
 function cli(t)
   for k, v in pairs(t) do
@@ -87,16 +91,14 @@ function cli(t)
       if s=="-"..(k:sub(1,1)) or s=="--"..k then
         t[k]=as(v=="true" and "false" or v=="false" and "true" or arg[argv+1]) end end end
   return t end
------------------------------------------------------------------------------------------
+
+-- isa
 local isa,obj
 function isa(x,y)    return setmetatable(y,x) end
 function obj(s,   t) t={_isa=s, __tostring=o}; t.__index=t; return t end
 
---            _                             
---       __  | |  __ _   ___  ___  ___   ___
---      / _| | | / _` | (_-< (_-< / -_) (_-<
---      \__| |_| \__,_| /__/ /__/ \___| /__/
-
+---- Columns ----------------------------------------------------------------------------
+--- gap
 local SYM=obj"SYM"
 function SYM.new(s,n)
   return isa(SYM,{txt=s or " ", at=n or 0, n=0, has={}, mode=nil, most=0}) end
@@ -114,7 +116,7 @@ function SYM:div(    e)
 
 function SYM:like(x, prior)
   return ((self.has[x] or 0) + the.m*prior)/(self.n +the.m) end
------------------------------------------------------------------------------------------
+
 local NUM=obj"NUM"
 function NUM.new(at,s) 
   return isa(NUM, {at=at or 0, txt=s or "", lo= 1E30, hi= -1E30, mu=0, m2=0, n=0,sd=0,
@@ -140,7 +142,8 @@ function NUM:like(x,_,      nom,denom)
   nom   = 2.718^(-.5*(x - self.mu)^2/(self.sd^2 + 1E-30))
   denom = (self.sd*2.5 + 1E-30)
   return  nom/denom end
------------------------------------------------------------------------------------------
+
+--- gap
 local COLS=obj"COLS"
 function COLS.new(t,   x,y,all,col,klass) 
   x,y,all={},{},{}
@@ -158,7 +161,8 @@ function COLS:add(row,   v)
       v = row.cells[col.at] 
       if v~=nil then col:add(v) end end end
   return row end
------------------------------------------------------------------------------------------
+
+--- gap
 local ROW=obj"ROW"
 function ROW.new(t) return isa(ROW, {evaluated=false, cells=t}) end
 function ROW:x(at)  return self.cells[at] end
@@ -195,7 +199,8 @@ function ROW:like(data,n,nHypotheses,       prior,out,v,inc)
       inc = col:like(v,prior)
       out = out + math.log(inc) end end
   return math.exp(1)^out end
------------------------------------------------------------------------------------------
+
+--- gap
 local DATA=obj"DATA"
 function DATA.new(src,  fun) return isa(DATA,{rows={},cols=nil}):adds(src,fun) end
 
@@ -224,11 +229,8 @@ function DATA:mid(      t)
 function DATA:stats(      t,f)
   t={}; for _,c in pairs(self.cols.y) do t[c.txt] = getmetatable(c)[f or "mid"](c) end
   return t end
---               _                    _    __   _            
---          __  | |  __ _   ___  ___ (_)  / _| (_)  ___   _ _ 
---         / _| | | / _` | (_-< (_-< | | |  _| | | / -_) | '_|
---         \__| |_| \__,_| /__/ /__/ |_| |_|   |_| \___| |_|  
---                                                            
+
+--- gap
 local NB=obj"NB"
 function NB.new(src,     self)
   self = isa(NB,{correct=0, datas={}, all=0, n=0})
@@ -243,12 +245,8 @@ function NB:add(cols,row,    kl)
     if kl == row:likes(self.datas) then self.correct=self.correct + 1 end end
   self.datas[kl] = self.datas[kl] or DATA.new{cols.names}
   self.datas[kl]:add(row) end
---                       _     _           _                  
---          ___   _ __  | |_  (_)  _ __   (_)  ___  ___   _ _ 
---         / _ \ | '_ \ |  _| | | | '  \  | | |_ / / -_) | '_|
---         \___/ | .__/  \__| |_| |_|_|_| |_| /__| \___| |_|  
---               |_|                                          
 
+--- gap
 function DATA:smo(    testing)
   local mids,tops,rows,liteRows,darkRows
   mids,tops = {},{}
@@ -288,18 +286,14 @@ function DATA:what2lookAtNext(darkRows, best,rest)
     if tmp>max then what2do,max = i,tmp end end
   return what2do,selected end
 
---       _                _        
---      | |_   ___   ___ | |_   ___
---      |  _| / -_) (_-< |  _| (_-<
---       \__| \___| /__/  \__| /__/
-
+--- gap
 local eg = {}
 
 local function try(k,   failed,saved) 
   saved = copy(the) -- set up
   math.randomseed(the.seed) -- set up
   failed = eg[k]()==false
-  io.stderr:write(fmt("# %s %s\n",failed and "❌ FAIL" or "✅ PASS",k))
+  io.stderr:write(fmt("# %s %s\n",failed and "X FAIL" or "! PASS",k))
   for k,v in pairs(saved) do the[k]=v end -- tear down
   return failed end
 
@@ -309,7 +303,7 @@ function eg.all(     bad)
   for _,k in pairs(keys(eg)) do 
     if k ~= "all" then 
       if try(k) then bad=bad+1 end end end
-  io.stderr:write(fmt("# %s %s fail(s)\n",bad>0 and "❌ FAIL" or "✅ PASS",bad))
+  io.stderr:write(fmt("# %s %s fail(s)\n",bad>0 and "X FAIL" or "! PASS",bad))
   rogues()
   os.exit(bad) end
 
@@ -349,7 +343,7 @@ function eg.like(     d)
 function eg.smo()
   DATA.new(the.file):smo(true) end
   
-----------------------------------------------------------------------------------------
+--- gap
 the = settings(the,help)
 
 if   pcall(debug.getlocal,4,1) 

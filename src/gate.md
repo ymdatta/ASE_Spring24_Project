@@ -95,19 +95,24 @@ function eg.bayes()
    print(wme.acc/(wme.tries))
    return wme.acc/(wme.tries) > .72 end
 ```
-Implementing Naive Bayes in eight lines is not so impressive
-(since the underlying algorithm is so simple).
-A more interesting example of how SE
-can simplify AI is  the 30 lines needed to code up sequential model
-optimization (see the rest of this paper).
-
-As for other examples where SE+AI leads to simpler SE,
-this code has not (yet) been applied to all things
-AI. But the track record so far is pretty interesting.
+Implementing Naive Bayes in eight lines is not so impressive (since
+the underlying algorithm is so simple). 
+What is  more interesting 
+is how
+`gate.lua` needs just
+30 lines to code up
+incremental semi-supervised learning for multi-objective sequential
+model optimization. That's a lot of buzz words but
+the main point here is that seemingly complex AI is not really
+complex, if you get the SE right.
 The methods of this document have also been applied
 to clustering, data synthesis, anomaly detection, privacy,
 multi-objective optimization, streaming, and many other 
-applications besides. But that's another story for another time.
+applications besides.
+
+And all that was pretty simple.
+
+Let me show you how.
 
 # Use of Lua
 

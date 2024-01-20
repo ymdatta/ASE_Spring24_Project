@@ -1,0 +1,24 @@
+---
+title: AI can be easy (using good SE)
+author: Tim Menzies
+date: \today
+geometry: margin=1in
+documentclass: article
+font-size: 8pt
+header-includes: |
+    \usepackage{graphicx}
+    \usepackage{titlesec}\newcommand{\sectionbreak}{\clearpage}
+    \usepackage{inconsolata}
+    \usepackage{amssymb}
+    \usepackage{pifont}
+    \usepackage{array}
+    \usepackage[T1]{fontenc}
+    \usepackage{textcomp}
+    \usepackage{mathpazo}
+    \usepackage{fancyhdr}\pagestyle{fancy}
+    \fancyhead[CO,CE]{}\fancyfoot[CO,CE]{}\fancyfoot[LE,RO]{\thepage}
+    \BeforeBeginEnvironment{listings}{\par\noindent\begin{minipage}{\linewidth}}
+    \AfterEndEnvironment{listings}{\end{minipage}\par\addvspace{\topskip}}
+---
+
+

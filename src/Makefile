@@ -56,22 +56,22 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  $(addprefix ~/tmp/, $(FILES:.l
 	echo "$$css" >> ../docs/pycco.css
 	git  add  $@
 
-~/tmp/%.pdf: %.lua  ## make pdf
-	mkdir -p ~/tmp
-	echo "a2ps: $^ -> $@" 
-	a2ps                          \
-		-qBr                         \
-		--chars-per-line 90           \
-		--file-align=fill              \
-		--line-numbers=1                \
-		--borders=no                     \
-		--pro=color                       \
-		--columns  3                       \
-		-M letter                           \
-		--pretty-print="../etc/lua.ssh"   \
-		-o ~/tmp/$^.ps $^ ;               \
-	ps2pdf ~/tmp/$^.ps $@ ;  rm ~/tmp/$^.ps; \
-  open $@
+# ~/tmp/%.pdf: %.lua  ## make pdf
+# 	mkdir -p ~/tmp
+# 	echo "a2ps: $^ -> $@" 
+# 	a2ps                          \
+# 		-qBr                         \
+# 		--chars-per-line 90           \
+# 		--file-align=fill              \
+# 		--line-numbers=1                \
+# 		--borders=no                     \
+# 		--pro=color                       \
+# 		--columns  3                       \
+# 		-M letter                           \
+# 		--pretty-print="../etc/lua.ssh"   \
+# 		-o ~/tmp/$^.ps $^ ;               \
+# 	ps2pdf ~/tmp/$^.ps $@ ;  rm ~/tmp/$^.ps; \
+#   open $@
 
 eggate: ## basic demo of GATE
 	lua gate.lua -t gate |column -t
@@ -88,6 +88,6 @@ egs:
 	echo $@
 	lua mylo.lua -s $$RANDOM -f $^  -t rules    > $@; cat $@
 
-tex:
-	pandoc --toc-depth=2 --metadata=cover-image:"cover1.png"  \
-				 -N -s --highlight-style mytango.theme --toc -o ~/tmp/gate.pdf gate.md
+~/tmp/%.pdf : %.lua
+	gawk -f ../etc/snip.awk $^ > ~/tmp/_.md
+	pandoc --toc-depth=2 -N -s --highlight-style tango --toc -o $@ ~/tmp/_.md
