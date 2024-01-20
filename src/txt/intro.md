@@ -44,7 +44,7 @@ into columns).
 
 [^sculley]: D. Sculley, Gary Holt, Daniel Golovin, Eugene Davydov,
 Todd Phillips, Dietmar Ebner, Vinay Chaudhary, Michael Young,
-Jean-François Crespo, Dan Dennison Hidden Technical Debt in Machine
+Jean-Francois Crespo, Dan Dennison Hidden Technical Debt in Machine
 Learning Systems Advances in Neural Information Processing Systems
 28 (NIPS 2015)
 
