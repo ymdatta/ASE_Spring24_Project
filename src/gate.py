@@ -29,16 +29,16 @@ class box(dict):
 
 def coerce(s):
   try: return ast.literal_eval(s)
-  except Exception: return s
+  except Exception:creturn s
 
 the = box(**{m[1]:coerce(m[2]) for m in re.finditer(r"--(\w+)[^=]*=\s*(\S+)",__doc__)})
 
 def cli(d):
   for k,v in d.items(): 
     v = str(v)
-    for i,arg in enumerate(sys.argv):
+    for c,arg in enumerate(sys.argv):
       if arg in ["-h", "--help"]: sys.exit(print(__doc__))
-      after = "" if i >= len(sys.argv) - 1 else sys.argv[i+1]
+      after = "" if c >= len(sys.argv) - 1 else sys.argv[c+1]
       if arg in ["-"+k[0], "--"+k]: 
         v = "false" if v=="true" else ("true" if v=="false" else after)
         d[k] = coerce(v) 
@@ -56,17 +56,28 @@ def ent(d):
   for k in d: e += d[k]/n * math.log( d[k]/n, 2)
   return -e
 
-def  DATA(rows):
-  ys   = [i for i,s in enumerate(rows[0]) if s[-1] in "+-!"]
-  nums = [i for i,s in enumerate(rows[0]) if s[0].isupper()]
-  all  = [[y for y in x if y !="?"] for x in zip(*rows[1:])]
-  all  = [NUM(a) if i in nums else Counter(a) for i,a in enumerate(all)]
-  return box(rows=rows[1:], cols=box(names=rows[0], ys=ys, nums=nums, all=all))
+def  DATA(lsts):
+  def goalp(s): return s[-1] in "+-!"
+  def want(s):  return 1 if s[-1] == "+" else 0
+  def nump(s):  return s[0].isupper()
+  def d2h(lst)
+    return (sum(abs(w - norm(all[c],lst[c]))**2 for c,w in ys.items()) / len(ys))**(1/2)
+  names,*rows = lsts
+  ys   = {c:want(s) for c,s in enumerate(names) if goalp(s)}
+  nums = [c         for c,s in enumerate(names) if nump(s)]
+  all  = [[y for y in x if y !="?"] for x in zip(*rows)]
+  all  = [NUM(a) if c in nums else Counter(a) for c,a in enumerate(all)]
+  data =  box(rows=rows, cols=box(names=names, ys=ys, nums=nums, all=all))
+  rows.sort(key=d2h)
+  return data
 
 def NUM(a):
   a.sort()
   p = len(a)/10
   return box(n=len(a),lo=a[0], hi=a[-1], mid=a[int(p*5)], sd=(a[int(9*p)]-a[int(p)])/2.56)
+
+def norm(col,x):
+  return x in x=="?" else (x - col.lo)/(col.hi - col.lo + 1E-30) 
 
 #---------------------------------------------------------------------------
 the = cli(the)
