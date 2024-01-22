@@ -1,0 +1,5 @@
+find the best found ever so far across whole run (that is top)
+repeat 20 times reports tats
+
+test stats 
+

@@ -56,7 +56,7 @@ function slice(t, go, stop, inc,    u)
 function adds(col,t) for _,x in pairs(t) do col:add(x) end; return col end
 
 -- pretty print function
-local cat,fmt,shows,o,oo,ooo,say 
+local cat,fmt,shows,o,oo,ooo,dot 
 cat=table.concat
 fmt=string.format
 
@@ -128,9 +128,7 @@ function SYM:div(    e)
   e=0; for _,v in pairs(self.has) do e=e-v/self.n*math.log(v/self.n,2) end; return e end
 
 function SYM:like(x, prior,tmp)
-  tmp= ((self.has[x] or 0) + the.m*prior)/(self.n +the.m) 
-  print(999,self.at,x,tmp)
-  return tmp end
+  return  ((self.has[x] or 0) + the.m*prior)/(self.n +the.m) end
 
 local NUM=obj"NUM"
 function NUM.new(at,s) 
@@ -156,7 +154,7 @@ function NUM:norm(x)
 function NUM:like(x,_,      nom,denom)
   nom   = 2.718^(-.5*(x - self.mu)^2/(self.sd^2 + 1E-30))
   denom = (self.sd*2.5 + 1E-30)
-  return  nom/denom end
+  return math.min(1,nom/denom) end
 
 --- gap
 local COLS=obj"COLS"
@@ -212,7 +210,6 @@ function ROW:like(data,n,nHypotheses,       prior,out,v,inc)
     v= self:x(col.at)
     if v ~= "?" then
       inc = col:like(v,prior)
-      print("1000",col.at,v,prior,inc)
       out = out + math.log(inc) end end
   out = math.exp(1)^out 
   assert(0<=out and out<=1, fmt("value not 0..1 : %s %s",out,o(self.cells)))
@@ -300,10 +297,8 @@ function DATA:what2lookAtNext(darkRows, best,rest)
     b = row:like(best, #self.rows, 2)
     r = row:like(rest, #self.rows, 2)
     if b>r then selected:add(row) end
-    tmp = b-- math.abs(b + r) / math.abs(b - r + 1E-300)
-    --tmp = math.abs(b + r) / math.abs(b - r + 1E-300)
-    --print(tmp,b,r,#best.rows,#rest.rows)
-    if tmp>max then print(i,tmp); what2do,max = i,tmp end end
+    tmp = math.abs(b + r) / math.abs(b - r + 1E-300)
+    if tmp>max then  what2do,max = i,tmp end end
   return what2do,selected end
 
 --- gap
@@ -377,8 +372,9 @@ function eg.smo(    data,best,mids,tops,log2,stats,order)
   print(log2(log2(1-.95)/log2(1-the.cohen/6)))
   print(0,o{all=stats, d2h=data:mid():d2h(data)})
   for i,mid in pairs(mids) do 
-    print(the.n+i,o{mid=mid:cols(data.cols.y), top=tops[i]:cols(data.cols.y), midd=mid:d2h(data), topd=tops[i]:d2h(data)})
-end end
+    if tops[i] then
+      print(the.n+i,o{mid=mid:cols(data.cols.y), top=tops[i]:cols(data.cols.y), midd=mid:d2h(data), topd=tops[i]:d2h(data)})
+end end end
   
 --- gap
 the = settings(the,help)
