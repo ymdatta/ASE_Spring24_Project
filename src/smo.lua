@@ -13,7 +13,7 @@ OPTIONS:
   -f --file  csv file (to be read in)            = ../data/auto93.csv
   -h --help  show help                           = false
   -n --n     start by evaluating n items         = 4
-  -N --N     stop after evaliation N items       = 10
+  -N --N     stop after evaluation N items       = 6
   -k --k     a Bayes low frequency hack          = 1
   -m --m     a Bayes low frequency hack          = 2
   -s --seed  random number seed                  = 31210
@@ -30,9 +30,12 @@ local function rogues()
 
 -- Lists
 local map,map2,keys,sort,shuffle,slice,copy,adds 
-function map(t,f)   local u={}; for _,x in pairs(t) do u[1+#u]=f(x)   end; return u end
-function map2(t,f)  local u={}; for k,x in pairs(t) do u[1+#u]=f(k,x) end; return u end
+function map(t,f,...)  
+  local u={}; for _,x in pairs(t) do u[1+#u]=f(x,...)   end; return u end
+function map2(t,f,...) 
+  local u={}; for k,x in pairs(t) do u[1+#u]=f(k,x,...) end; return u end
 function keys(t)    return map2(t, function(k,_) return k end) end
+
 function sort(t,f)  table.sort(t,f); return t end
 
 function shuffle(t,    u,j)
@@ -53,7 +56,7 @@ function slice(t, go, stop, inc,    u)
 function adds(col,t) for _,x in pairs(t) do col:add(x) end; return col end
 
 -- pretty print function
-local cat,fmt,show,o,oo,ooo 
+local cat,fmt,shows,o,oo,ooo,say 
 cat=table.concat
 fmt=string.format
 
@@ -65,6 +68,16 @@ function o(x,  n,    f,u)
   if type(x) ~= "table"  then return tostring(x) end
   u = map2(x, function(k,v) v=o(v,n); return #x>0 and tostring(v) or fmt(":%s %s",k,v) end)
   return (x._isa or "") .. '{'.. cat(#x>0 and u or sort(u)," ") .. '}' end
+
+function dot(x) 
+  io.write(x or "."); io.flush() end
+
+function shows(ts,  f,     order,u,show)
+  f=f or "%8s"
+  show=function(t) return cat(map(order, function(k) return fmt(f,t[k]) end), ", ") end 
+  for x,t in pairs(ts) do
+    if   not order then order = keys(t); print(fmt(f,""),show(keys)) end
+    print(fmt(f,x),show(t)) end end
 
 -- coerce strings to some tupe
 local as,as1,csv,settings 
@@ -100,8 +113,8 @@ function obj(s,   t) t={_isa=s, __tostring=o}; t.__index=t; return t end
 ---- Columns ----------------------------------------------------------------------------
 --- gap
 local SYM=obj"SYM"
-function SYM.new(s,n)
-  return isa(SYM,{txt=s or " ", at=n or 0, n=0, has={}, mode=nil, most=0}) end
+function SYM.new(at,s)
+  return isa(SYM,{txt=s or " ", at=at or 0, n=0, has={}, mode=nil, most=0}) end
 
 function SYM:add(x)
   if x ~= "?" then
@@ -114,8 +127,10 @@ function SYM:mid() return self.mode end
 function SYM:div(    e)
   e=0; for _,v in pairs(self.has) do e=e-v/self.n*math.log(v/self.n,2) end; return e end
 
-function SYM:like(x, prior)
-  return ((self.has[x] or 0) + the.m*prior)/(self.n +the.m) end
+function SYM:like(x, prior,tmp)
+  tmp= ((self.has[x] or 0) + the.m*prior)/(self.n +the.m) 
+  print(999,self.at,x,tmp)
+  return tmp end
 
 local NUM=obj"NUM"
 function NUM.new(at,s) 
@@ -152,7 +167,7 @@ function COLS.new(t,   x,y,all,col,klass)
     all[1+#all] = col
     if not s:find"X$" then
       if s:find"!$" then klass=col end
-      table.insert(s:find"[!-+]$" and y or x, col) end end
+      table.insert(s:find"[!+-]$" and y or x, col) end end
   return isa(COLS,{names=t, x=x, y=y, klass=klass, all=all}) end
 
 function COLS:add(row,   v)
@@ -197,8 +212,14 @@ function ROW:like(data,n,nHypotheses,       prior,out,v,inc)
     v= self:x(col.at)
     if v ~= "?" then
       inc = col:like(v,prior)
+      print("1000",col.at,v,prior,inc)
       out = out + math.log(inc) end end
-  return math.exp(1)^out end
+  out = math.exp(1)^out 
+  assert(0<=out and out<=1, fmt("value not 0..1 : %s %s",out,o(self.cells)))
+  return out end
+
+function ROW:cols(cols,    u)
+  u={}; for _,col in pairs(cols) do u[col.txt] = self.cells[col.at] end; return u end
 
 --- gap
 local DATA=obj"DATA"
@@ -220,10 +241,10 @@ function DATA:add(x,  fun,    row)
   else self.cols = COLS.new(row) end end
 
 function DATA:sorter()
-  return function(a,b) return a:d2h(self) > b:d2h(self) end  end
+  return function(a,b) return a:d2h(self) < b:d2h(self) end  end
 
 function DATA:mid(      t)
-  t={}; for _,col in pairs(self.cols.all) do t[col.txt]=col:mid() end
+  t={}; for _,col in pairs(self.cols.all) do t[col.at]=col:mid() end
   return ROW.new(t) end
 
 function DATA:stats(      t,f)
@@ -253,37 +274,36 @@ function DATA:smo(    testing)
   rows     = shuffle(self.rows)
   liteRows = slice(rows, 1, the.n)
   darkRows = slice(rows, the.n+1) 
+  local best,rest
   for i = 1, the.N do
-    local lite,best,rest,todo,selected
-    lite          = self:clone(liteRows) 
+    local lite          = self:clone(liteRows) 
     best,rest     = lite:bestRest((#lite.rows)^the.best) 
-    todo,selected = lite:what2lookAtNext(darkRows, best, rest)
-    print(#selected.rows)
+    local todo,selected = lite:what2lookAtNext(darkRows, best, rest)
     if testing then 
       table.sort(selected.rows, self:sorter())
       mids[i] = selected:mid()
-      tops[i] = selected.rows[1] 
-      print(oo(tops[i].cells)) end
+      tops[i] = selected.rows[1]  end
     table.insert(liteRows, table.remove(darkRows,todo)) end 
-  return liteRows,mids,tops end
+  return best,mids,tops end
 
 function DATA:bestRest(want,     best,rest)
   best,rest= self:clone(), self:clone()
-  for i,row in pairs(sort(self.rows,self:sorter())) do
+  for i,row in pairs(sort(self.rows, self:sorter())) do
     (i<= want and best or rest):add(row) end
   return best,rest end
 
 function DATA:what2lookAtNext(darkRows, best,rest)
   local b,r,tmp,max,what2do,selected
   selected = self:clone()
-  what2do, max = 1, -1E30
+  what2do, max = 1, -math.huge
   for i,row in pairs(darkRows) do
     b = row:like(best, #self.rows, 2)
     r = row:like(rest, #self.rows, 2)
     if b>r then selected:add(row) end
-    tmp = math.abs(b + r) / math.abs(b - r + 1E-300)
-    print(tmp,b,r,#best.rows,#rest.rows)
-    if tmp>max then what2do,max = i,tmp end end
+    tmp = b-- math.abs(b + r) / math.abs(b - r + 1E-300)
+    --tmp = math.abs(b + r) / math.abs(b - r + 1E-300)
+    --print(tmp,b,r,#best.rows,#rest.rows)
+    if tmp>max then print(i,tmp); what2do,max = i,tmp end end
   return what2do,selected end
 
 --- gap
@@ -291,6 +311,7 @@ local eg = {}
 
 local function try(k,   failed,saved) 
   saved = copy(the) -- set up
+  print(the.seed)
   math.randomseed(the.seed) -- set up
   failed = eg[k]()==false
   io.stderr:write(fmt("# %s %s\n",failed and "X FAIL" or "! PASS",k))
@@ -332,6 +353,13 @@ function eg.cols()
 function eg.data() 
   ooo(DATA.new(the.file).cols.all) end
 
+function eg.sorter(      d)
+  d=DATA.new(the.file)
+  print("all",o(d:stats(),1))
+  for i,row in pairs(sort(d.rows, d:sorter())) do
+    if i % 50 == 1 then
+      print(i,o(row:cols(d.cols.y),1)) end end end 
+
 function eg.mid(      d)
   d=DATA.new(the.file)
   oo(d.cols.all[5]) end
@@ -340,8 +368,17 @@ function eg.like(     d)
   d= DATA.new(the.file)
   oo(sort(map(d.rows, function(row) return math.log(row:like(d,1000,2)) end))) end  
 
-function eg.smo()
-  DATA.new(the.file):smo(true) end
+function eg.smo(    data,best,mids,tops,log2,stats,order)
+  data = DATA.new(the.file)
+  best,mids,tops = data:smo(true)
+  stats =  data:stats()
+  order = keys(stats)
+  log2=function(n) return math.log(n,2) end
+  print(log2(log2(1-.95)/log2(1-the.cohen/6)))
+  print(0,o{all=stats, d2h=data:mid():d2h(data)})
+  for i,mid in pairs(mids) do 
+    print(the.n+i,o{mid=mid:cols(data.cols.y), top=tops[i]:cols(data.cols.y), midd=mid:d2h(data), topd=tops[i]:d2h(data)})
+end end
   
 --- gap
 the = settings(the,help)
