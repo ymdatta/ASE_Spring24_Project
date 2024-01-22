@@ -15,7 +15,7 @@ OPTIONS:
   -s --seed   random number seed              = 31210
   -t --todo   start up action                 = 'help' """
 
-import re,sys,ast
+import re,sys,ast,math
 from collections import Counter
 from fileinput import FileInput as file_or_stdin
 
@@ -29,25 +29,27 @@ class box(dict):
 
 def coerce(s):
   try: return ast.literal_eval(s)
-  except Exception:creturn s
+  except Exception: return s
 
 the = box(**{m[1]:coerce(m[2]) for m in re.finditer(r"--(\w+)[^=]*=\s*(\S+)",__doc__)})
 
-def goalp(s): return s[-1] in "+-!"
-def want(s):  return 1 if s[-1] == "+" else 0
-def nump(s):  return s[0].isupper()
+def goalp(s):  return s[-1] in "+-!"
+def heaven(s): return 0 if s[-1] == "-" else 1
+def nump(s):   return s[0].isupper()
 
 def  DATA(lsts):
-  def d2h(lst)
-    return (sum(abs(w - norm(all[c],lst[c]))**2 for c,w in ys.items()) / len(ys))**(1/2)
+  def d2h(lst):
+    return (sum(abs(w - norm(all[c],lst[c]))**2 for c,w in ys.items()) / len(ys))**.5
   names,*rows = lsts
-  ys   = {c:want(s) for c,s in enumerate(names) if goalp(s)}
-  nums = [c         for c,s in enumerate(names) if nump(s)]
+  ys   = {c:heaven(s) for c,s in enumerate(names) if goalp(s)}
+  nums = [c           for c,s in enumerate(names) if nump(s)]
   all  = [[y for y in x if y !="?"] for x in zip(*rows)]
   all  = [NUM(a) if c in nums else Counter(a) for c,a in enumerate(all)]
-  data = box(rows=rows, cols=box(names=names, ys=ys, nums=nums, all=all))
-  rows.sort(key=d2h)
-  return data
+  return box(rows = sorted(rows, key=d2h), 
+             cols = box(names=names, ys=ys, nums=nums, all=all))
+
+def clone(data,rows=[]):
+  return DATA( [data.cols.names] +  rows )  
 
 def NUM(a):
   a.sort()
@@ -55,7 +57,7 @@ def NUM(a):
   return box(n=len(a),lo=a[0], hi=a[-1], mid=a[int(p*5)], sd=(a[int(9*p)]-a[int(p)])/2.56)
 
 def norm(col,x):
-  return x in x=="?" else (x - col.lo)/(col.hi - col.lo + 1E-30) 
+  return x if x=="?" else (x - col.lo)/(col.hi - col.lo + 1E-30) 
 
 def ent(d):
   e,n = 0,0

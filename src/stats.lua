@@ -7,7 +7,7 @@ function cliffsDelta(ns1,ns2, dull) --> bool; true if different by a trivial amo
       n = n + 1
       if x > y then gt = gt + 1 end
       if x < y then lt = lt + 1 end end end
-  return math.abs(lt - gt)/n <= (dull or 0.147) end
+  return math.abs(lt - gt)/n >= (dull or 0.147) end
 ---------------------------------------------------------------------------------------------------
 function mwu(ns1,ns2,nConf) -->bool; True if ranks of `ns1,ns2` are different at confidence `nConf`
   local t,r1,r2,u1,u2,c = ranks(ns1,ns2)
@@ -20,7 +20,7 @@ function mwu(ns1,ns2,nConf) -->bool; True if ranks of `ns1,ns2` are different at
   u1 = n1*n2 + n1*(n1+1)/2 - r1
   u2 = n1*n2 + n2*(n2+1)/2 - r2
   local word = math.min(u1,u2)<=c
-  return math.min(u1,u2)>c  end  -- not evidence evidence to say they are the same
+  return math.min(u1,u2)<=c  end  -- not evidence evidence to say they are the same
 
 function rank(rx) return rx.ranks/rx.n end --> n; returns average range in a treatment
 
@@ -84,34 +84,59 @@ function ranks(ns1,ns2) -->t; numbers of both populations are jointly ranked
     u[x].n     = u[x].n + 1 end
   return u end
 
+
+function stats(t)
+   local n,sd,sum=0,0,0
+   for _,v in pairs(t) do n=n+1; sum=sum+v end
+   for _,v in pairs(t) do sd = sd + (v-sum/n)^2 end
+   sd = (sd/(n-1))^.5 
+   return n,sum/n, sd end
+
+
+function cohensd(t1,t2,cohen)
+  local n1,mu1,sd1 = stats(t1)
+  local n2,mu2,sd2 = stats(t2)
+  local pooled =  (((n1-1)*sd1^2 + (n2-1)*sd2^2)/ (n1+n2-2))^.5
+  return math.abs(mu1 - mu2) / pooled >= (cohen or .35) end 
+
 eg={}
 function eg.one()
   print("false",mwu( {8,7,6,2,5,8,7,3},{8,7,6,2,5,8,7,3}))
   print("true",mwu( {8,7,6,2,5,8,7,3}, {9,9,7,8,10,9,6})) end
 
-function eg.two()
+function eg.f(s,f)
   print""
-  print("true",mwu({0.34,0.49,0.51,0.6,.34,.49,.51,.6},{0.6,0.7,0.8,0.9,.6,.7,.8,.9}))
-  print("true",mwu({0.15,0.25,0.4,0.35,0.15,0.25,0.4,0.35},{0.6,0.7,0.8,0.9,0.6,0.7,0.8,0.9}))
-  print("false",mwu({0.6,0.7,0.8,0.9,.6,.7,.8,.9},{0.6,0.7,0.8,0.9,0.6,0.7,0.8,0.9}))
-  print""
-  print("true",mwu({0.34,0.49,0.51,0.6},{0.6,0.7,0.8,0.9}))
-  print("true",mwu({0.15,0.25,0.4,0.35},{0.6,0.7,0.8,0.9}))
-  print("false",mwu({0.6,0.7,0.8,0.9},{0.6,0.7,0.8,0.9})) end
+  print(s,"true",f({0.34,0.49,0.51,0.6,.34,.49,.51,.6},{0.6,0.7,0.8,0.9,.6,.7,.8,.9}))
+  print(s,"true",f({0.15,0.25,0.4,0.35,0.15,0.25,0.4,0.35},{0.6,0.7,0.8,0.9,0.6,0.7,0.8,0.9}))
+  print(s,"false",f({0.6,0.7,0.8,0.9,.6,.7,.8,.9},{0.6,0.7,0.8,0.9,0.6,0.7,0.8,0.9}))
+  print(s,"true",f({0.34,0.49,0.51,0.6},{0.6,0.7,0.8,0.9}))
+  print(s,"true",f({0.15,0.25,0.4,0.35},{0.6,0.7,0.8,0.9}))
+  print(s,"false",f({0.6,0.7,0.8,0.9},{0.6,0.7,0.8,0.9})) end
+
+function eg.two() eg.f("mwu",mwu) end
+function eg.three() eg.f("cohen",cohensd) end
+function eg.four() eg.f("cliffs",cliffsDelta) end
 
 local function gauss(mu,sd,    R)
   R=math.random
   return (mu or 0) + (sd or 1) * math.sqrt(-2 * math.log(R()))
                                * math.cos(2 * math.pi * R()) end
 
-function eg.three()
+function eg.ten()
   for i=1,1 do
     print""
-    local j=1
-    while j < 2 do
-      local t={}; for _=1,100 do t[1+#t] = gauss(10,2)^.5 end
-      local u={}; for k,x in pairs(t) do u[k] = x *j end
-      print(i,j, mwu(t,u),cliffsDelta(t,u))
-      j=j+0.05 end end end 
+    local j=0
+    while j < 1 do
+      local t={}; for _=1,256 do t[1+#t] = gauss(10,1)^.5 end
+      local u={}; for k,v in pairs(t) do u[k]= t[k] + j  end
+      print(i,j, mwu(t,u),cliffsDelta(t,u), cohensd(t,u,.35))
+      j=j+.1 end end end 
 
-eg.three()
+if   pcall(debug.getlocal,4,1) 
+then return {mwu=mwu, cliffsDelta=cliffsDelta, cohensd=cohensd}
+else eg.two()
+     eg.three()
+     eg.four()
+     eg.ten()
+end
+

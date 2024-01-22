@@ -13,7 +13,7 @@ OPTIONS:
   -f --file  csv file (to be read in)            = ../data/auto93.csv
   -h --help  show help                           = false
   -n --n     start by evaluating n items         = 4
-  -N --N     stop after evaluation N items       = 6
+  -N --N     stop after evaluation N items       = 10
   -k --k     a Bayes low frequency hack          = 1
   -m --m     a Bayes low frequency hack          = 2
   -s --seed  random number seed                  = 31210
@@ -130,6 +130,8 @@ function SYM:div(    e)
 function SYM:like(x, prior,tmp)
   return  ((self.has[x] or 0) + the.m*prior)/(self.n +the.m) end
 
+function SYM:small() return 0 end
+
 local NUM=obj"NUM"
 function NUM.new(at,s) 
   return isa(NUM, {at=at or 0, txt=s or "", lo= 1E30, hi= -1E30, mu=0, m2=0, n=0,sd=0,
@@ -156,6 +158,7 @@ function NUM:like(x,_,      nom,denom)
   denom = (self.sd*2.5 + 1E-30)
   return math.min(1,nom/denom) end
 
+function NUM:small() return the.cohen * self:div() end
 --- gap
 local COLS=obj"COLS"
 function COLS.new(t,   x,y,all,col,klass) 
@@ -240,12 +243,16 @@ function DATA:add(x,  fun,    row)
 function DATA:sorter()
   return function(a,b) return a:d2h(self) < b:d2h(self) end  end
 
-function DATA:mid(      t)
-  t={}; for _,col in pairs(self.cols.all) do t[col.at]=col:mid() end
+function DATA:centroid(t)
+    t = {}; for _, col in pairs(self.cols.all) do t[col.at] = col:mid() end
+    return ROW.new(t) end
+  
+function DATA:small(      t)  
+  t={}; for _,col in pairs(self.cols.all) do t[col.at]=col:small() end
   return ROW.new(t) end
 
-function DATA:stats(      t,f)
-  t={}; for _,c in pairs(self.cols.y) do t[c.txt] = getmetatable(c)[f or "mid"](c) end
+function DATA:stats(  cols,f,      t)
+  t={}; for _,c in pairs(cols or self.cols.y) do t[c.txt] = getmetatable(c)[f or "mid"](c) end
   return t end
 
 --- gap
@@ -266,22 +273,18 @@ function NB:add(cols,row,    kl)
 
 --- gap
 function DATA:smo(    testing)
-  local mids,tops,rows,liteRows,darkRows
-  mids,tops = {},{}
-  rows     = shuffle(self.rows)
-  liteRows = slice(rows, 1, the.n)
-  darkRows = slice(rows, the.n+1) 
+  local founds, seens, rows  = {}, {}, shuffle(self.rows) 
+  local liteRows = slice(rows, 1, the.n)
+  local darkRows  = slice(rows, the.n + 1)
   local best,rest
   for i = 1, the.N do
-    local lite          = self:clone(liteRows) 
+    local lite    = self:clone(liteRows) 
     best,rest     = lite:bestRest((#lite.rows)^the.best) 
+    if testing  then seens[i] = best.rows[1]  end -- kinda like precision. what we would show someone
     local todo,selected = lite:what2lookAtNext(darkRows, best, rest)
-    if testing then 
-      table.sort(selected.rows, self:sorter())
-      mids[i] = selected:mid()
-      tops[i] = selected.rows[1]  end
+    if testing then founds[i] = selected:centroid() end -- kimda like recall. what the model would find
     table.insert(liteRows, table.remove(darkRows,todo)) end 
-  return best,mids,tops end
+  return best,founds,seens end
 
 function DATA:bestRest(want,     best,rest)
   best,rest= self:clone(), self:clone()
@@ -363,17 +366,25 @@ function eg.like(     d)
   d= DATA.new(the.file)
   oo(sort(map(d.rows, function(row) return math.log(row:like(d,1000,2)) end))) end  
 
-function eg.smo(    data,best,mids,tops,log2,stats,order)
+function eg.smo(    data,best,founds,seens,log2,stats,_,delta)
   data = DATA.new(the.file)
-  best,mids,tops = data:smo(true)
-  stats =  data:stats()
-  order = keys(stats)
+  _,founds,seens = data:smo(true)
+  stats =  data:stats() 
   log2=function(n) return math.log(n,2) end
-  print(log2(log2(1-.95)/log2(1-the.cohen/6)))
-  print(0,o{all=stats, d2h=data:mid():d2h(data)})
-  for i,mid in pairs(mids) do 
-    if tops[i] then
-      print(the.n+i,o{mid=mid:cols(data.cols.y), top=tops[i]:cols(data.cols.y), midd=mid:d2h(data), topd=tops[i]:d2h(data)})
+  oo(log2(log2(1-.95)/log2(1-the.cohen/6)))
+  small= data:small():cols(data.cols.y)
+  print(0, o { all = stats, small=small, d2h = data:centroid():d2h(data) })
+  delta=function(t,d) 
+    for k,v in pairs(t) do 
+      d= k:find"-$" and stats[k]-t[k] or t[k]-stats[k]
+      t[k] = (d)/small[k] end; return t end
+  for i,found in pairs(founds) do 
+    if seens[i] then
+      print(the.n + i, o { 
+                           --found  = found:cols(data.cols.y), seen = seens[i]:cols(data.cols.y),
+                           founds  = delta(found:cols(data.cols.y)), seens = delta(seens[i]:cols(data.cols.y)),
+                           --foundd = found:d2h(data),         seend = seens[i]:d2h(data)
+                         })
 end end end
   
 --- gap
