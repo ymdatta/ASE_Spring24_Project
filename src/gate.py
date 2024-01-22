@@ -14,90 +14,69 @@ OPTIONS:
   -m --m      low attribute frequency kludge  = 2
   -s --seed   random number seed              = 31210
   -t --todo   start up action                 = 'help' """
-import re,sys
-from typing import List
-from ast import literal_eval as val
+
+import re,sys,ast
 from fileinput import FileInput as file_or_stdin
 
-class box(dict): 
-  __getattr__=dict.get; __setattr__=dict.__setitem__; __repr__=lambda x:o(x)
-#---------------------------------------------------------------------------
-class Col:
-  def __init__(self,txt=" ",at=0):
-    self.txt,self.at,self.goalp = txt,at,(txt[-1] in "!+-")
-  def add(self,x):
-    if x=="?": self.n += 1; self.add1(x)
+def o(d,s=""): 
+ return s+"{"+ (", ".join([f":{k} {v}" for k,v in d.items() if k[0]!="_"]))+"}" 
 
-class Num(Col):
-  def __init__(self,**d):
-    Col.__init__(**d)
-    self.lo, self.hi = 1E30, -1E30
-    self.heaven = 0 if self.txt[-1]=="-" else 1
-  def mid(self, h:hold): 
-    a= h:has(); return a[length(a)//2]
-  def div(self, h:hold): 
-    a= h:has(); return (a[length(a)*.9//1] - a[length(a)*.1//1])/2.56
-  
-class Sym(Col):
-  def __init__(self,**d): Col.__init__(**d) 
-  def mid(self,d: dict) -> float: return max(d, key=d.get)
-  def div(self,d: dict) -> float: return ent(d) 
+class Pretty:
+  def __repr__(self):  return o(self.__dict__, self.__class__.__name__)
 
-class Nums:
-  def __init__(i): i.n,i.mu,i.m,i.sd2 = 0,0,0,0
-  def add(i,x): 
-    if x !="?" :
-      i.n  += 1
-      d     = x - i.mu
-      i.mu += d/i.n
-      i.m2 += d*(x-i.mu)
-      i.sd  = 0 if i.n < 2 else (i.m2/(i.n-1))**.5
+class The(Pretty): 
+  def __init__(self):
+    d = {m[1]:coerce(m[2]) for m in re.finditer(r"--(\w+)[^=]*=\s*(\S+)",__doc__)}
+    return self.__dict__.update(**d)
+  def update(self):
+    d = self.__dict__
+    for k,v in d.items(): 
+      v = str(v)
+      for i,arg in enumerate(sys.argv):
+        if arg in ["-h", "--help"]: sys.exit(print(__doc__))
+        after = "" if i >= len(sys.argv) - 1 else sys.argv[i+1]
+        if arg in ["-"+k[0], "--"+k]: 
+          v = "false" if v=="true" else ("true" if v=="false" else after)
+          d[k] = coerce(v) 
+    return self
 
-class Syms:
-   def __init__(i):  i.has={}
-   def add(i,x):
-     if x != "?" :
-      i.n += 1
-      tmp  = i.has[x] = i.has.get(x,0) + 1
-      if tmp > i.most: i.mode,i.most = x,tmp 
-#--------------------------------------------------------------------
-class Eg:
-  _all = locals() 
-  def one(i): print(1)
-  def _wo(i): print([k for k in Eg._all if k[0] != "_"])
-
-Eg()._wo()
-
-def ent(d):
-  e,n = 0,0
-  for k in d: n += d[k]
-  for k in d: e -= d[k]/n * math.log( d[k]/n, 2)
-  return e
-
-def settings(s): 
-  return box(**{m[1]:val(m[2]) for m in re.finditer(r"--(\w+)[^=]*=\s*(\S+)",s)})
-
-def oo(x): print(o(x)); return x
-def o(x) : return x.__class__.__name__ +"{"+ ( 
-             ", ".join([f":{k} {v}" for k,v in x.items() if k[0]!="_"]))+"}" 
-
-def cli(d: dict) -> dict:
-  for k,v in d.items(): 
-    v = str(v)
-    for i,arg in enumerate(sys.argv):
-      if arg in ["-h", "--help"]: sys.exit(print(__doc__))
-      if arg in ["-"+k[0], "--"+k]: 
-        v = "false" if v=="true" else ("true" if v=="false" else sys.argv[i+1])
-        d[k] = val(v) 
-  return d
+def coerce(s):
+  try: return ast.literal_eval(s)
+  except Exception: return s
 
 def csv(file=None):
   with file_or_stdin(file) as src:
     for line in src:
       line = re.sub(r'([\n\t\r"\’ ]|#.*)', '', line)
-      if line: yield [evil(s.strip()) for s in line.split(",")]
+      if line: yield [coerce(s.strip()) for s in line.split(",")]
 
-the = cli(settings(__doc__))
+def ent(d):
+  e,n = 0,0
+  for k in d: n += d[k]
+  for k in d: e += d[k]/n * math.log( d[k]/n, 2)
+  return -e
+
+def main():
+  rows = [row for row in csv(the.file)]
+  head = rows[0]
+  body = rows[1:]
+  print(head)
+  _ys  = ys(head)
+  a    = [[row[y] for y in _ys] for row in body]
+  cols = [list(x) for x in zip(*a)]
+  for i,col in enumerate(cols):
+    col.sort()
+    print(i, col[0], col[-1])
+
+def ys(row):
+  return [at for at,s in enumerate(row) if s[-1] in "+-!"]
+#-----------------------------------------------------------------------------------------
+class Eg:
+  _all = locals() 
+  def _egs(): return {k:v for k,v in Eg._all.items() if k[0] != "_"}
+
+  def the():  print(the)
 
 #---------------------------------------------------------------------------
-print(the)
+the = The().update()
+main()
