@@ -244,7 +244,7 @@ function DATA:gate2(budget0,budget,some)
 function DATA:split(best,rest,liteRows,darkRows)
   local selected,max,out
   selected = DATA.new{self.cols.names}
-  max = 1E30
+  max = -1E30
   out = 1
   for i,row in pairs(darkRows) do
     local b,r,tmp
