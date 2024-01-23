@@ -72,6 +72,21 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  $(addprefix ~/tmp/, $(FILES:.l
 # 		-o ~/tmp/$^.ps $^ ;               \
 # 	ps2pdf ~/tmp/$^.ps $@ ;  rm ~/tmp/$^.ps; \
 #   open $@
+~/tmp/%.pdf: %.py  ## make pdf
+	mkdir -p ~/tmp
+	echo "a2ps: $^ -> $@" 
+	a2ps                          \
+		-qBR                         \
+		--chars-per-line 90           \
+		--file-align=fill              \
+		--line-numbers=1                \
+		--borders=no                     \
+		--pro=color                       \
+		--columns  2                      \
+		-M letter                           \
+		-o ~/tmp/$^.ps $^ ;               \
+	ps2pdf ~/tmp/$^.ps $@ ;  rm ~/tmp/$^.ps; \
+  open $@
 
 eggate: ## basic demo of GATE
 	lua gate.lua -t gate |column -t
