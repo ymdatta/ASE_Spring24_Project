@@ -82,7 +82,7 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  $(addprefix ~/tmp/, $(FILES:.l
 		--line-numbers=1                \
 		--borders=no                     \
 		--pro=color                       \
-		--columns  2                      \
+		--columns  3                      \
 		-M letter                           \
 		-o ~/tmp/$^.ps $^ ;               \
 	ps2pdf ~/tmp/$^.ps $@ ;  rm ~/tmp/$^.ps; \

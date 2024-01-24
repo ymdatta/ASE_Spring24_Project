@@ -8,7 +8,7 @@ USAGE:
 
 OPTIONS:
   -b --budget0 initial evals                   = 4
-  -B --Budget  subsequent evals                = 30 
+  -B --Budget  subsequent evals                = 10 
   -c --cohen   small effect size               = .35
   -f --file    csv data file name              = '../data/auto93.csv'
   -h --help    show help                       = False
@@ -42,8 +42,11 @@ def clone(data, rows=[], order=False):
   return DATA([data.cols.names] + rows, order=order)  
 
 def centroid(data): 
-  return [(col.mu if c in data.cols.nums else max(col,key=col.get)) 
-           for c,col in enumerate(data.cols.all)]
+  Cs = data.cols
+  return [(C.mu if c in Cs.nums else max(C,key=C.get)) for c,C in enumerate(Cs.all)]
+
+def ycols(data,row): 
+  return [row[c] for c,_ in data.cols.ys.items()]
 
 def NUM(a):
   n,sd,sum, lo,hi = 0,0,0, sys.maxsize, -sys.maxsize
@@ -72,13 +75,14 @@ def like(data,row,nall,nh,m=1,k=2):
 def smo(data,fun=None):  
   done, todo = data.rows[:the.budget0], data.rows[the.budget0:]
   for i in range(the.Budget):
-    data1 = clone(data,done,order=True)
-    n  = int(len(done)**the.Top + .5)
-    j  = what2do(i,clone(data,data1.rows[:n]), 
-                   clone(data,data1.rows[n:]),
-                   len(data1.rows),
-                   todo,
-                   fun) 
+    data1 = clone(data, done, order=True)
+    n = int(len(done)**the.Top + .5)
+    j = what2do(i+the.budget0,
+                clone(data,data1.rows[:n],order=True), 
+                clone(data,data1.rows[n:]),
+                len(data1.rows),
+                todo,
+                fun) 
     done.append(todo.pop(j))
 
 def what2do(i,best,rest,nall,rows,fun):
@@ -88,7 +92,8 @@ def what2do(i,best,rest,nall,rows,fun):
     r = like(rest,row,nall,2,the.m,the.k) 
     if b>r: selected.append(row)
     tmp = abs(b+r) / abs(b-r + 1E-300)
-    if tmp > max:  todo,max = k,tmp  
+    tmp = b #abs(b+r) / abs(b-r + 1E-300)
+    if tmp > max: todo,max = k,tmp  
   if fun: fun(i,best.rows[0], centroid(clone(best,selected)))
   return todo
 #----------------------------------------------------------------------------------------
@@ -124,9 +129,13 @@ def csv(file=None):
       line = re.sub(r'([\n\t\r"\’ ]|#.*)', '', line)
       if line: yield [coerce(s.strip()) for s in line.split(",")]
 
-def rnds(l,n): return [round(x,n) if numeric(x) else x for x in l]
+isa=isinstance
 
-def numeric(x): return isinstance(x, (int, float, complex)) and not isinstance(x, bool)
+def rnds(x,n): 
+  if isa(x,(int,float)):  return x if int(x)==x else round(x,n)
+  if isa(x,(list,tuple)): return [rnds(y,n) for y in x]
+  return x
+
 #----------------------------------------------------------------------------------------
 class Eg:
   def all():
@@ -145,11 +154,12 @@ class Eg:
   def smos():
     print(the.seed)
     d=DATA(csv(the.file),order=False) 
-    print("names,",d.cols.names),
-    print("base,",rnds(centroid(d),2)); print("#")
+    print("names,",ycols(d,d.cols.names))
+    print("base,", rnds(ycols(d,centroid(d)),2)); print("#")
     random.shuffle(d.rows) 
-    smo(d,lambda i,top,mid: print(f"step{i}, ",rnds(top,2)));print("#")
-    print("best,",rnds(clone(d,d.rows,order=True).rows[0],2))
+    smo(d,
+        lambda i,top,mid: print(f"step{i}, ",rnds(ycols(d,top),2)))
+    print("#\nbest,",rnds(ycols(d, clone(d,d.rows,order=True).rows[0]),2))
 
 #----------------------------------------------------------------------------------------
 the = box(**{m[1]:coerce(m[2]) for m in re.finditer(r"--(\w+)[^=]*=\s*(\S+)",__doc__)})
