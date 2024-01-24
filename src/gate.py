@@ -26,23 +26,25 @@ from fileinput import FileInput as file_or_stdin
 def  DATA(lsts,order=False):
   def goalp(s):  return s[-1] in "+-!"
   def heaven(s): return 0 if s[-1] == "-" else 1
-  def nump(s):   return s[0].isupper()  
-  def d2h(lst):
-    return (sum(abs(w - norm(all[c],lst[c]))**2 for c,w in ys.items()) / len(ys))**.5
+  def nump(s):   return s[0].isupper() 
+  def d2h(row):  return distance2heaven(row,cols)
   def NUM(a):
     n,sd,sum, lo,hi = len(a),0,0, sys.maxsize, -sys.maxsize
     if n==0: return box(n=n,sd=0)
     for x in a: n  += 1; sum += x; hi=max(x,hi); lo=min(x,lo)
     for x in a: sd += (x-sum/n)**2 
-    return box(n=n,lo=lo, hi=hi, mu=sum/n, sd= (sd/(n-1+1E-30))**.5)
+    return box(n=n,lo=lo, hi=hi, mu=sum/n, sd= (sd/(n-1+1E-30))**.5) 
   #-----------------------
   names,*rows = list(lsts)
   ys   = {c:heaven(s) for c,s in enumerate(names) if goalp(s)}
   nums = [c           for c,s in enumerate(names) if nump(s)]
   all  = [[y for y in x if y !="?"] for x in zip(*rows)]
   all  = [(NUM(a) if c in nums else Counter(a)) for c,a in enumerate(all)]
-  return box(rows = sorted(rows, key=d2h) if order else rows,
-             cols = box(names=names, ys=ys, nums=nums, all=all))
+  cols = box(names=names, ys=ys, nums=nums, all=all)
+  return box(cols=cols, rows = sorted(rows, key=d2h) if order else rows)
+
+def distance2heaven(lst,Cs): 
+  return (sum(abs(w-norm(Cs.all[c],lst[c]))**2 for c,w in Cs.ys.items())/len(Cs.ys))**.5
 
 def clone(data, rows=[], order=False):
   return DATA([data.cols.names] + rows, order=order)  
@@ -138,10 +140,12 @@ def rnds(x,n):
 
 #----------------------------------------------------------------------------------------
 class Eg:
+  _all = locals()
   def all():
-    sys.exit(sum((f() or 0) for f in [Eg.data, Eg.likes]))
+    errors = [f() for s,f in Eg._all.items() if s[0] !="_" and s !="all"]
+    sys.exit(sum(0 if x==None else x for x in errors))
     
-  def help(): print(__doc__)
+  def help(): print(__doc__);  
   
   def data():
     for i,row in enumerate(DATA([r for r in csv(the.file)]).rows):
@@ -149,7 +153,8 @@ class Eg:
 
   def likes():
     d = DATA( csv(the.file))
-    for row in d.rows: print(like(d, row, 1000, 2, m=the.m, k=the.k))
+    for i,row in enumerate(d.rows): 
+      if i % 25 ==0: print(like(d, row, 1000, 2, m=the.m, k=the.k))
 
   def smos():
     print(the.seed)
@@ -165,4 +170,4 @@ class Eg:
 the = box(**{m[1]:coerce(m[2]) for m in re.finditer(r"--(\w+)[^=]*=\s*(\S+)",__doc__)})
 the = cli(the)
 random.seed(the.seed)
-getattr(Eg, the.todo)()
+getattr(Eg, the.todo, Eg.help)()

@@ -77,12 +77,12 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  $(addprefix ~/tmp/, $(FILES:.l
 	echo "a2ps: $^ -> $@" 
 	a2ps                          \
 		-qBR                         \
-		--chars-per-line 90           \
+		--chars-per-line 100           \
 		--file-align=fill              \
 		--line-numbers=1                \
 		--borders=no                     \
 		--pro=color                       \
-		--columns  3                      \
+		--columns  2                      \
 		-M letter                           \
 		-o ~/tmp/$^.ps $^ ;               \
 	ps2pdf ~/tmp/$^.ps $@ ;  rm ~/tmp/$^.ps; \
