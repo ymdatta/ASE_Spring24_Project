@@ -7,16 +7,16 @@ USAGE:
   python3 gate.lua [OPTIONS] 
 
 OPTIONS:
-  -b --budget0 initial evals                  = 4
-  -B --Budget  subsequent evals               = 10 
-  -c --cohen  small effect size               = .35
-  -f --file   csv data file name              = '../data/auto93.csv'
-  -h --help   show help                       = False
-  -k --k      low class frequency kludge      = 1
-  -m --m      low attribute frequency kludge  = 2
-  -s --seed   random number seed              = 31210 
-  -t --todo   start up action                 = 'help' 
-  -T --Top    best section                    = .5 """
+  -b --budget0 initial evals                   = 4
+  -B --Budget  subsequent evals                = 30 
+  -c --cohen   small effect size               = .35
+  -f --file    csv data file name              = '../data/auto93.csv'
+  -h --help    show help                       = False
+  -k --k       low class frequency kludge      = 1
+  -m --m       low attribute frequency kludge  = 2
+  -s --seed    random number seed              = 31210 
+  -t --todo    start up action                 = 'help' 
+  -T --Top     best section                    = .5 """
 
 import re,sys,ast,math,random
 from collections import Counter
@@ -29,7 +29,7 @@ def  DATA(lsts,order=False):
   def nump(s):   return s[0].isupper()  
   def d2h(lst):
     return (sum(abs(w - norm(all[c],lst[c]))**2 for c,w in ys.items()) / len(ys))**.5
-  #-----------------
+  #-----------------------
   names,*rows = list(lsts)
   ys   = {c:heaven(s) for c,s in enumerate(names) if goalp(s)}
   nums = [c           for c,s in enumerate(names) if nump(s)]
@@ -38,18 +38,18 @@ def  DATA(lsts,order=False):
   return box(rows = sorted(rows, key=d2h) if order else rows,
              cols = box(names=names, ys=ys, nums=nums, all=all))
 
-def clone(data,rows=[],order=False):
-  return DATA( [data.cols.names] +  rows, order )  
+def clone(data, rows=[], order=False):
+  return DATA([data.cols.names] + rows, order=order)  
 
-def centroid(data,rnd=2): 
-  return [(round(col.mu,rnd) if c in data.cols.nums else max(col,key=col.get)) 
+def centroid(data): 
+  return [(col.mu if c in data.cols.nums else max(col,key=col.get)) 
            for c,col in enumerate(data.cols.all)]
 
 def NUM(a):
   n,sd,sum, lo,hi = 0,0,0, sys.maxsize, -sys.maxsize
   for x in a: n  += 1; sum += x; hi=max(x,hi); lo=min(x,lo)
   for x in a: sd += (x-sum/n)**2 
-  return box(n=n,lo=lo, hi=hi, mu=sum/n, sd= (sd/(n-1))**.5)
+  return box(n=n,lo=lo, hi=hi, mu=sum/n, sd= (sd/(n-1+1E-30))**.5)
 
 def like(data,row,nall,nh,m=1,k=2):
   def num(col,x):
@@ -70,24 +70,26 @@ def like(data,row,nall,nh,m=1,k=2):
   return out
  
 def smo(data,fun=None):  
-  done, todo = data.rows[:the.budget], data.rows[the.budget:]
+  done, todo = data.rows[:the.budget0], data.rows[the.budget0:]
   for i in range(the.Budget):
     data1 = clone(data,done,order=True)
     n  = int(len(done)**the.Top + .5)
-    j  = what2do(clone(data,data1.rows[:n]), 
-                 clone(data,data1.rows[n:]),
-                 len(data1.rows),todo,fun) 
+    j  = what2do(i,clone(data,data1.rows[:n]), 
+                   clone(data,data1.rows[n:]),
+                   len(data1.rows),
+                   todo,
+                   fun) 
     done.append(todo.pop(j))
 
-def what2do(best,rest,nall,rows,fun):
+def what2do(i,best,rest,nall,rows,fun):
   todo,max,selected = 0,-1E300,[]
-  for i,row in enumerate(rows):
+  for k,row in enumerate(rows):
     b = like(best,row,nall,2,the.m,the.k)
     r = like(rest,row,nall,2,the.m,the.k) 
     if b>r: selected.append(row)
     tmp = abs(b+r) / abs(b-r + 1E-300)
-    if tmp > max:  todo,max = i,tmp  
-  if fun: fun(best.rows[0], centroid(clone(best,selected)))
+    if tmp > max:  todo,max = k,tmp  
+  if fun: fun(i,best.rows[0], centroid(clone(best,selected)))
   return todo
 #----------------------------------------------------------------------------------------
 def o(d,s=""): 
@@ -122,6 +124,9 @@ def csv(file=None):
       line = re.sub(r'([\n\t\r"\’ ]|#.*)', '', line)
       if line: yield [coerce(s.strip()) for s in line.split(",")]
 
+def rnds(l,n): return [round(x,n) if numeric(x) else x for x in l]
+
+def numeric(x): return isinstance(x, (int, float, complex)) and not isinstance(x, bool)
 #----------------------------------------------------------------------------------------
 class Eg:
   def all():
@@ -138,15 +143,16 @@ class Eg:
     for row in d.rows: print(like(d, row, 1000, 2, m=the.m, k=the.k))
 
   def smos():
-     d=DATA(csv(the.file),order=False) 
-     print(d.cols.names)
-     print(centroid(d)); print("#")
-     random.shuffle(d.rows) 
-     smo(d,lambda top,mid: print(top));print("#")
-     print(clone(d,d.rows,order=True).rows[0])
+    print(the.seed)
+    d=DATA(csv(the.file),order=False) 
+    print("names,",d.cols.names),
+    print("base,",rnds(centroid(d),2)); print("#")
+    random.shuffle(d.rows) 
+    smo(d,lambda i,top,mid: print(f"step{i}, ",rnds(top,2)));print("#")
+    print("best,",rnds(clone(d,d.rows,order=True).rows[0],2))
+
 #----------------------------------------------------------------------------------------
 the = box(**{m[1]:coerce(m[2]) for m in re.finditer(r"--(\w+)[^=]*=\s*(\S+)",__doc__)})
 the = cli(the)
-print(the.seed)
 random.seed(the.seed)
 getattr(Eg, the.todo)()
