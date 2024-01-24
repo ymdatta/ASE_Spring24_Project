@@ -8,7 +8,7 @@ USAGE:
 
 OPTIONS:
   -b --budget0 initial evals                   = 4
-  -B --Budget  subsequent evals                = 10 
+  -B --Budget  subsequent evals                = 6 
   -c --cohen   small effect size               = .35
   -f --file    csv data file name              = '../data/auto93.csv'
   -h --help    show help                       = False
@@ -29,6 +29,12 @@ def  DATA(lsts,order=False):
   def nump(s):   return s[0].isupper()  
   def d2h(lst):
     return (sum(abs(w - norm(all[c],lst[c]))**2 for c,w in ys.items()) / len(ys))**.5
+  def NUM(a):
+    n,sd,sum, lo,hi = len(a),0,0, sys.maxsize, -sys.maxsize
+    if n==0: return box(n=n,sd=0)
+    for x in a: n  += 1; sum += x; hi=max(x,hi); lo=min(x,lo)
+    for x in a: sd += (x-sum/n)**2 
+    return box(n=n,lo=lo, hi=hi, mu=sum/n, sd= (sd/(n-1+1E-30))**.5)
   #-----------------------
   names,*rows = list(lsts)
   ys   = {c:heaven(s) for c,s in enumerate(names) if goalp(s)}
@@ -48,12 +54,6 @@ def centroid(data):
 def ycols(data,row): 
   return [row[c] for c,_ in data.cols.ys.items()]
 
-def NUM(a):
-  n,sd,sum, lo,hi = 0,0,0, sys.maxsize, -sys.maxsize
-  for x in a: n  += 1; sum += x; hi=max(x,hi); lo=min(x,lo)
-  for x in a: sd += (x-sum/n)**2 
-  return box(n=n,lo=lo, hi=hi, mu=sum/n, sd= (sd/(n-1+1E-30))**.5)
-
 def like(data,row,nall,nh,m=1,k=2):
   def num(col,x):
     v = col.sd**2 + 10**-64
@@ -71,7 +71,7 @@ def like(data,row,nall,nh,m=1,k=2):
       inc  = (sym if isinstance(col, Counter) else num)(col, x) 
       out += math.log(inc)
   return out
- 
+
 def smo(data,fun=None):  
   done, todo = data.rows[:the.budget0], data.rows[the.budget0:]
   for i in range(the.Budget):
@@ -91,10 +91,10 @@ def what2do(i,best,rest,nall,rows,fun):
     b = like(best,row,nall,2,the.m,the.k)
     r = like(rest,row,nall,2,the.m,the.k) 
     if b>r: selected.append(row)
-    tmp = abs(b+r) / abs(b-r + 1E-300)
-    tmp = b #abs(b+r) / abs(b-r + 1E-300)
+    #tmp = abs(b+r) / abs(b-r + 1E-300)
+    tmp = b - r #abs(b+r) / abs(b-r + 1E-300)
     if tmp > max: todo,max = k,tmp  
-  if fun: fun(i,best.rows[0], centroid(clone(best,selected)))
+  if fun: fun(i,best.rows[0])
   return todo
 #----------------------------------------------------------------------------------------
 def o(d,s=""): 
@@ -158,7 +158,7 @@ class Eg:
     print("base,", rnds(ycols(d,centroid(d)),2)); print("#")
     random.shuffle(d.rows) 
     smo(d,
-        lambda i,top,mid: print(f"step{i}, ",rnds(ycols(d,top),2)))
+        lambda i,top: print(f"step{i}, ",rnds(ycols(d,top),2)))
     print("#\nbest,",rnds(ycols(d, clone(d,d.rows,order=True).rows[0]),2))
 
 #----------------------------------------------------------------------------------------
