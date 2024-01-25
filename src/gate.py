@@ -1,7 +1,8 @@
 """
 gate: guess, assess, try, expand  
 (c) 2023, Tim Menzies, <timm@ieee.org> BSD-2  
-Learn a little, guess a lot, try the strangest guess, repeat  
+Learn a little, guess a lot, try the strangest guess, repeat    
+src = https://github.com/timm/lo/blob/main/src/gate.py
   
 USAGE:  
   python3 gate.lua [OPTIONS]   
