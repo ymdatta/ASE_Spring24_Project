@@ -56,10 +56,21 @@ class DATA(struct):
   def __init__(self, lsts, order=False):
     names,*rows = list(lsts)
     self.cols = COLS(names,rows)
-    self.rows = sorted(rows, key=lambda row: d2h(row,self.cols)) if order else rows
+    self.rows = sorted(rows, key=lambda row:self.d2h(row)) if order else rows
+
+  def centroid(self): 
+    return [(col.mu if c in self.cols.nums else max(col,key=col.get)) 
+            for c,col in enumerate(self.cols.all)]
 
   def clone(self, rows=[], order=False):
     return DATA([self.cols.names] + rows, order=order)  
+
+  def d2h(self,lst):  
+    return (sum(abs(w-norm(self.cols.all[c], lst[c]))**2 
+                for c,w in self.cols.ys.items())/len(self.cols.ys))**.5 
+
+  def ycols(self,row): 
+    return [row[c] for c,_ in self.cols.ys.items()]
 
   def like(self,row,nall,nh,m=1,k=2):
     def num(col,x):
@@ -84,7 +95,7 @@ class DATA(struct):
     for i in range(the.Budget):
       data1 = self.clone(done, order=True)
       n = int(len(done)**the.Top + .5)
-      j = what2do(i+the.budget0,
+      j = _smo1(i+the.budget0,
                   self.clone(data1.rows[:n],order=True), 
                   self.clone(data1.rows[n:]),
                   len(self.rows),
@@ -92,7 +103,7 @@ class DATA(struct):
                   fun) 
     done.append(todo.pop(j))
 
-def what2do(i,best,rest,nall,rows,fun):
+def _smo1(i,best,rest,nall,rows,fun):
   todo,max,selected = 0,-1E300,[]
   for k,row in enumerate(rows):
     b = best.like(row,nall,2,the.m,the.k)
@@ -103,16 +114,6 @@ def what2do(i,best,rest,nall,rows,fun):
     if tmp > max: todo,max = k,tmp  
   if fun: fun(i,best.rows[0])
   return todo
-
-def d2h(lst,Cs): 
-  return (sum(abs(w-norm(Cs.all[c],lst[c]))**2 for c,w in Cs.ys.items())/len(Cs.ys))**.5
-
-def centroid(data): 
-  Cs = data.cols
-  return [(C.mu if c in Cs.nums else max(C,key=C.get)) for c,C in enumerate(Cs.all)]
-
-def ycols(data,row): 
-  return [row[c] for c,_ in data.cols.ys.items()]
 
 #----------------------------------------------------------------------------------------
 class THE(struct):
@@ -149,7 +150,7 @@ def csv(file=None):
 
 isa=isinstance
 
-def rnds(x,n): 
+def rnds(x,n=2): 
   if isa(x,(int,float)):  return x if int(x)==x else round(x,n)
   if isa(x,(list,tuple)): return [rnds(y,n) for y in x]
   return x
@@ -170,18 +171,20 @@ class Eg:
        if i % 30 == 0 : print(i,row)
 
   def likes():
-    d = DATA( csv(the.file))
+    d = DATA( csv(the.file),order=True)
     for i,row in enumerate(d.rows): 
-      if i % 25 ==0: print(d.like(row, 1000, 2, m=the.m, k=the.k))
+      if i % 25 == 0: 
+          print(i, rnds(d.d2h(row)),
+                rnds(d.like(row, 1000, 2, m=the.m, k=the.k)))
 
   def smos():
     print(the.seed)
     d=DATA(csv(the.file),order=False) 
-    print("names,",ycols(d,d.cols.names))
-    print("base,", rnds(ycols(d,centroid(d)),2)); print("#")
+    print("names,",d.ycols(d.cols.names))
+    print("base,", rnds(d.ycols(d.centroid()),2)); print("#")
     random.shuffle(d.rows) 
-    d.smo(lambda i,top: print(f"step{i}, ",rnds(ycols(d,top),2)))
-    print("#\nbest,",rnds(ycols(d, d.clone(d.rows,order=True).rows[0]),2))
+    d.smo(lambda i,top: print(f"step{i}, ",rnds(d.ycols(top),2)))
+    print("#\nbest,",rnds(d.ycols( d.clone(d.rows,order=True).rows[0]),2))
 
 #----------------------------------------------------------------------------------------
 the = THE(__doc__)
