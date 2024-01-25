@@ -6,12 +6,12 @@
 <meta name="generator" content="pdoc 0.10.0" />
 <title>gate API documentation</title>
 <meta name="description" content="gate: guess, assess, try, expand
-(c) 2023, Tim Menzies, &lt;timm@ieee.org&gt; BSD-2
+(c) 2023, Tim Menzies, &lt;timm@ieee.org&gt;, BSD-2
 Learn a little, guess a lot, try the strangest guess, repeat
-src …" />
+…" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
-<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/atom-one-light.min.css" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github-gist.min.css" crossorigin>
 <style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
 <style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
 <style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
@@ -26,7 +26,7 @@ src …" />
 </header>
 <section id="section-intro">
 <p>gate: guess, assess, try, expand<br>
-(c) 2023, Tim Menzies, <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#116;&#105;&#109;&#109;&#64;&#105;&#101;&#101;&#101;&#46;&#111;&#114;&#103;">&#116;&#105;&#109;&#109;&#64;&#105;&#101;&#101;&#101;&#46;&#111;&#114;&#103;</a> BSD-2<br>
+(c) 2023, Tim Menzies, <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#116;&#105;&#109;&#109;&#64;&#105;&#101;&#101;&#101;&#46;&#111;&#114;&#103;">&#116;&#105;&#109;&#109;&#64;&#105;&#101;&#101;&#101;&#46;&#111;&#114;&#103;</a>, BSD-2<br>
 Learn a little, guess a lot, try the strangest guess, repeat
 <br>
 src = <a href="https://github.com/timm/lo/blob/main/src/gate.py">https://github.com/timm/lo/blob/main/src/gate.py</a></p>
@@ -52,7 +52,7 @@ python3 gate.lua [OPTIONS]
 </summary>
 <pre><code class="python">&#34;&#34;&#34;
 gate: guess, assess, try, expand  
-(c) 2023, Tim Menzies, &lt;timm@ieee.org&gt; BSD-2  
+(c) 2023, Tim Menzies, &lt;timm@ieee.org&gt;, BSD-2  
 Learn a little, guess a lot, try the strangest guess, repeat    
 src = https://github.com/timm/lo/blob/main/src/gate.py
   
@@ -113,8 +113,12 @@ class DATA(struct):
     self.cols = COLS(names,rows)
     self.rows = sorted(rows, key=lambda row:self.d2h(row)) if order else rows
 
-  def centroid(self): 
+  def mid(self): 
     return [(col.mu if c in self.cols.nums else max(col,key=col.get)) 
+            for c,col in enumerate(self.cols.all)] 
+  
+  def div(self): 
+    return [(col.sd if c in self.cols.nums else entropy(col)) 
             for c,col in enumerate(self.cols.all)]
 
   def clone(self, rows=[], order=False):
@@ -197,6 +201,10 @@ def coerce(s):
 def norm(col,x):
   return x if x==&#34;?&#34; else (x - col.lo)/(col.hi - col.lo + 1E-30) 
 
+def entropy(d): 
+  n = sum(d.values()) 
+  return -sum(v/n*math.log(v/n,2) for _,v in d.items() if v&gt;0)
+
 def csv(file=None):
   with file_or_stdin(file) as src:
     for line in src:
@@ -233,6 +241,15 @@ class Eg:
                 rnds(d.like(row, 1000, 2, m=the.m, k=the.k)))
 
   def smos():
+    print(the.seed)
+    d=DATA(csv(the.file),order=False) 
+    print(&#34;names,&#34;,d.ycols(d.cols.names))
+    print(&#34;base,&#34;, rnds(d.ycols(d.centroid()),2)); print(&#34;#&#34;)
+    random.shuffle(d.rows) 
+    d.smo(lambda i,top: print(f&#34;step{i}, &#34;,rnds(d.ycols(top),2)))
+    print(&#34;#\nbest,&#34;,rnds(d.ycols( d.clone(d.rows,order=True).rows[0]),2))
+
+  def smos20():
     print(the.seed)
     d=DATA(csv(the.file),order=False) 
     print(&#34;names,&#34;,d.ycols(d.cols.names))
@@ -283,6 +300,20 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
     for line in src:
       line = re.sub(r&#39;([\n\t\r&#34;\’ ]|#.*)&#39;, &#39;&#39;, line)
       if line: yield [coerce(s.strip()) for s in line.split(&#34;,&#34;)]</code></pre>
+</details>
+</dd>
+<dt id="gate.entropy"><code class="name flex">
+<span>def <span class="ident">entropy</span></span>(<span>d)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def entropy(d): 
+  n = sum(d.values()) 
+  return -sum(v/n*math.log(v/n,2) for _,v in d.items() if v&gt;0)</code></pre>
 </details>
 </dd>
 <dt id="gate.isGoal"><code class="name flex">
@@ -428,8 +459,12 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
     self.cols = COLS(names,rows)
     self.rows = sorted(rows, key=lambda row:self.d2h(row)) if order else rows
 
-  def centroid(self): 
+  def mid(self): 
     return [(col.mu if c in self.cols.nums else max(col,key=col.get)) 
+            for c,col in enumerate(self.cols.all)] 
+  
+  def div(self): 
+    return [(col.sd if c in self.cols.nums else entropy(col)) 
             for c,col in enumerate(self.cols.all)]
 
   def clone(self, rows=[], order=False):
@@ -479,20 +514,6 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 </ul>
 <h3>Methods</h3>
 <dl>
-<dt id="gate.DATA.centroid"><code class="name flex">
-<span>def <span class="ident">centroid</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def centroid(self): 
-  return [(col.mu if c in self.cols.nums else max(col,key=col.get)) 
-          for c,col in enumerate(self.cols.all)]</code></pre>
-</details>
-</dd>
 <dt id="gate.DATA.clone"><code class="name flex">
 <span>def <span class="ident">clone</span></span>(<span>self, rows=[], order=False)</span>
 </code></dt>
@@ -518,6 +539,20 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <pre><code class="python">def d2h(self,lst):  
   return (sum(abs(w-norm(self.cols.all[c], lst[c]))**2 
               for c,w in self.cols.ys.items())/len(self.cols.ys))**.5 </code></pre>
+</details>
+</dd>
+<dt id="gate.DATA.div"><code class="name flex">
+<span>def <span class="ident">div</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def div(self): 
+  return [(col.sd if c in self.cols.nums else entropy(col)) 
+          for c,col in enumerate(self.cols.all)]</code></pre>
 </details>
 </dd>
 <dt id="gate.DATA.like"><code class="name flex">
@@ -546,6 +581,20 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
       inc  = (sym if isinstance(col, Counter) else num)(col, x) 
       out += math.log(inc)
   return out</code></pre>
+</details>
+</dd>
+<dt id="gate.DATA.mid"><code class="name flex">
+<span>def <span class="ident">mid</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def mid(self): 
+  return [(col.mu if c in self.cols.nums else max(col,key=col.get)) 
+          for c,col in enumerate(self.cols.all)] </code></pre>
 </details>
 </dd>
 <dt id="gate.DATA.smo"><code class="name flex">
@@ -617,6 +666,15 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
                 rnds(d.like(row, 1000, 2, m=the.m, k=the.k)))
 
   def smos():
+    print(the.seed)
+    d=DATA(csv(the.file),order=False) 
+    print(&#34;names,&#34;,d.ycols(d.cols.names))
+    print(&#34;base,&#34;, rnds(d.ycols(d.centroid()),2)); print(&#34;#&#34;)
+    random.shuffle(d.rows) 
+    d.smo(lambda i,top: print(f&#34;step{i}, &#34;,rnds(d.ycols(top),2)))
+    print(&#34;#\nbest,&#34;,rnds(d.ycols( d.clone(d.rows,order=True).rows[0]),2))
+
+  def smos20():
     print(the.seed)
     d=DATA(csv(the.file),order=False) 
     print(&#34;names,&#34;,d.ycols(d.cols.names))
@@ -706,6 +764,25 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def smos():
+  print(the.seed)
+  d=DATA(csv(the.file),order=False) 
+  print(&#34;names,&#34;,d.ycols(d.cols.names))
+  print(&#34;base,&#34;, rnds(d.ycols(d.centroid()),2)); print(&#34;#&#34;)
+  random.shuffle(d.rows) 
+  d.smo(lambda i,top: print(f&#34;step{i}, &#34;,rnds(d.ycols(top),2)))
+  print(&#34;#\nbest,&#34;,rnds(d.ycols( d.clone(d.rows,order=True).rows[0]),2))</code></pre>
+</details>
+</dd>
+<dt id="gate.Eg.smos20"><code class="name flex">
+<span>def <span class="ident">smos20</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def smos20():
   print(the.seed)
   d=DATA(csv(the.file),order=False) 
   print(&#34;names,&#34;,d.ycols(d.cols.names))
@@ -830,6 +907,7 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <ul class="two-column">
 <li><code><a title="gate.coerce" href="#gate.coerce">coerce</a></code></li>
 <li><code><a title="gate.csv" href="#gate.csv">csv</a></code></li>
+<li><code><a title="gate.entropy" href="#gate.entropy">entropy</a></code></li>
 <li><code><a title="gate.isGoal" href="#gate.isGoal">isGoal</a></code></li>
 <li><code><a title="gate.isHeaven" href="#gate.isHeaven">isHeaven</a></code></li>
 <li><code><a title="gate.isNum" href="#gate.isNum">isNum</a></code></li>
@@ -847,10 +925,11 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <li>
 <h4><code><a title="gate.DATA" href="#gate.DATA">DATA</a></code></h4>
 <ul class="two-column">
-<li><code><a title="gate.DATA.centroid" href="#gate.DATA.centroid">centroid</a></code></li>
 <li><code><a title="gate.DATA.clone" href="#gate.DATA.clone">clone</a></code></li>
 <li><code><a title="gate.DATA.d2h" href="#gate.DATA.d2h">d2h</a></code></li>
+<li><code><a title="gate.DATA.div" href="#gate.DATA.div">div</a></code></li>
 <li><code><a title="gate.DATA.like" href="#gate.DATA.like">like</a></code></li>
+<li><code><a title="gate.DATA.mid" href="#gate.DATA.mid">mid</a></code></li>
 <li><code><a title="gate.DATA.smo" href="#gate.DATA.smo">smo</a></code></li>
 <li><code><a title="gate.DATA.ycols" href="#gate.DATA.ycols">ycols</a></code></li>
 </ul>
@@ -864,6 +943,7 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <li><code><a title="gate.Eg.likes" href="#gate.Eg.likes">likes</a></code></li>
 <li><code><a title="gate.Eg.nums" href="#gate.Eg.nums">nums</a></code></li>
 <li><code><a title="gate.Eg.smos" href="#gate.Eg.smos">smos</a></code></li>
+<li><code><a title="gate.Eg.smos20" href="#gate.Eg.smos20">smos20</a></code></li>
 </ul>
 </li>
 <li>

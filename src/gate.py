@@ -1,6 +1,6 @@
 """
 gate: guess, assess, try, expand  
-(c) 2023, Tim Menzies, <timm@ieee.org> BSD-2  
+(c) 2023, Tim Menzies, <timm@ieee.org>, BSD-2  
 Learn a little, guess a lot, try the strangest guess, repeat    
 src = https://github.com/timm/lo/blob/main/src/gate.py
   
@@ -61,8 +61,12 @@ class DATA(struct):
     self.cols = COLS(names,rows)
     self.rows = sorted(rows, key=lambda row:self.d2h(row)) if order else rows
 
-  def centroid(self): 
+  def mid(self): 
     return [(col.mu if c in self.cols.nums else max(col,key=col.get)) 
+            for c,col in enumerate(self.cols.all)] 
+  
+  def div(self): 
+    return [(col.sd if c in self.cols.nums else entropy(col)) 
             for c,col in enumerate(self.cols.all)]
 
   def clone(self, rows=[], order=False):
@@ -145,6 +149,10 @@ def coerce(s):
 def norm(col,x):
   return x if x=="?" else (x - col.lo)/(col.hi - col.lo + 1E-30) 
 
+def entropy(d): 
+  n = sum(d.values()) 
+  return -sum(v/n*math.log(v/n,2) for _,v in d.items() if v>0)
+
 def csv(file=None):
   with file_or_stdin(file) as src:
     for line in src:
@@ -181,6 +189,15 @@ class Eg:
                 rnds(d.like(row, 1000, 2, m=the.m, k=the.k)))
 
   def smos():
+    print(the.seed)
+    d=DATA(csv(the.file),order=False) 
+    print("names,",d.ycols(d.cols.names))
+    print("base,", rnds(d.ycols(d.centroid()),2)); print("#")
+    random.shuffle(d.rows) 
+    d.smo(lambda i,top: print(f"step{i}, ",rnds(d.ycols(top),2)))
+    print("#\nbest,",rnds(d.ycols( d.clone(d.rows,order=True).rows[0]),2))
+
+  def smos20():
     print(the.seed)
     d=DATA(csv(the.file),order=False) 
     print("names,",d.ycols(d.cols.names))
