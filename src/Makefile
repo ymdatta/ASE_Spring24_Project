@@ -88,6 +88,9 @@ docs: $(addprefix ../docs/, $(FILES:.lua=.html))  $(addprefix ~/tmp/, $(FILES:.l
 	ps2pdf ~/tmp/$^.ps $@ ;  rm ~/tmp/$^.ps; \
   open $@
 
+../docs/gate.html: gate.py
+	pdoc --html --force   --template-dir ../docs -o ../docs gate.py
+
 eggate: ## basic demo of GATE
 	lua gate.lua -t gate |column -t
 

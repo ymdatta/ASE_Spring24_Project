@@ -1,31 +1,33 @@
 """
-gate: guess, assess, try, expand
-(c) 2023, Tim Menzies, BSD-2
-Learn a little, guess a lot, try the strangest guess, repeat
+gate: guess, assess, try, expand  
+(c) 2023, Tim Menzies, <timm@ieee.org> BSD-2  
+Learn a little, guess a lot, try the strangest guess, repeat  
+  
+USAGE:  
+  python3 gate.lua [OPTIONS]   
+  
+OPTIONS:  
 
-USAGE:
-  python3 gate.lua [OPTIONS] 
-
-OPTIONS:
-  -b --budget0 initial evals                   = 4
-  -B --Budget  subsequent evals                = 6 
-  -c --cohen   small effect size               = .35
-  -f --file    csv data file name              = '../data/auto93.csv'
-  -h --help    show help                       = False
-  -k --k       low class frequency kludge      = 1
-  -m --m       low attribute frequency kludge  = 2
-  -s --seed    random number seed              = 31210 
-  -t --todo    start up action                 = 'help' 
-  -T --Top     best section                    = .5 """
+     -b --budget0 initial evals                   = 4  
+     -B --Budget  subsequent evals                = 6   
+     -c --cohen   small effect size               = .35  
+     -f --file    csv data file name              = '../data/auto93.csv'  
+     -h --help    show help                       = False  
+     -k --k       low class frequency kludge      = 1  
+     -m --m       low attribute frequency kludge  = 2  
+     -s --seed    random number seed              = 31210   
+     -t --todo    start up action                 = 'help'   
+     -T --Top     best section                    = .5   
+"""
 
 import re,sys,ast,math,random
 from collections import Counter
 from fileinput import FileInput as file_or_stdin
 
 #----------------------------------------------------------------------------------------
-def goalp(s):  return s[-1] in "+-!"
-def heaven(s): return 0 if s[-1] == "-" else 1
-def nump(s):   return s[0].isupper() 
+def isGoal(s):  return s[-1] in "+-!"
+def isHeaven(s): return 0 if s[-1] == "-" else 1
+def isNum(s):   return s[0].isupper() 
 
 #----------------------------------------------------------------------------------------
 class struct:
@@ -46,8 +48,8 @@ class NUM(struct):
 class COLS(struct):
   def __init__(self,names,rows):
     self.names = names
-    self.ys    = {c:heaven(s) for c,s in enumerate(self.names) if goalp(s)}
-    self.nums  = [c           for c,s in enumerate(self.names) if nump(s)]
+    self.ys    = {c:isHeaven(s) for c,s in enumerate(self.names) if isGoal(s)}
+    self.nums  = [c           for c,s in enumerate(self.names) if isNum(s)]
     tmp        = [[y for y in x if y !="?"] for x in zip(*rows)]
     self.all   = [(NUM if c in self.nums else Counter)(a) for c,a in enumerate(tmp)]
 
@@ -95,7 +97,7 @@ class DATA(struct):
     for i in range(the.Budget):
       data1 = self.clone(done, order=True)
       n = int(len(done)**the.Top + .5)
-      j = _smo1(i+the.budget0,
+      j = smo1(i+the.budget0,
                   self.clone(data1.rows[:n],order=True), 
                   self.clone(data1.rows[n:]),
                   len(self.rows),
@@ -103,7 +105,7 @@ class DATA(struct):
                   fun) 
     done.append(todo.pop(j))
 
-def _smo1(i,best,rest,nall,rows,fun):
+def smo1(i,best,rest,nall,rows,fun):
   todo,max,selected = 0,-1E300,[]
   for k,row in enumerate(rows):
     b = best.like(row,nall,2,the.m,the.k)
