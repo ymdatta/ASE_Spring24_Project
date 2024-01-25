@@ -65,8 +65,8 @@ class DATA(struct):
     return [(col.mu if c in self.cols.nums else max(col,key=col.get)) 
             for c,col in enumerate(self.cols.all)] 
   
-  def div(self): 
-    return [(col.sd if c in self.cols.nums else entropy(col)) 
+  def small(self): 
+    return [(col.sd*the.cohen if c in self.cols.nums else 0)
             for c,col in enumerate(self.cols.all)]
 
   def clone(self, rows=[], order=False):
@@ -192,7 +192,7 @@ class Eg:
     print(the.seed)
     d=DATA(csv(the.file),order=False) 
     print("names,",d.ycols(d.cols.names))
-    print("base,", rnds(d.ycols(d.centroid()),2)); print("#")
+    print("base,", rnds(d.ycols(d.mid()),2)); print("#")
     random.shuffle(d.rows) 
     d.smo(lambda i,top: print(f"step{i}, ",rnds(d.ycols(top),2)))
     print("#\nbest,",rnds(d.ycols( d.clone(d.rows,order=True).rows[0]),2))
@@ -200,10 +200,14 @@ class Eg:
   def smos20():
     print(the.seed)
     d=DATA(csv(the.file),order=False) 
-    print("names,",d.ycols(d.cols.names))
-    print("base,", rnds(d.ycols(d.centroid()),2)); print("#")
+    names = d.ycols(d.cols.names)
+    print("names,",names)
+    print("mid,", rnds(d.ycols(d.mid()),2));  
+    small= d.ycols(d.small())
+    print("small,", rnds(small,2)); print("#")
     random.shuffle(d.rows) 
-    d.smo(lambda i,top: print(f"step{i}, ",rnds(d.ycols(top),2)))
+    def deltas(ys): return [(delta(y,small,name) for y,small,name in zip(ys,small,name)]
+    d.smo(lambda i,top: print(f"step{i}, ",rnds(deltas(d.ycols(top)),2)))
     print("#\nbest,",rnds(d.ycols( d.clone(d.rows,order=True).rows[0]),2))
 
 #----------------------------------------------------------------------------------------
