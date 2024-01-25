@@ -27,38 +27,85 @@ def goalp(s):  return s[-1] in "+-!"
 def heaven(s): return 0 if s[-1] == "-" else 1
 def nump(s):   return s[0].isupper() 
 
-class BOX:
+#----------------------------------------------------------------------------------------
+class struct:
   def __init__(self,**d) : self.__dict__.update(d)
-  __repr = lambda self: o(self.__dict__, self.__class__.__name__)
+  __repr__ = lambda self: o(self.__dict__, self.__class__.__name__)
 
-class NUM(BOX):
+#----------------------------------------------------------------------------------------
+class NUM(struct):
   def __init__(self,lst):
-    self.n, self.sd, self.mu, self.lo, self.hi = len(a),0,0, sys.maxsize, -sys.maxsize
+    self.n, self.sd, self.mu, self.lo, self.hi = len(lst),0,0, sys.maxsize, -sys.maxsize
     if self.n != 0: 
       tmp, self.mu  = 0, sum(lst) / self.n
       for x in lst: 
         tmp += (x-self.mu)**2; self.hi=max(x,self.hi); self.lo=min(x,self.lo)
       self.sd = (tmp/(self.n - 1+1E-30))**.5 
 
-class COLS(BOX):
-  def __init__(self,names):
+#----------------------------------------------------------------------------------------
+class COLS(struct):
+  def __init__(self,names,rows):
     self.names = names
     self.ys    = {c:heaven(s) for c,s in enumerate(self.names) if goalp(s)}
     self.nums  = [c           for c,s in enumerate(self.names) if nump(s)]
-    tmp        = [[y for y in x if y !="?"] for x in zip(*self.rows)]
-    self.all   = [(NUM(a) if c in self.nums else Counter(a)) for c,a in enumerate(tmp)]
+    tmp        = [[y for y in x if y !="?"] for x in zip(*rows)]
+    self.all   = [(NUM if c in self.nums else Counter)(a) for c,a in enumerate(tmp)]
 
-class DATA(BOX):
+#----------------------------------------------------------------------------------------
+class DATA(struct):
   def __init__(self, lsts, order=False):
     names,*rows = list(lsts)
-    self.cols = COLS(names)
+    self.cols = COLS(names,rows)
     self.rows = sorted(rows, key=lambda row: d2h(row,self.cols)) if order else rows
+
+  def clone(self, rows=[], order=False):
+    return DATA([self.cols.names] + rows, order=order)  
+
+  def like(self,row,nall,nh,m=1,k=2):
+    def num(col,x):
+      v = col.sd**2 + 10**-64
+      nom = math.e**(-1*(x - col.mu)**2/(2*v)) + 10**-64
+      denom = (2*math.pi*v)**.5
+      return min(1, nom/(denom + 10**-64))
+    def sym(col,x):
+      return (col.get(x, 0) + m*prior) / (len(self.rows) + m)
+    #------------------------------------------
+    prior = (len(self.rows) + k) / (nall + k*nh)
+    out   = math.log(prior)
+    for c,x in enumerate(row):
+      if x != "?" and c not in self.cols.ys:
+        col  = self.cols.all[c]
+        inc  = (sym if isinstance(col, Counter) else num)(col, x) 
+        out += math.log(inc)
+    return out
+
+  def smo(self,fun=None):  
+    done, todo = self.rows[:the.budget0], self.rows[the.budget0:]
+    for i in range(the.Budget):
+      data1 = self.clone(done, order=True)
+      n = int(len(done)**the.Top + .5)
+      j = what2do(i+the.budget0,
+                  self.clone(data1.rows[:n],order=True), 
+                  self.clone(data1.rows[n:]),
+                  len(self.rows),
+                  todo,
+                  fun) 
+    done.append(todo.pop(j))
+
+def what2do(i,best,rest,nall,rows,fun):
+  todo,max,selected = 0,-1E300,[]
+  for k,row in enumerate(rows):
+    b = best.like(row,nall,2,the.m,the.k)
+    r = rest.like(row,nall,2,the.m,the.k) 
+    if b>r: selected.append(row)
+    #tmp = abs(b+r) / abs(b-r + 1E-300)
+    tmp = b - r #abs(b+r) / abs(b-r + 1E-300)
+    if tmp > max: todo,max = k,tmp  
+  if fun: fun(i,best.rows[0])
+  return todo
 
 def d2h(lst,Cs): 
   return (sum(abs(w-norm(Cs.all[c],lst[c]))**2 for c,w in Cs.ys.items())/len(Cs.ys))**.5
-
-def clone(data, rows=[], order=False):
-  return DATA([data.cols.names] + rows, order=order)  
 
 def centroid(data): 
   Cs = data.cols
@@ -67,67 +114,14 @@ def centroid(data):
 def ycols(data,row): 
   return [row[c] for c,_ in data.cols.ys.items()]
 
-def like(data,row,nall,nh,m=1,k=2):
-  def num(col,x):
-    v = col.sd**2 + 10**-64
-    nom = math.e**(-1*(x - col.mu)**2/(2*v)) + 10**-64
-    denom = (2*math.pi*v)**.5
-    return min(1, nom/(denom + 10**-64))
-  def sym(col,x):
-    return (col.get(x, 0) + m*prior) / (len(data.rows) + m)
-  #------------------------------------------
-  prior = (len(data.rows) + k) / (nall + k*nh)
-  out   = math.log(prior)
-  for c,x in enumerate(row):
-    if x != "?" and c not in data.cols.ys:
-      col  = data.cols.all[c]
-      inc  = (sym if isinstance(col, Counter) else num)(col, x) 
-      out += math.log(inc)
-  return out
-
-def smo(data,fun=None):  
-  done, todo = data.rows[:the.budget0], data.rows[the.budget0:]
-  for i in range(the.Budget):
-    data1 = clone(data, done, order=True)
-    n = int(len(done)**the.Top + .5)
-    j = what2do(i+the.budget0,
-                clone(data,data1.rows[:n],order=True), 
-                clone(data,data1.rows[n:]),
-                len(data1.rows),
-                todo,
-                fun) 
-    done.append(todo.pop(j))
-
-def what2do(i,best,rest,nall,rows,fun):
-  todo,max,selected = 0,-1E300,[]
-  for k,row in enumerate(rows):
-    b = like(best,row,nall,2,the.m,the.k)
-    r = like(rest,row,nall,2,the.m,the.k) 
-    if b>r: selected.append(row)
-    #tmp = abs(b+r) / abs(b-r + 1E-300)
-    tmp = b - r #abs(b+r) / abs(b-r + 1E-300)
-    if tmp > max: todo,max = k,tmp  
-  if fun: fun(i,best.rows[0])
-  return todo
-
-#----------------------------------------------------------------------------------------
-def o(d,s=""): 
-  return s+"{"+(", ".join([f":{k} {v}" for k,v in d.items() if k[0]!="_"]))+"}" 
-
-def coerce(s):
-  try: return ast.literal_eval(s)
-  except Exception: return s
-
-def norm(col,x):
-  return x if x=="?" else (x - col.lo)/(col.hi - col.lo + 1E-30) 
-
-class THE(BOX):
-  def __init__(i,txt):
+#----------------------------------------------------------------------------------------
+class THE(struct):
+  def __init__(self,txt):
     self.help = txt
     d = {m[1]:coerce(m[2]) for m in re.finditer(r"--(\w+)[^=]*=\s*(\S+)",txt)}
     self.__dict__.update(d)
-  def cli(i)
-    for k,v in self.__init__.items(): 
+  def cli(self):
+    for k,v in self.__dict__.items(): 
       v = str(v)
       for c,arg in enumerate(sys.argv):
         if arg in ["-h", "--help"]: sys.exit(self.help)
@@ -135,6 +129,17 @@ class THE(BOX):
         if arg in ["-"+k[0], "--"+k]: 
           v = "false" if v=="true" else ("true" if v=="false" else after)
           self.__dict__[k] = coerce(v) 
+          
+def o(d,s=""): 
+  return s+"{"+(", ".join([f":{k} {v}" for k,v in d.items() if k[0]!="_"]))+"}" 
+
+#----------------------------------------------------------------------------------------
+def coerce(s):
+  try: return ast.literal_eval(s)
+  except Exception: return s
+
+def norm(col,x):
+  return x if x=="?" else (x - col.lo)/(col.hi - col.lo + 1E-30) 
 
 def csv(file=None):
   with file_or_stdin(file) as src:
@@ -167,7 +172,7 @@ class Eg:
   def likes():
     d = DATA( csv(the.file))
     for i,row in enumerate(d.rows): 
-      if i % 25 ==0: print(like(d, row, 1000, 2, m=the.m, k=the.k))
+      if i % 25 ==0: print(d.like(row, 1000, 2, m=the.m, k=the.k))
 
   def smos():
     print(the.seed)
@@ -175,8 +180,8 @@ class Eg:
     print("names,",ycols(d,d.cols.names))
     print("base,", rnds(ycols(d,centroid(d)),2)); print("#")
     random.shuffle(d.rows) 
-    smo(d, lambda i,top: print(f"step{i}, ",rnds(ycols(d,top),2)))
-    print("#\nbest,",rnds(ycols(d, clone(d,d.rows,order=True).rows[0]),2))
+    d.smo(lambda i,top: print(f"step{i}, ",rnds(ycols(d,top),2)))
+    print("#\nbest,",rnds(ycols(d, d.clone(d.rows,order=True).rows[0]),2))
 
 #----------------------------------------------------------------------------------------
 the = THE(__doc__)
