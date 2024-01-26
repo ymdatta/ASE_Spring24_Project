@@ -3,20 +3,25 @@ gate: Guess, Assess, Try the strangest thing, Expand, repeat
 (c) 2023, Tim Menzies, <timm@ieee.org>, BSD-2  
   
 USAGE:    
-python3 gate.lua [OPTIONS]   
+python3 gate.py [OPTIONS]   
   
 OPTIONS:  
 
-     -b --budget0 initial evals                   = 4  
-     -B --Budget  subsequent evals                = 6   
-     -c --cohen   small effect size               = .35  
-     -f --file    csv data file name              = '../data/auto93.csv'  
-     -h --help    show help                       = False  
-     -k --k       low class frequency kludge      = 1  
-     -m --m       low attribute frequency kludge  = 2  
-     -s --seed    random number seed              = 31210   
-     -t --todo    start up action                 = 'help'   
-     -T --Top     best section                    = .5   
+
+
+     -b --budget0     initial evals                   = 4  
+     -B --Budget      subsequent evals                = 6   
+     -c --cohen       small effect size               = .35  
+     -c --confidence  staistical confidence           =.05
+     -e --effectSize  non-parametric msall detal      = 0.2385
+     -E --Experiments number of Bootstraops           = 512
+     -f --file        csv data file name              = '../data/auto93.csv'  
+     -h --help        show help                       = False  
+     -k --k           low class frequency kludge      = 1  
+     -m --m           low attribute frequency kludge  = 2  
+     -s --seed        random number seed              = 31210   
+     -t --todo        start up action                 = 'help'   
+     -T --Top        best section                    = .5   
 """
 
 import re,sys,ast,math,random
@@ -37,7 +42,8 @@ class struct:
 #----------------------------------------------------------------------------------------
 class NUM(struct):
   "stores mean, standard deviation, low, high, of a list of numbers"
-  def __init__(self,lst):
+  def __init__(self,lst,txt="",rank=0):
+    self.txt, self.rank = =txt,0
     self.n, self.sd, self.mu, self.lo, self.hi = len(lst),0,0, sys.maxsize, -sys.maxsize
     if self.n != 0: 
       tmp, self.mu  = 0, sum(lst) / self.n
@@ -186,6 +192,39 @@ def rnds(x,n=2):
   if isa(x,(int,float)):  return x if int(x)==x else round(x,n)
   if isa(x,(list,tuple)): return [rnds(y,n) for y in x]
   return x
+
+def different(x,y):
+  "non-parametric effect size and significance test"
+  return cliffsDelta(x,y) and bootstrap(x,y)
+
+def cliffsDelta(x,y,effectSize=.2):
+  """non-parametric effect size. threshold is border between small=.11 and medium=.28 
+     from Table1 of  https://doi.org/10.3102/10769986025002101"""
+  if len(x) > 10*len(y) : return cliffsDelta(random.choices(x,10*len(y)),y)
+  if len(y) > 10*len(x) : return cliffsDelta(x, random.choices(y,10*len(x)))
+  n,lt,gt = 0,0,0
+  for x1 in x:
+    for y1 in y:
+      n = n + 1
+      if x1 > y1: gt = gt + 1
+      if x1 < y1: lt = lt + 1
+  return abs(lt - gt)/n > effectSize # true if different
+
+def bootstrap(y0,z0,confidence=.05,Experiments=512,):
+  """non-parametric significance test From Introduction to Bootstrap, 
+     Efron and Tibshirani, 1993, chapter 20. https://doi.org/10.1201/9780429246593"""
+  obs = lambda x,y: abs(x.mu-y.mu) / ((x.sd**2/x.n + y.ad**2/y.n)**.5 + 1E-30)
+  x, y, z = NUM(y0+z0), NUM(y0), NUM(z0)
+  d = obs(y,z)
+  yhat = [y1 - y.mu + x.mu for y1 in y0]
+  zhat = [z1 - z.mu + x.mu for z1 in z0]
+  n      = 0
+  for _ in range(Experiments):
+    ynum = NUM(random.choices(yhat,k=len(yhat)))
+    znum = NUM(random.choices(zhat,k=len(zhat)))
+    if obs(ynum, znum) > d:
+      n += 1
+  return n / Experiments < confidence # true if different
 
 #----------------------------------------------------------------------------------------
 class Eg:
