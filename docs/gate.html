@@ -5,10 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>gate API documentation</title>
-<meta name="description" content="gate: guess, assess, try, expand
-(c) 2023, Tim Menzies, &lt;timm@ieee.org&gt;, BSD-2
-Learn a little, guess a lot, try the strangest guess, repeat
-…" />
+<meta name="description" content="gate: Guess, Assess, Try the strangest thing, Expand, repeat
+(c) 2023, Tim Menzies, &lt;timm@ieee.org&gt;, BSD-2 …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -25,12 +23,12 @@ Learn a little, guess a lot, try the strangest guess, repeat
 <h1 class="title">Module <code>gate</code></h1>
 </header>
 <section id="section-intro">
-<p>gate: guess, assess, try, expand<br>
-(c) 2023, Tim Menzies, <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#116;&#105;&#109;&#109;&#64;&#105;&#101;&#101;&#101;&#46;&#111;&#114;&#103;">&#116;&#105;&#109;&#109;&#64;&#105;&#101;&#101;&#101;&#46;&#111;&#114;&#103;</a>, BSD-2<br>
-Learn a little, guess a lot, try the strangest guess, repeat
+<p>gate: Guess, Assess, Try the strangest thing, Expand, repeat
 <br>
-src = <a href="https://github.com/timm/lo/blob/main/src/gate.py">https://github.com/timm/lo/blob/main/src/gate.py</a></p>
-<p>USAGE:<br>
+(c) 2023, Tim Menzies, <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#116;&#105;&#109;&#109;&#64;&#105;&#101;&#101;&#101;&#46;&#111;&#114;&#103;">&#116;&#105;&#109;&#109;&#64;&#105;&#101;&#101;&#101;&#46;&#111;&#114;&#103;</a>, BSD-2
+</p>
+<p>USAGE:
+<br>
 python3 gate.lua [OPTIONS]
 </p>
 <p>OPTIONS:
@@ -51,13 +49,11 @@ python3 gate.lua [OPTIONS]
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">&#34;&#34;&#34;
-gate: guess, assess, try, expand  
+gate: Guess, Assess, Try the strangest thing, Expand, repeat     
 (c) 2023, Tim Menzies, &lt;timm@ieee.org&gt;, BSD-2  
-Learn a little, guess a lot, try the strangest guess, repeat    
-src = https://github.com/timm/lo/blob/main/src/gate.py
   
-USAGE:  
-  python3 gate.lua [OPTIONS]   
+USAGE:    
+python3 gate.lua [OPTIONS]   
   
 OPTIONS:  
 
@@ -84,11 +80,13 @@ def isNum(s):   return s[0].isupper()
 
 #----------------------------------------------------------------------------------------
 class struct:
+  &#34;simple struct-like class, with built-in pretty-print&#34;
   def __init__(self,**d) : self.__dict__.update(d)
   __repr__ = lambda self: o(self.__dict__, self.__class__.__name__)
 
 #----------------------------------------------------------------------------------------
 class NUM(struct):
+  &#34;stores mean, standard deviation, low, high, of a list of numbers&#34;
   def __init__(self,lst):
     self.n, self.sd, self.mu, self.lo, self.hi = len(lst),0,0, sys.maxsize, -sys.maxsize
     if self.n != 0: 
@@ -99,6 +97,7 @@ class NUM(struct):
 
 #----------------------------------------------------------------------------------------
 class COLS(struct):
+  &#34;stores NUMs and Counters generated from list of column names&#34;
   def __init__(self,names,rows):
     self.names = names
     self.ys    = {c:isHeaven(s) for c,s in enumerate(self.names) if isGoal(s)}
@@ -108,30 +107,37 @@ class COLS(struct):
 
 #----------------------------------------------------------------------------------------
 class DATA(struct):
+  &#34;storage and processing or rows and columns&#34;
   def __init__(self, lsts, order=False):
     names,*rows = list(lsts)
     self.cols = COLS(names,rows)
     self.rows = sorted(rows, key=lambda row:self.d2h(row)) if order else rows
 
   def mid(self): 
+    &#34;returns centroid&#34;
     return [(col.mu if c in self.cols.nums else max(col,key=col.get)) 
             for c,col in enumerate(self.cols.all)] 
   
-  def div(self): 
-    return [(col.sd if c in self.cols.nums else entropy(col)) 
+  def small(self): 
+    &#34;returns small delta from centroid&#34;
+    return [(col.sd*the.cohen if c in self.cols.nums else 0)
             for c,col in enumerate(self.cols.all)]
 
   def clone(self, rows=[], order=False):
+    &#34;return a new DATA with a similar structure to self&#34;
     return DATA([self.cols.names] + rows, order=order)  
 
   def d2h(self,lst):  
+    &#34;Euclidean distance to a mythical best point&#34;
     return (sum(abs(w-norm(self.cols.all[c], lst[c]))**2 
                 for c,w in self.cols.ys.items())/len(self.cols.ys))**.5 
 
   def ycols(self,row): 
+    &#34;returns just the y columns&#34;
     return [row[c] for c,_ in self.cols.ys.items()]
 
   def like(self,row,nall,nh,m=1,k=2):
+    &#34;returns how much self likes row&#34;
     def num(col,x):
       v = col.sd**2 + 10**-64
       nom = math.e**(-1*(x - col.mu)**2/(2*v)) + 10**-64
@@ -150,6 +156,8 @@ class DATA(struct):
     return out
 
   def smo(self,fun=None):  
+    &#34;&#34;&#34;evaluate a few, divide them into best and rest, use that
+    information to guess the next most informative example to evaluate&#34;&#34;&#34;
     done, todo = self.rows[:the.budget0], self.rows[the.budget0:]
     for i in range(the.Budget):
       data1 = self.clone(done, order=True)
@@ -163,6 +171,8 @@ class DATA(struct):
     done.append(todo.pop(j))
 
 def smo1(i,best,rest,nall,rows,fun):
+  &#34;&#34;&#34;For rows not evaluated, score how likely they belong to best,rest.
+  Return the row nearest the border of best,rest&#34;&#34;&#34;
   todo,max,selected = 0,-1E300,[]
   for k,row in enumerate(rows):
     b = best.like(row,nall,2,the.m,the.k)
@@ -176,36 +186,44 @@ def smo1(i,best,rest,nall,rows,fun):
 
 #----------------------------------------------------------------------------------------
 class THE(struct):
+  &#34;Builds config from __doc__ string, maybe update it from command line&#34;
   def __init__(self,txt):
     self.help = txt
     d = {m[1]:coerce(m[2]) for m in re.finditer(r&#34;--(\w+)[^=]*=\s*(\S+)&#34;,txt)}
     self.__dict__.update(d)
+    
   def cli(self):
+    &#34;update settings from command line flags&#34;
     for k,v in self.__dict__.items(): 
       v = str(v)
       for c,arg in enumerate(sys.argv):
-        if arg in [&#34;-h&#34;, &#34;--help&#34;]: sys.exit(self.help)
         after = &#34;&#34; if c &gt;= len(sys.argv) - 1 else sys.argv[c+1]
         if arg in [&#34;-&#34;+k[0], &#34;--&#34;+k]: 
           v = &#34;false&#34; if v==&#34;true&#34; else (&#34;true&#34; if v==&#34;false&#34; else after)
           self.__dict__[k] = coerce(v) 
+    if self.__dict__[&#34;help&#34;]:  sys.exit(self.help)
           
+#----------------------------------------------------------------------------------------
 def o(d,s=&#34;&#34;): 
+  &#34;pretty print for dictionary&#34;
   return s+&#34;{&#34;+(&#34;, &#34;.join([f&#34;:{k} {v}&#34; for k,v in d.items() if k[0]!=&#34;_&#34;]))+&#34;}&#34; 
 
-#----------------------------------------------------------------------------------------
 def coerce(s):
+  &#34;turn a string into some typed atom&#34;
   try: return ast.literal_eval(s)
   except Exception: return s
 
 def norm(col,x):
+  &#34;convert `x` to the range 0..1&#34;
   return x if x==&#34;?&#34; else (x - col.lo)/(col.hi - col.lo + 1E-30) 
 
 def entropy(d): 
+  &#34;return diversity for symbol counts&#34;
   n = sum(d.values()) 
   return -sum(v/n*math.log(v/n,2) for _,v in d.items() if v&gt;0)
 
 def csv(file=None):
+  &#34;iterator: returns rows in csv file&#34;
   with file_or_stdin(file) as src:
     for line in src:
       line = re.sub(r&#39;([\n\t\r&#34;\’ ]|#.*)&#39;, &#39;&#39;, line)
@@ -214,26 +232,35 @@ def csv(file=None):
 isa=isinstance
 
 def rnds(x,n=2): 
+  &#34;round a thing, or a list to a few decimal places&#34;
   if isa(x,(int,float)):  return x if int(x)==x else round(x,n)
   if isa(x,(list,tuple)): return [rnds(y,n) for y in x]
   return x
 
 #----------------------------------------------------------------------------------------
 class Eg:
+  &#34;place to store demos&#34;
   _all = locals()
   def all():
+    &#34;run all examples, return to operating system count of failures&#34;
     errors = [f() for s,f in Eg._all.items() if s[0] !=&#34;_&#34; and s !=&#34;all&#34;]
     sys.exit(sum(0 if x==None else x for x in errors))
     
-  def help(): print(__doc__);  
+  def help(): 
+    &#34;print help&#34;
+    print(__doc__);  
 
-  def nums(): print(NUM([x**.5 for x in range(100)]))
+  def nums(): 
+    &#34;show NUMS working&#34;
+    print(NUM([x**.5 for x in range(100)]))
   
   def data():
-    for i,row in enumerate(DATA([r for r in csv(the.file)]).rows):
+    &#34;read rows from csv, sorted by distance to heaven&#34;
+    for i,row in enumerate(DATA(csv(the.file),order=True).rows):
        if i % 30 == 0 : print(i,row)
 
   def likes():
+    &#34;reports the likelihood of rows&#34;
     d = DATA( csv(the.file),order=True)
     for i,row in enumerate(d.rows): 
       if i % 25 == 0: 
@@ -241,10 +268,11 @@ class Eg:
                 rnds(d.like(row, 1000, 2, m=the.m, k=the.k)))
 
   def smos():
+    &#34;example of smos&#34;
     print(the.seed)
     d=DATA(csv(the.file),order=False) 
     print(&#34;names,&#34;,d.ycols(d.cols.names))
-    print(&#34;base,&#34;, rnds(d.ycols(d.centroid()),2)); print(&#34;#&#34;)
+    print(&#34;base,&#34;, rnds(d.ycols(d.mid()),2)); print(&#34;#&#34;)
     random.shuffle(d.rows) 
     d.smo(lambda i,top: print(f&#34;step{i}, &#34;,rnds(d.ycols(top),2)))
     print(&#34;#\nbest,&#34;,rnds(d.ycols( d.clone(d.rows,order=True).rows[0]),2))
@@ -252,10 +280,15 @@ class Eg:
   def smos20():
     print(the.seed)
     d=DATA(csv(the.file),order=False) 
-    print(&#34;names,&#34;,d.ycols(d.cols.names))
-    print(&#34;base,&#34;, rnds(d.ycols(d.centroid()),2)); print(&#34;#&#34;)
+    names = d.ycols(d.cols.names)
+    print(&#34;names,&#34;,names)
+    print(&#34;mid,&#34;, rnds(d.ycols(d.mid()),2));  
+    small= d.ycols(d.small())
+    print(&#34;small,&#34;, rnds(small,2)); print(&#34;#&#34;)
     random.shuffle(d.rows) 
-    d.smo(lambda i,top: print(f&#34;step{i}, &#34;,rnds(d.ycols(top),2)))
+    def delta(x): return x
+    def deltas(ys): return [delta(y,small,name) for y,small,name in zip(ys,small,names)]
+    d.smo(lambda i,top: print(f&#34;step{i}, &#34;,rnds(deltas(d.ycols(top)),2)))
     print(&#34;#\nbest,&#34;,rnds(d.ycols( d.clone(d.rows,order=True).rows[0]),2))
 
 #----------------------------------------------------------------------------------------
@@ -276,12 +309,13 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>def <span class="ident">coerce</span></span>(<span>s)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>turn a string into some typed atom</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def coerce(s):
+  &#34;turn a string into some typed atom&#34;
   try: return ast.literal_eval(s)
   except Exception: return s</code></pre>
 </details>
@@ -290,12 +324,13 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>def <span class="ident">csv</span></span>(<span>file=None)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>iterator: returns rows in csv file</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def csv(file=None):
+  &#34;iterator: returns rows in csv file&#34;
   with file_or_stdin(file) as src:
     for line in src:
       line = re.sub(r&#39;([\n\t\r&#34;\’ ]|#.*)&#39;, &#39;&#39;, line)
@@ -306,12 +341,13 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>def <span class="ident">entropy</span></span>(<span>d)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>return diversity for symbol counts</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def entropy(d): 
+  &#34;return diversity for symbol counts&#34;
   n = sum(d.values()) 
   return -sum(v/n*math.log(v/n,2) for _,v in d.items() if v&gt;0)</code></pre>
 </details>
@@ -356,12 +392,13 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>def <span class="ident">norm</span></span>(<span>col, x)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>convert <code>x</code> to the range 0..1</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def norm(col,x):
+  &#34;convert `x` to the range 0..1&#34;
   return x if x==&#34;?&#34; else (x - col.lo)/(col.hi - col.lo + 1E-30) </code></pre>
 </details>
 </dd>
@@ -369,12 +406,13 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>def <span class="ident">o</span></span>(<span>d, s='')</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>pretty print for dictionary</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def o(d,s=&#34;&#34;): 
+  &#34;pretty print for dictionary&#34;
   return s+&#34;{&#34;+(&#34;, &#34;.join([f&#34;:{k} {v}&#34; for k,v in d.items() if k[0]!=&#34;_&#34;]))+&#34;}&#34; </code></pre>
 </details>
 </dd>
@@ -382,12 +420,13 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>def <span class="ident">rnds</span></span>(<span>x, n=2)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>round a thing, or a list to a few decimal places</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def rnds(x,n=2): 
+  &#34;round a thing, or a list to a few decimal places&#34;
   if isa(x,(int,float)):  return x if int(x)==x else round(x,n)
   if isa(x,(list,tuple)): return [rnds(y,n) for y in x]
   return x</code></pre>
@@ -397,12 +436,15 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>def <span class="ident">smo1</span></span>(<span>i, best, rest, nall, rows, fun)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>For rows not evaluated, score how likely they belong to best,rest.
+Return the row nearest the border of best,rest</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def smo1(i,best,rest,nall,rows,fun):
+  &#34;&#34;&#34;For rows not evaluated, score how likely they belong to best,rest.
+  Return the row nearest the border of best,rest&#34;&#34;&#34;
   todo,max,selected = 0,-1E300,[]
   for k,row in enumerate(rows):
     b = best.like(row,nall,2,the.m,the.k)
@@ -425,12 +467,13 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>(</span><span>names, rows)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>stores NUMs and Counters generated from list of column names</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class COLS(struct):
+  &#34;stores NUMs and Counters generated from list of column names&#34;
   def __init__(self,names,rows):
     self.names = names
     self.ys    = {c:isHeaven(s) for c,s in enumerate(self.names) if isGoal(s)}
@@ -448,36 +491,43 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>(</span><span>lsts, order=False)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>storage and processing or rows and columns</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DATA(struct):
+  &#34;storage and processing or rows and columns&#34;
   def __init__(self, lsts, order=False):
     names,*rows = list(lsts)
     self.cols = COLS(names,rows)
     self.rows = sorted(rows, key=lambda row:self.d2h(row)) if order else rows
 
   def mid(self): 
+    &#34;returns centroid&#34;
     return [(col.mu if c in self.cols.nums else max(col,key=col.get)) 
             for c,col in enumerate(self.cols.all)] 
   
-  def div(self): 
-    return [(col.sd if c in self.cols.nums else entropy(col)) 
+  def small(self): 
+    &#34;returns small delta from centroid&#34;
+    return [(col.sd*the.cohen if c in self.cols.nums else 0)
             for c,col in enumerate(self.cols.all)]
 
   def clone(self, rows=[], order=False):
+    &#34;return a new DATA with a similar structure to self&#34;
     return DATA([self.cols.names] + rows, order=order)  
 
   def d2h(self,lst):  
+    &#34;Euclidean distance to a mythical best point&#34;
     return (sum(abs(w-norm(self.cols.all[c], lst[c]))**2 
                 for c,w in self.cols.ys.items())/len(self.cols.ys))**.5 
 
   def ycols(self,row): 
+    &#34;returns just the y columns&#34;
     return [row[c] for c,_ in self.cols.ys.items()]
 
   def like(self,row,nall,nh,m=1,k=2):
+    &#34;returns how much self likes row&#34;
     def num(col,x):
       v = col.sd**2 + 10**-64
       nom = math.e**(-1*(x - col.mu)**2/(2*v)) + 10**-64
@@ -496,6 +546,8 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
     return out
 
   def smo(self,fun=None):  
+    &#34;&#34;&#34;evaluate a few, divide them into best and rest, use that
+    information to guess the next most informative example to evaluate&#34;&#34;&#34;
     done, todo = self.rows[:the.budget0], self.rows[the.budget0:]
     for i in range(the.Budget):
       data1 = self.clone(done, order=True)
@@ -518,12 +570,13 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>def <span class="ident">clone</span></span>(<span>self, rows=[], order=False)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>return a new DATA with a similar structure to self</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def clone(self, rows=[], order=False):
+  &#34;return a new DATA with a similar structure to self&#34;
   return DATA([self.cols.names] + rows, order=order)  </code></pre>
 </details>
 </dd>
@@ -531,40 +584,28 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>def <span class="ident">d2h</span></span>(<span>self, lst)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Euclidean distance to a mythical best point</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def d2h(self,lst):  
+  &#34;Euclidean distance to a mythical best point&#34;
   return (sum(abs(w-norm(self.cols.all[c], lst[c]))**2 
               for c,w in self.cols.ys.items())/len(self.cols.ys))**.5 </code></pre>
-</details>
-</dd>
-<dt id="gate.DATA.div"><code class="name flex">
-<span>def <span class="ident">div</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def div(self): 
-  return [(col.sd if c in self.cols.nums else entropy(col)) 
-          for c,col in enumerate(self.cols.all)]</code></pre>
 </details>
 </dd>
 <dt id="gate.DATA.like"><code class="name flex">
 <span>def <span class="ident">like</span></span>(<span>self, row, nall, nh, m=1, k=2)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>returns how much self likes row</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def like(self,row,nall,nh,m=1,k=2):
+  &#34;returns how much self likes row&#34;
   def num(col,x):
     v = col.sd**2 + 10**-64
     nom = math.e**(-1*(x - col.mu)**2/(2*v)) + 10**-64
@@ -587,26 +628,45 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>def <span class="ident">mid</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>returns centroid</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def mid(self): 
+  &#34;returns centroid&#34;
   return [(col.mu if c in self.cols.nums else max(col,key=col.get)) 
           for c,col in enumerate(self.cols.all)] </code></pre>
+</details>
+</dd>
+<dt id="gate.DATA.small"><code class="name flex">
+<span>def <span class="ident">small</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>returns small delta from centroid</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def small(self): 
+  &#34;returns small delta from centroid&#34;
+  return [(col.sd*the.cohen if c in self.cols.nums else 0)
+          for c,col in enumerate(self.cols.all)]</code></pre>
 </details>
 </dd>
 <dt id="gate.DATA.smo"><code class="name flex">
 <span>def <span class="ident">smo</span></span>(<span>self, fun=None)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>evaluate a few, divide them into best and rest, use that
+information to guess the next most informative example to evaluate</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def smo(self,fun=None):  
+  &#34;&#34;&#34;evaluate a few, divide them into best and rest, use that
+  information to guess the next most informative example to evaluate&#34;&#34;&#34;
   done, todo = self.rows[:the.budget0], self.rows[the.budget0:]
   for i in range(the.Budget):
     data1 = self.clone(done, order=True)
@@ -624,12 +684,13 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>def <span class="ident">ycols</span></span>(<span>self, row)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>returns just the y columns</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def ycols(self,row): 
+  &#34;returns just the y columns&#34;
   return [row[c] for c,_ in self.cols.ys.items()]</code></pre>
 </details>
 </dd>
@@ -639,26 +700,34 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>class <span class="ident">Eg</span></span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>place to store demos</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Eg:
+  &#34;place to store demos&#34;
   _all = locals()
   def all():
+    &#34;run all examples, return to operating system count of failures&#34;
     errors = [f() for s,f in Eg._all.items() if s[0] !=&#34;_&#34; and s !=&#34;all&#34;]
     sys.exit(sum(0 if x==None else x for x in errors))
     
-  def help(): print(__doc__);  
+  def help(): 
+    &#34;print help&#34;
+    print(__doc__);  
 
-  def nums(): print(NUM([x**.5 for x in range(100)]))
+  def nums(): 
+    &#34;show NUMS working&#34;
+    print(NUM([x**.5 for x in range(100)]))
   
   def data():
-    for i,row in enumerate(DATA([r for r in csv(the.file)]).rows):
+    &#34;read rows from csv, sorted by distance to heaven&#34;
+    for i,row in enumerate(DATA(csv(the.file),order=True).rows):
        if i % 30 == 0 : print(i,row)
 
   def likes():
+    &#34;reports the likelihood of rows&#34;
     d = DATA( csv(the.file),order=True)
     for i,row in enumerate(d.rows): 
       if i % 25 == 0: 
@@ -666,10 +735,11 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
                 rnds(d.like(row, 1000, 2, m=the.m, k=the.k)))
 
   def smos():
+    &#34;example of smos&#34;
     print(the.seed)
     d=DATA(csv(the.file),order=False) 
     print(&#34;names,&#34;,d.ycols(d.cols.names))
-    print(&#34;base,&#34;, rnds(d.ycols(d.centroid()),2)); print(&#34;#&#34;)
+    print(&#34;base,&#34;, rnds(d.ycols(d.mid()),2)); print(&#34;#&#34;)
     random.shuffle(d.rows) 
     d.smo(lambda i,top: print(f&#34;step{i}, &#34;,rnds(d.ycols(top),2)))
     print(&#34;#\nbest,&#34;,rnds(d.ycols( d.clone(d.rows,order=True).rows[0]),2))
@@ -677,10 +747,15 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
   def smos20():
     print(the.seed)
     d=DATA(csv(the.file),order=False) 
-    print(&#34;names,&#34;,d.ycols(d.cols.names))
-    print(&#34;base,&#34;, rnds(d.ycols(d.centroid()),2)); print(&#34;#&#34;)
+    names = d.ycols(d.cols.names)
+    print(&#34;names,&#34;,names)
+    print(&#34;mid,&#34;, rnds(d.ycols(d.mid()),2));  
+    small= d.ycols(d.small())
+    print(&#34;small,&#34;, rnds(small,2)); print(&#34;#&#34;)
     random.shuffle(d.rows) 
-    d.smo(lambda i,top: print(f&#34;step{i}, &#34;,rnds(d.ycols(top),2)))
+    def delta(x): return x
+    def deltas(ys): return [delta(y,small,name) for y,small,name in zip(ys,small,names)]
+    d.smo(lambda i,top: print(f&#34;step{i}, &#34;,rnds(deltas(d.ycols(top)),2)))
     print(&#34;#\nbest,&#34;,rnds(d.ycols( d.clone(d.rows,order=True).rows[0]),2))</code></pre>
 </details>
 <h3>Methods</h3>
@@ -689,12 +764,13 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>def <span class="ident">all</span></span>(<span>)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>run all examples, return to operating system count of failures</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def all():
+  &#34;run all examples, return to operating system count of failures&#34;
   errors = [f() for s,f in Eg._all.items() if s[0] !=&#34;_&#34; and s !=&#34;all&#34;]
   sys.exit(sum(0 if x==None else x for x in errors))</code></pre>
 </details>
@@ -703,13 +779,14 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>def <span class="ident">data</span></span>(<span>)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>read rows from csv, sorted by distance to heaven</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def data():
-  for i,row in enumerate(DATA([r for r in csv(the.file)]).rows):
+  &#34;read rows from csv, sorted by distance to heaven&#34;
+  for i,row in enumerate(DATA(csv(the.file),order=True).rows):
      if i % 30 == 0 : print(i,row)</code></pre>
 </details>
 </dd>
@@ -717,24 +794,27 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>def <span class="ident">help</span></span>(<span>)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>print help</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def help(): print(__doc__);  </code></pre>
+<pre><code class="python">def help(): 
+  &#34;print help&#34;
+  print(__doc__);  </code></pre>
 </details>
 </dd>
 <dt id="gate.Eg.likes"><code class="name flex">
 <span>def <span class="ident">likes</span></span>(<span>)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>reports the likelihood of rows</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def likes():
+  &#34;reports the likelihood of rows&#34;
   d = DATA( csv(the.file),order=True)
   for i,row in enumerate(d.rows): 
     if i % 25 == 0: 
@@ -746,28 +826,31 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>def <span class="ident">nums</span></span>(<span>)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>show NUMS working</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def nums(): print(NUM([x**.5 for x in range(100)]))</code></pre>
+<pre><code class="python">def nums(): 
+  &#34;show NUMS working&#34;
+  print(NUM([x**.5 for x in range(100)]))</code></pre>
 </details>
 </dd>
 <dt id="gate.Eg.smos"><code class="name flex">
 <span>def <span class="ident">smos</span></span>(<span>)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>example of smos</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def smos():
+  &#34;example of smos&#34;
   print(the.seed)
   d=DATA(csv(the.file),order=False) 
   print(&#34;names,&#34;,d.ycols(d.cols.names))
-  print(&#34;base,&#34;, rnds(d.ycols(d.centroid()),2)); print(&#34;#&#34;)
+  print(&#34;base,&#34;, rnds(d.ycols(d.mid()),2)); print(&#34;#&#34;)
   random.shuffle(d.rows) 
   d.smo(lambda i,top: print(f&#34;step{i}, &#34;,rnds(d.ycols(top),2)))
   print(&#34;#\nbest,&#34;,rnds(d.ycols( d.clone(d.rows,order=True).rows[0]),2))</code></pre>
@@ -785,10 +868,15 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <pre><code class="python">def smos20():
   print(the.seed)
   d=DATA(csv(the.file),order=False) 
-  print(&#34;names,&#34;,d.ycols(d.cols.names))
-  print(&#34;base,&#34;, rnds(d.ycols(d.centroid()),2)); print(&#34;#&#34;)
+  names = d.ycols(d.cols.names)
+  print(&#34;names,&#34;,names)
+  print(&#34;mid,&#34;, rnds(d.ycols(d.mid()),2));  
+  small= d.ycols(d.small())
+  print(&#34;small,&#34;, rnds(small,2)); print(&#34;#&#34;)
   random.shuffle(d.rows) 
-  d.smo(lambda i,top: print(f&#34;step{i}, &#34;,rnds(d.ycols(top),2)))
+  def delta(x): return x
+  def deltas(ys): return [delta(y,small,name) for y,small,name in zip(ys,small,names)]
+  d.smo(lambda i,top: print(f&#34;step{i}, &#34;,rnds(deltas(d.ycols(top)),2)))
   print(&#34;#\nbest,&#34;,rnds(d.ycols( d.clone(d.rows,order=True).rows[0]),2))</code></pre>
 </details>
 </dd>
@@ -799,12 +887,13 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>(</span><span>lst)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>stores mean, standard deviation, low, high, of a list of numbers</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class NUM(struct):
+  &#34;stores mean, standard deviation, low, high, of a list of numbers&#34;
   def __init__(self,lst):
     self.n, self.sd, self.mu, self.lo, self.hi = len(lst),0,0, sys.maxsize, -sys.maxsize
     if self.n != 0: 
@@ -823,25 +912,28 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>(</span><span>txt)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Builds config from <strong>doc</strong> string, maybe update it from command line</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class THE(struct):
+  &#34;Builds config from __doc__ string, maybe update it from command line&#34;
   def __init__(self,txt):
     self.help = txt
     d = {m[1]:coerce(m[2]) for m in re.finditer(r&#34;--(\w+)[^=]*=\s*(\S+)&#34;,txt)}
     self.__dict__.update(d)
+    
   def cli(self):
+    &#34;update settings from command line flags&#34;
     for k,v in self.__dict__.items(): 
       v = str(v)
       for c,arg in enumerate(sys.argv):
-        if arg in [&#34;-h&#34;, &#34;--help&#34;]: sys.exit(self.help)
         after = &#34;&#34; if c &gt;= len(sys.argv) - 1 else sys.argv[c+1]
         if arg in [&#34;-&#34;+k[0], &#34;--&#34;+k]: 
           v = &#34;false&#34; if v==&#34;true&#34; else (&#34;true&#34; if v==&#34;false&#34; else after)
-          self.__dict__[k] = coerce(v) </code></pre>
+          self.__dict__[k] = coerce(v) 
+    if self.__dict__[&#34;help&#34;]:  sys.exit(self.help)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -853,20 +945,21 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>def <span class="ident">cli</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>update settings from command line flags</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def cli(self):
+  &#34;update settings from command line flags&#34;
   for k,v in self.__dict__.items(): 
     v = str(v)
     for c,arg in enumerate(sys.argv):
-      if arg in [&#34;-h&#34;, &#34;--help&#34;]: sys.exit(self.help)
       after = &#34;&#34; if c &gt;= len(sys.argv) - 1 else sys.argv[c+1]
       if arg in [&#34;-&#34;+k[0], &#34;--&#34;+k]: 
         v = &#34;false&#34; if v==&#34;true&#34; else (&#34;true&#34; if v==&#34;false&#34; else after)
-        self.__dict__[k] = coerce(v) </code></pre>
+        self.__dict__[k] = coerce(v) 
+  if self.__dict__[&#34;help&#34;]:  sys.exit(self.help)</code></pre>
 </details>
 </dd>
 </dl>
@@ -876,12 +969,13 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <span>(</span><span>**d)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>simple struct-like class, with built-in pretty-print</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class struct:
+  &#34;simple struct-like class, with built-in pretty-print&#34;
   def __init__(self,**d) : self.__dict__.update(d)
   __repr__ = lambda self: o(self.__dict__, self.__class__.__name__)</code></pre>
 </details>
@@ -897,6 +991,14 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 </section>
 </article>
 <nav id="sidebar">
+<center>
+<p><img src="simpler.png"></p>
+<p><img src="https://img.shields.io/badge/purpose-teaching-red">
+<img src="https://img.shields.io/badge/task-optimization-blue">
+<img src="https://img.shields.io/badge/language-python3-yellow">
+<a href="https://github.com/timm/lo/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/license-bsd2-green"></a><br>
+<a href="https://github.com/timm/lo/blob/main/src/gate.py"><img height=45 src="https://iconspng.com/uploads/download-button-black.png"></a></p>
+</center>
 <h1>Index</h1>
 <div class="toc">
 <ul></ul>
@@ -926,9 +1028,9 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <ul class="two-column">
 <li><code><a title="gate.DATA.clone" href="#gate.DATA.clone">clone</a></code></li>
 <li><code><a title="gate.DATA.d2h" href="#gate.DATA.d2h">d2h</a></code></li>
-<li><code><a title="gate.DATA.div" href="#gate.DATA.div">div</a></code></li>
 <li><code><a title="gate.DATA.like" href="#gate.DATA.like">like</a></code></li>
 <li><code><a title="gate.DATA.mid" href="#gate.DATA.mid">mid</a></code></li>
+<li><code><a title="gate.DATA.small" href="#gate.DATA.small">small</a></code></li>
 <li><code><a title="gate.DATA.smo" href="#gate.DATA.smo">smo</a></code></li>
 <li><code><a title="gate.DATA.ycols" href="#gate.DATA.ycols">ycols</a></code></li>
 </ul>

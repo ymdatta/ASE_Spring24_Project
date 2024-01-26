@@ -372,12 +372,12 @@ function eg.smo(    data,best,founds,seens,log2,stats,_,delta)
   stats =  data:stats() 
   log2=function(n) return math.log(n,2) end
   oo(log2(log2(1-.95)/log2(1-the.cohen/6)))
-  small= data:small():cols(data.cols.y)
-  print(0, o { all = stats, small=small, d2h = data:centroid():d2h(data) })
+  xsmall = data:small():cols(data.cols.y)
+  print(0, o { all = stats, small=xsmall, d2h = data:centroid():d2h(data) })
   delta=function(t,d) 
     for k,v in pairs(t) do 
       d= k:find"-$" and stats[k]-t[k] or t[k]-stats[k]
-      t[k] = (d)/small[k] end; return t end
+      t[k] = (d)/xsmall[k] end; return t end
   for i,found in pairs(founds) do 
     if seens[i] then
       print(the.n + i, o { 
