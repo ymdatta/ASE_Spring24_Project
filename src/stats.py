@@ -59,18 +59,23 @@ def _bootstrap(y0,z0,confidence=.05,Experiments=512,):
       n += 1
   return n / Experiments < confidence # true if different
 
-def sk(nums):
+def cluster(nums):
   "sort nums on median. give adjacent nums the same rank if they are statistically the same"
   def sk1(nums, rank,lvl=1):
     all = lambda lst:  [x for num in lst for x in num.has]
-    b4, max, cut = NUM(all(nums)), -1, None
+    b4, cut = NUM(all(nums)) ,None
+    min = b4.sd
     for i in range(1,len(nums)): 
+      print("")
       lhs = NUM(all(nums[:i])); 
       rhs = NUM(all(nums[i:])); 
-      tmp = (lhs.n*(lhs.mid() - b4.mid())**2 + rhs.n*(rhs.mid() - b4.mid())**2)/b4.n
-      if tmp > max: 
-         max,cut = tmp,i
+      tmp = (lhs.n*(lhs.sd  ) + rhs.n*(rhs.sd  ))/b4.n
+      print(tmp,lhs.n,rhs.n,[num.txt for num in nums[:i]],[num.txt for num in nums[i:]])
+      if tmp <min:
+         min,cut = tmp,i
+    print(cut)
     if cut and different( all(nums[:cut]), all(nums[cut:])):
+      print("do",[num.txt for num in nums[:cut]],[num.txt for num in nums[cut:]] )
       rank = sk1(nums[:cut], rank, lvl+1) + 1
       rank = sk1(nums[cut:], rank, lvl+1)
     else:
@@ -81,37 +86,38 @@ def sk(nums):
   sk1(nums,0)
   return nums
 
+def eg0(nums):
+  all = NUM([x for num in nums for x in num.has])
+  [print(all.bar(num,width=40,word="%4s", fmt="%5.2f")) for num in cluster(nums)] 
+    
+def eg1():
+  x=1
+  while x<1.4:
+    a1 = [random.gauss(10,3) for x in range(20)]
+    a2 = [y*x for y in a1]
+    print(round(x,3),_cliffsDelta(a1,a2),_bootstrap(a1,a2),sep="\t")
+    x *= 1.02
+  
+def eg2(n=5):
+  eg0([NUM([0.34, 0.49 ,0.51, 0.6]*n,   "x1"),
+        NUM([0.6  ,0.7 , 0.8 , 0.89]*n,  "x2"),
+        NUM([0.13 ,0.23, 0.38 , 0.38]*n, "x3"),
+        NUM([0.6  ,0.7,  0.8 , 0.9]*n,   "x4"),
+        NUM([0.1  ,0.2,  0.3 , 0.4]*n,   "x5")])
+  
+def eg3():
+  eg0([NUM([0.32,  0.55,  0.70,  0.84,  0.95],"one"),
+        NUM([ 0.01,  0.10,  0.27,  0.51,  0.85],"two")])
+
+def eg4(n=5):
+  eg0([
+        NUM([0.34, 0.49 ,0.51, 0.6]*n,   "x1"),
+        NUM([0.34, 0.49 ,0.51, 0.6]*n,   "x2"),
+        NUM([0.13 ,0.23, 0.38 , 0.38]*n, "x4"),
+        ])
+ 
+
 if __name__ == "__main__":
-  def eg0(nums):
-    all = NUM([x for num in nums for x in num.has])
-    [print(all.bar(num,width=40,word="%4s", fmt="%5.2f")) for num in sk(nums)] 
-     
-  def eg1():
-    x=1
-    while x<1.4:
-      a1 = [random.gauss(10,3) for x in range(20)]
-      a2 = [y*x for y in a1]
-      print(round(x,3),_cliffsDelta(a1,a2),_bootstrap(a1,a2),sep="\t")
-      x *= 1.02
-    
-  def eg2(n=5):
-    eg0([NUM([0.34, 0.49 ,0.51, 0.6]*n,   "x1"),
-         NUM([0.6  ,0.7 , 0.8 , 0.89]*n,  "x2"),
-         NUM([0.13 ,0.23, 0.38 , 0.38]*n, "x3"),
-         NUM([0.6  ,0.7,  0.8 , 0.9]*n,   "x4"),
-         NUM([0.1  ,0.2,  0.3 , 0.4]*n,   "x5")])
-    
-  def eg3():
-    eg0([NUM([0.32,  0.55,  0.70,  0.84,  0.95],"one"),
-         NUM([ 0.01,  0.10,  0.27,  0.51,  0.85],"two")])
-
-  def eg4(n=5):
-    eg0([
-         NUM([0.34, 0.49 ,0.51, 0.6]*n,   "x1"),
-         NUM([0.34, 0.49 ,0.51, 0.7]*n,   "x2"),
-         NUM([0.13 ,0.23, 0.38 , 0.38]*n, "x4"),
-         ])
-    random.seed(1)
-
-  eg4()
+  random.seed(1)
+  eg3()
   #[print("\n",f()) for f in [eg1,eg2,eg3,eg4]]
