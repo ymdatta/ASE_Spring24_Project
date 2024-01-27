@@ -7,17 +7,14 @@ python3 gate.py [OPTIONS]
   
 OPTIONS:  
 
-
-
      -b --budget0     initial evals                   = 4  
      -B --Budget      subsequent evals                = 6   
      -c --cohen       small effect size               = .35  
-     -c --confidence  staistical confidence           =.05
-     -e --effectSize  non-parametric msall detal      = 0.2385
-     -E --Experiments number of Bootstraops           = 512
+     -c --confidence  statistical confidence          =.05
+     -e --effectSize  non-parametric small delta      = 0.2385
+     -E --Experiments number of Bootstraps            = 512
      -f --file        csv data file name              = '../data/auto93.csv'  
-     -h --help        show help                       = False  
-     -k --k           low class frequency kludge      = 1  
+     -k --k      low class frequency kludge      = 1  
      -m --m           low attribute frequency kludge  = 2  
      -s --seed        random number seed              = 31210   
      -t --todo        start up action                 = 'help'   
@@ -43,13 +40,35 @@ class struct:
 class NUM(struct):
   "stores mean, standard deviation, low, high, of a list of numbers"
   def __init__(self,lst,txt="",rank=0):
-    self.txt, self.rank = =txt,0
+    self.has = sorted(lst)
+    self.txt, self.rank = txt,0
     self.n, self.sd, self.mu, self.lo, self.hi = len(lst),0,0, sys.maxsize, -sys.maxsize
     if self.n != 0: 
       tmp, self.mu  = 0, sum(lst) / self.n
       for x in lst: 
         tmp += (x-self.mu)**2; self.hi=max(x,self.hi); self.lo=min(x,self.lo)
       self.sd = (tmp/(self.n - 1+1E-30))**.5 
+
+  def mid(i): return self.has[len(self.has)//2]
+
+def sk(nums):
+  "sort nums on median. give adjacent nums the same rank if they are statistically the same"
+  def sk1(nums, rank)
+    all = lambda lst: [x of num in lst for x in num.has]
+    b4, max, cut = all(nums), -1, None
+    for i in range(1,len(nums) -1): 
+      lhs = all(nums[:i])
+      rhs = all(nums[i:])
+      tmp = (lhs.n*abs(lhs.mid() - b4.mid())**2 + rhs.n*abs(rhs.mid() - b4.mid())**2)/b4.n
+      if tmp > max: max,cut = tmp,i
+    if cut and different( all(nums[:cut]), all(nums[cut:])):
+      rank = sk1(nums[:cut], rank) + 1
+      rank = sk1(nums[cut:], rank)
+    else:
+      for num in nums: num.rank = rank
+    return rank
+  #------------
+  return sk1(sorted(nums, key=lambda num:num.mid()), 0)
 
 #----------------------------------------------------------------------------------------
 class COLS(struct):
