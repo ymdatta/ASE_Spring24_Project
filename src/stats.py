@@ -15,10 +15,10 @@ class NUM:
   def mid(self): return self.has[len(self.has)//2]
 
   def bar(self, num, fmt="%8.3f", word="%10s", width=50):
-    out  = [' '] *width
-    norm = lambda x: int(width * (x - self.has[0]) / (self.has[-1] - self.has[0] + 1E-30))
+    out  = [' '] * width
+    pos = lambda x: int(width * (x - self.has[0]) / (self.has[-1] - self.has[0] + 1E-30))
     [a, b, c, d, e]  = [num.has[int(len(num.has)*x)] for x in [0.1,0.3,0.5,0.7,0.9]]
-    [na,nb,nc,nd,ne] = [norm(x) for x in [a,b,c,d,e]]
+    [na,nb,nc,nd,ne] = [pos(x) for x in [a,b,c,d,e]]
     for i in range(na,nb): out[i] = "-"
     for i in range(nd,ne): out[i] = "-"
     out[width//2] = "|"
@@ -59,23 +59,19 @@ def _bootstrap(y0,z0,confidence=.05,Experiments=512,):
       n += 1
   return n / Experiments < confidence # true if different
 
-def cluster(nums):
+def sk(nums):
   "sort nums on median. give adjacent nums the same rank if they are statistically the same"
   def sk1(nums, rank,lvl=1):
     all = lambda lst:  [x for num in lst for x in num.has]
     b4, cut = NUM(all(nums)) ,None
-    min = b4.sd
-    for i in range(1,len(nums)): 
-      print("")
+    max =  -1
+    for i in range(1,len(nums)):  
       lhs = NUM(all(nums[:i])); 
       rhs = NUM(all(nums[i:])); 
-      tmp = (lhs.n*(lhs.sd  ) + rhs.n*(rhs.sd  ))/b4.n
-      print(tmp,lhs.n,rhs.n,[num.txt for num in nums[:i]],[num.txt for num in nums[i:]])
-      if tmp <min:
-         min,cut = tmp,i
-    print(cut)
-    if cut and different( all(nums[:cut]), all(nums[cut:])):
-      print("do",[num.txt for num in nums[:cut]],[num.txt for num in nums[cut:]] )
+      tmp = (lhs.n*abs(lhs.mid() - b4.mid()) + rhs.n*abs(rhs.mid() - b4.mid()))/b4.n 
+      if tmp > max:
+         max,cut = tmp,i 
+    if cut and different( all(nums[:cut]), all(nums[cut:])): 
       rank = sk1(nums[:cut], rank, lvl+1) + 1
       rank = sk1(nums[cut:], rank, lvl+1)
     else:
@@ -88,7 +84,7 @@ def cluster(nums):
 
 def eg0(nums):
   all = NUM([x for num in nums for x in num.has])
-  [print(all.bar(num,width=40,word="%4s", fmt="%5.2f")) for num in cluster(nums)] 
+  [print(all.bar(num,width=40,word="%4s", fmt="%5.2f")) for num in sk(nums)] 
     
 def eg1():
   x=1
@@ -106,18 +102,18 @@ def eg2(n=5):
         NUM([0.1  ,0.2,  0.3 , 0.4]*n,   "x5")])
   
 def eg3():
-  eg0([NUM([0.32,  0.55,  0.70,  0.84,  0.95],"one"),
-        NUM([ 0.01,  0.10,  0.27,  0.51,  0.85],"two")])
+  eg0([NUM([0.32,  0.45,  0.50,  0.5,  0.55],"one"),
+        NUM([ 0.76,  0.90,  0.95,  0.99,  0.995],"two")])
 
 def eg4(n=5):
   eg0([
         NUM([0.34, 0.49 ,0.51, 0.6]*n,   "x1"),
-        NUM([0.34, 0.49 ,0.51, 0.6]*n,   "x2"),
+        NUM([0.35, 0.52 ,0.63, 0.8]*n,   "x2"),
         NUM([0.13 ,0.23, 0.38 , 0.38]*n, "x4"),
         ])
  
 
 if __name__ == "__main__":
   random.seed(1)
-  eg3()
+  eg2(n=20)
   #[print("\n",f()) for f in [eg1,eg2,eg3,eg4]]
