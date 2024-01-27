@@ -24,6 +24,7 @@ OPTIONS:
 import re,sys,ast,math,random
 from collections import Counter
 from fileinput import FileInput as file_or_stdin
+from stats import NUM
 
 #----------------------------------------------------------------------------------------
 def isGoal(s):  return s[-1] in "+-!"
@@ -35,40 +36,6 @@ class struct:
   "simple struct-like class, with built-in pretty-print"
   def __init__(self,**d) : self.__dict__.update(d)
   __repr__ = lambda self: o(self.__dict__, self.__class__.__name__)
-
-#----------------------------------------------------------------------------------------
-class NUM(struct):
-  "stores mean, standard deviation, low, high, of a list of numbers"
-  def __init__(self,lst,txt="",rank=0):
-    self.has = sorted(lst)
-    self.txt, self.rank = txt,0
-    self.n, self.sd, self.mu, self.lo, self.hi = len(lst),0,0, sys.maxsize, -sys.maxsize
-    if self.n != 0: 
-      tmp, self.mu  = 0, sum(lst) / self.n
-      for x in lst: 
-        tmp += (x-self.mu)**2; self.hi=max(x,self.hi); self.lo=min(x,self.lo)
-      self.sd = (tmp/(self.n - 1+1E-30))**.5 
-
-  def mid(i): return self.has[len(self.has)//2]
-
-def sk(nums):
-  "sort nums on median. give adjacent nums the same rank if they are statistically the same"
-  def sk1(nums, rank)
-    all = lambda lst: [x of num in lst for x in num.has]
-    b4, max, cut = all(nums), -1, None
-    for i in range(1,len(nums) -1): 
-      lhs = all(nums[:i])
-      rhs = all(nums[i:])
-      tmp = (lhs.n*abs(lhs.mid() - b4.mid())**2 + rhs.n*abs(rhs.mid() - b4.mid())**2)/b4.n
-      if tmp > max: max,cut = tmp,i
-    if cut and different( all(nums[:cut]), all(nums[cut:])):
-      rank = sk1(nums[:cut], rank) + 1
-      rank = sk1(nums[cut:], rank)
-    else:
-      for num in nums: num.rank = rank
-    return rank
-  #------------
-  return sk1(sorted(nums, key=lambda num:num.mid()), 0)
 
 #----------------------------------------------------------------------------------------
 class COLS(struct):
@@ -211,39 +178,6 @@ def rnds(x,n=2):
   if isa(x,(int,float)):  return x if int(x)==x else round(x,n)
   if isa(x,(list,tuple)): return [rnds(y,n) for y in x]
   return x
-
-def different(x,y):
-  "non-parametric effect size and significance test"
-  return cliffsDelta(x,y) and bootstrap(x,y)
-
-def cliffsDelta(x,y,effectSize=.2):
-  """non-parametric effect size. threshold is border between small=.11 and medium=.28 
-     from Table1 of  https://doi.org/10.3102/10769986025002101"""
-  if len(x) > 10*len(y) : return cliffsDelta(random.choices(x,10*len(y)),y)
-  if len(y) > 10*len(x) : return cliffsDelta(x, random.choices(y,10*len(x)))
-  n,lt,gt = 0,0,0
-  for x1 in x:
-    for y1 in y:
-      n = n + 1
-      if x1 > y1: gt = gt + 1
-      if x1 < y1: lt = lt + 1
-  return abs(lt - gt)/n > effectSize # true if different
-
-def bootstrap(y0,z0,confidence=.05,Experiments=512,):
-  """non-parametric significance test From Introduction to Bootstrap, 
-     Efron and Tibshirani, 1993, chapter 20. https://doi.org/10.1201/9780429246593"""
-  obs = lambda x,y: abs(x.mu-y.mu) / ((x.sd**2/x.n + y.ad**2/y.n)**.5 + 1E-30)
-  x, y, z = NUM(y0+z0), NUM(y0), NUM(z0)
-  d = obs(y,z)
-  yhat = [y1 - y.mu + x.mu for y1 in y0]
-  zhat = [z1 - z.mu + x.mu for z1 in z0]
-  n      = 0
-  for _ in range(Experiments):
-    ynum = NUM(random.choices(yhat,k=len(yhat)))
-    znum = NUM(random.choices(zhat,k=len(zhat)))
-    if obs(ynum, znum) > d:
-      n += 1
-  return n / Experiments < confidence # true if different
 
 #----------------------------------------------------------------------------------------
 class Eg:
