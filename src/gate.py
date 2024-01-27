@@ -24,7 +24,7 @@ OPTIONS:
 import re,sys,ast,math,random
 from collections import Counter
 from fileinput import FileInput as file_or_stdin
-from stats import NUM
+from stats import NUM,sk
 
 #----------------------------------------------------------------------------------------
 def isGoal(s):  return s[-1] in "+-!"

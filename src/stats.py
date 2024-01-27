@@ -28,9 +28,9 @@ class NUM:
 
 def different(x,y):
   "non-parametric effect size and significance test"
-  return cliffsDelta(x,y) and bootstrap(x,y)
+  return _cliffsDelta(x,y) and _bootstrap(x,y)
 
-def cliffsDelta(x, y, effectSize=0.2):
+def _cliffsDelta(x, y, effectSize=0.2):
   """non-parametric effect size. threshold is border between small=.11 and medium=.28 
      from Table1 of  https://doi.org/10.3102/10769986025002101"""
   #if len(x) > 10*len(y) : return cliffsDelta(random.choices(x,10*len(y)),y)
@@ -43,7 +43,7 @@ def cliffsDelta(x, y, effectSize=0.2):
       if x1 < y1: lt += 1
   return abs(lt - gt)/n  > effectSize # true if different
 
-def bootstrap(y0,z0,confidence=.05,Experiments=512,):
+def _bootstrap(y0,z0,confidence=.05,Experiments=512,):
   """non-parametric significance test From Introduction to Bootstrap, 
      Efron and Tibshirani, 1993, chapter 20. https://doi.org/10.1201/9780429246593"""
   obs = lambda x,y: abs(x.mu-y.mu) / ((x.sd**2/x.n + y.sd**2/y.n)**.5 + 1E-30)
@@ -65,14 +65,12 @@ def sk(nums):
     all = lambda lst:  [x for num in lst for x in num.has]
     b4, max, cut = NUM(all(nums)), -1, None
     for i in range(1,len(nums)): 
-      lhs = NUM(all(nums[:i]))
-      rhs = NUM(all(nums[i:]))
+      lhs = NUM(all(nums[:i])); 
+      rhs = NUM(all(nums[i:])); 
       tmp = (lhs.n*(lhs.mid() - b4.mid())**2 + rhs.n*(rhs.mid() - b4.mid())**2)/b4.n
-      print(i,tmp,cut)
-      if tmp >= max: 
+      if tmp > max: 
          max,cut = tmp,i
     if cut and different( all(nums[:cut]), all(nums[cut:])):
-      print('|-- ' * lvl,cut,sep="\t")
       rank = sk1(nums[:cut], rank, lvl+1) + 1
       rank = sk1(nums[cut:], rank, lvl+1)
     else:
@@ -80,7 +78,7 @@ def sk(nums):
     return rank
   #------------ 
   nums = sorted(nums, key=lambda num:num.mid())
-  sk1(nums,1)
+  sk1(nums,0)
   return nums
 
 if __name__ == "__main__":
@@ -93,7 +91,7 @@ if __name__ == "__main__":
     while x<1.4:
       a1 = [random.gauss(10,3) for x in range(20)]
       a2 = [y*x for y in a1]
-      print(round(x,3),cliffsDelta(a1,a2),bootstrap(a1,a2),sep="\t")
+      print(round(x,3),_cliffsDelta(a1,a2),_bootstrap(a1,a2),sep="\t")
       x *= 1.02
     
   def eg2(n=5):
@@ -110,8 +108,7 @@ if __name__ == "__main__":
   def eg4(n=5):
     eg0([
          NUM([0.34, 0.49 ,0.51, 0.6]*n,   "x1"),
-         NUM([0.34, 0.49 ,0.51, 0.6]*n,   "x2"),
-         NUM([0.34, 0.49 ,0.51, 0.6]*n,   "x3"),
+         NUM([0.34, 0.49 ,0.51, 0.7]*n,   "x2"),
          NUM([0.13 ,0.23, 0.38 , 0.38]*n, "x4"),
          ])
     random.seed(1)
