@@ -1,5 +1,21 @@
 import sys, random
 
+def of(s):
+    try: return float(s)
+    except ValueError: return s
+
+def slurp(file):
+  nums,lst,last= [],[],None
+  with open(file) as fp: 
+    for word in [of(x) for s in fp.readlines() for x in s.split()]:
+      if isinstance(word,float):
+        lst += [word]
+      else:
+        if len(lst)>0: nums += [NUM(lst,last)]
+        lst,last =[],word
+  if len(lst)>0: nums += [NUM(lst,last)]
+  return nums
+
 class NUM:
   "stores mean, standard deviation, low, high, of a list of numbers"
   def __init__(self,lst,txt="",rank=0):
@@ -82,6 +98,9 @@ def sk(nums):
   sk1(nums,0)
   return nums
 
+def egSlurp():
+  eg0(slurp("stats.txt"))
+
 def eg0(nums):
   all = NUM([x for num in nums for x in num.has])
   [print(all.bar(num,width=40,word="%4s", fmt="%5.2f")) for num in sk(nums)] 
@@ -115,5 +134,5 @@ def eg4(n=5):
 
 if __name__ == "__main__":
   random.seed(1)
-  eg2(n=20)
+  egSlurp()
   #[print("\n",f()) for f in [eg1,eg2,eg3,eg4]]
