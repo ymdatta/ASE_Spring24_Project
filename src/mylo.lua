@@ -705,7 +705,7 @@ function eg.dist(   d,rows,r1)
   r1   = d.rows[1]
   rows = r1:neighbors(d)
   for i, row in pairs(rows) do
-    if i%30 ==0 then print(l.o(row.cells), l.rnd(row:dist(r1,d))) end end end
+    if i%30 ==1 then print(i,l.o(row.cells), l.rnd(row:dist(r1,d))) end end end
 
 function eg.far(      d,rows,a,b,C)
   d  = DATA.new("../data/auto93.csv")

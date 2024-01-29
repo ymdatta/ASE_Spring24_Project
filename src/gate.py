@@ -10,15 +10,16 @@ OPTIONS:
      -b --budget0     initial evals                   = 4  
      -B --Budget      subsequent evals                = 6   
      -c --cohen       small effect size               = .35  
-     -c --confidence  statistical confidence          =.05
+     -c --confidence  statistical confidence          = .05
      -e --effectSize  non-parametric small delta      = 0.2385
      -E --Experiments number of Bootstraps            = 512
      -f --file        csv data file name              = '../data/auto93.csv'  
-     -k --k      low class frequency kludge      = 1  
+     -h --help        print help                      = false
+     -k --k           low class frequency kludge      = 1  
      -m --m           low attribute frequency kludge  = 2  
      -s --seed        random number seed              = 31210   
      -t --todo        start up action                 = 'help'   
-     -T --Top        best section                    = .5   
+     -T --Top         best section                    = .5   
 """
 
 import re,sys,ast,math,random
@@ -130,7 +131,7 @@ def smo1(i,best,rest,nall,rows,fun):
 class THE(struct):
   "Builds config from __doc__ string, maybe update it from command line"
   def __init__(self,txt):
-    self.help = txt
+    self._help = txt
     d = {m[1]:coerce(m[2]) for m in re.finditer(r"--(\w+)[^=]*=\s*(\S+)",txt)}
     self.__dict__.update(d)
     
@@ -142,8 +143,8 @@ class THE(struct):
         after = "" if c >= len(sys.argv) - 1 else sys.argv[c+1]
         if arg in ["-"+k[0], "--"+k]: 
           v = "false" if v=="true" else ("true" if v=="false" else after)
-          self.__dict__[k] = coerce(v) 
-    if self.__dict__["help"]:  sys.exit(self.help)
+          self.__dict__[k] = coerce(v)
+    if self.__dict__.get("help",False):  sys.exit(self._help)
           
 #----------------------------------------------------------------------------------------
 def o(d,s=""): 
@@ -188,6 +189,7 @@ class Eg:
     errors = [f() for s,f in Eg._all.items() if s[0] !="_" and s !="all"]
     sys.exit(sum(0 if x==None else x for x in errors))
     
+  def nothing(): pass
   def help(): 
     "print help"
     print(__doc__);  
@@ -235,6 +237,8 @@ class Eg:
 
 #----------------------------------------------------------------------------------------
 the = THE(__doc__)
-the.cli()
-random.seed(the.seed)
-getattr(Eg, the.todo, Eg.help)()
+if __name__ == "__main__":
+  the.cli()
+  random.seed(the.seed)
+  print(the.todo)
+  getattr(Eg, the.todo, Eg.help)()
