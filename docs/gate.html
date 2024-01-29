@@ -36,16 +36,16 @@ python3 gate.py [OPTIONS]
 <pre><code> -b --budget0     initial evals                   = 4  
  -B --Budget      subsequent evals                = 6   
  -c --cohen       small effect size               = .35  
- -c --confidence  statistical confidence          =.05
+ -c --confidence  statistical confidence          = .05
  -e --effectSize  non-parametric small delta      = 0.2385
  -E --Experiments number of Bootstraps            = 512
  -f --file        csv data file name              = '../data/auto93.csv'  
- -h --help        show help                       = False  
+ -h --help        print help                      = false
  -k --k           low class frequency kludge      = 1  
  -m --m           low attribute frequency kludge  = 2  
  -s --seed        random number seed              = 31210   
  -t --todo        start up action                 = 'help'   
- -T --Top        best section                    = .5
+ -T --Top         best section                    = .5
 </code></pre>
 <details class="source">
 <summary>
@@ -60,26 +60,25 @@ python3 gate.py [OPTIONS]
   
 OPTIONS:  
 
-
-
      -b --budget0     initial evals                   = 4  
      -B --Budget      subsequent evals                = 6   
      -c --cohen       small effect size               = .35  
-     -c --confidence  statistical confidence          =.05
+     -c --confidence  statistical confidence          = .05
      -e --effectSize  non-parametric small delta      = 0.2385
      -E --Experiments number of Bootstraps            = 512
      -f --file        csv data file name              = &#39;../data/auto93.csv&#39;  
-     -h --help        show help                       = False  
+     -h --help        print help                      = false
      -k --k           low class frequency kludge      = 1  
      -m --m           low attribute frequency kludge  = 2  
      -s --seed        random number seed              = 31210   
      -t --todo        start up action                 = &#39;help&#39;   
-     -T --Top        best section                    = .5   
+     -T --Top         best section                    = .5   
 &#34;&#34;&#34;
 
 import re,sys,ast,math,random
 from collections import Counter
 from fileinput import FileInput as file_or_stdin
+from stats import NUM,sk
 
 #----------------------------------------------------------------------------------------
 def isGoal(s):  return s[-1] in &#34;+-!&#34;
@@ -91,18 +90,6 @@ class struct:
   &#34;simple struct-like class, with built-in pretty-print&#34;
   def __init__(self,**d) : self.__dict__.update(d)
   __repr__ = lambda self: o(self.__dict__, self.__class__.__name__)
-
-#----------------------------------------------------------------------------------------
-class NUM(struct):
-  &#34;stores mean, standard deviation, low, high, of a list of numbers&#34;
-  def __init__(self,lst,txt=&#34;&#34;,rank=0):
-    self.txt, self.rank = txt,0
-    self.n, self.sd, self.mu, self.lo, self.hi = len(lst),0,0, sys.maxsize, -sys.maxsize
-    if self.n != 0: 
-      tmp, self.mu  = 0, sum(lst) / self.n
-      for x in lst: 
-        tmp += (x-self.mu)**2; self.hi=max(x,self.hi); self.lo=min(x,self.lo)
-      self.sd = (tmp/(self.n - 1+1E-30))**.5 
 
 #----------------------------------------------------------------------------------------
 class COLS(struct):
@@ -197,7 +184,7 @@ def smo1(i,best,rest,nall,rows,fun):
 class THE(struct):
   &#34;Builds config from __doc__ string, maybe update it from command line&#34;
   def __init__(self,txt):
-    self.help = txt
+    self._help = txt
     d = {m[1]:coerce(m[2]) for m in re.finditer(r&#34;--(\w+)[^=]*=\s*(\S+)&#34;,txt)}
     self.__dict__.update(d)
     
@@ -209,8 +196,8 @@ class THE(struct):
         after = &#34;&#34; if c &gt;= len(sys.argv) - 1 else sys.argv[c+1]
         if arg in [&#34;-&#34;+k[0], &#34;--&#34;+k]: 
           v = &#34;false&#34; if v==&#34;true&#34; else (&#34;true&#34; if v==&#34;false&#34; else after)
-          self.__dict__[k] = coerce(v) 
-    if self.__dict__[&#34;help&#34;]:  sys.exit(self.help)
+          self.__dict__[k] = coerce(v)
+    if self.__dict__.get(&#34;help&#34;,False):  sys.exit(self._help)
           
 #----------------------------------------------------------------------------------------
 def o(d,s=&#34;&#34;): 
@@ -246,39 +233,6 @@ def rnds(x,n=2):
   if isa(x,(list,tuple)): return [rnds(y,n) for y in x]
   return x
 
-def different(x,y):
-  &#34;non-parametric effect size and significance test&#34;
-  return cliffsDelta(x,y) and bootstrap(x,y)
-
-def cliffsDelta(x,y,effectSize=.2):
-  &#34;&#34;&#34;non-parametric effect size. threshold is border between small=.11 and medium=.28 
-     from Table1 of  https://doi.org/10.3102/10769986025002101&#34;&#34;&#34;
-  if len(x) &gt; 10*len(y) : return cliffsDelta(random.choices(x,10*len(y)),y)
-  if len(y) &gt; 10*len(x) : return cliffsDelta(x, random.choices(y,10*len(x)))
-  n,lt,gt = 0,0,0
-  for x1 in x:
-    for y1 in y:
-      n = n + 1
-      if x1 &gt; y1: gt = gt + 1
-      if x1 &lt; y1: lt = lt + 1
-  return abs(lt - gt)/n &gt; effectSize # true if different
-
-def bootstrap(y0,z0,confidence=.05,Experiments=512,):
-  &#34;&#34;&#34;non-parametric significance test From Introduction to Bootstrap, 
-     Efron and Tibshirani, 1993, chapter 20. https://doi.org/10.1201/9780429246593&#34;&#34;&#34;
-  obs = lambda x,y: abs(x.mu-y.mu) / ((x.sd**2/x.n + y.ad**2/y.n)**.5 + 1E-30)
-  x, y, z = NUM(y0+z0), NUM(y0), NUM(z0)
-  d = obs(y,z)
-  yhat = [y1 - y.mu + x.mu for y1 in y0]
-  zhat = [z1 - z.mu + x.mu for z1 in z0]
-  n      = 0
-  for _ in range(Experiments):
-    ynum = NUM(random.choices(yhat,k=len(yhat)))
-    znum = NUM(random.choices(zhat,k=len(zhat)))
-    if obs(ynum, znum) &gt; d:
-      n += 1
-  return n / Experiments &lt; confidence # true if different
-
 #----------------------------------------------------------------------------------------
 class Eg:
   &#34;place to store demos&#34;
@@ -288,6 +242,7 @@ class Eg:
     errors = [f() for s,f in Eg._all.items() if s[0] !=&#34;_&#34; and s !=&#34;all&#34;]
     sys.exit(sum(0 if x==None else x for x in errors))
     
+  def nothing(): pass
   def help(): 
     &#34;print help&#34;
     print(__doc__);  
@@ -335,9 +290,11 @@ class Eg:
 
 #----------------------------------------------------------------------------------------
 the = THE(__doc__)
-the.cli()
-random.seed(the.seed)
-getattr(Eg, the.todo, Eg.help)()</code></pre>
+if __name__ == &#34;__main__&#34;:
+  the.cli()
+  random.seed(the.seed)
+  print(the.todo)
+  getattr(Eg, the.todo, Eg.help)()</code></pre>
 </details>
 </section>
 <section>
@@ -347,58 +304,6 @@ getattr(Eg, the.todo, Eg.help)()</code></pre>
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="gate.bootstrap"><code class="name flex">
-<span>def <span class="ident">bootstrap</span></span>(<span>y0, z0, confidence=0.05, Experiments=512)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>non-parametric significance test From Introduction to Bootstrap,
-Efron and Tibshirani, 1993, chapter 20. <a href="https://doi.org/10.1201/9780429246593">https://doi.org/10.1201/9780429246593</a></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def bootstrap(y0,z0,confidence=.05,Experiments=512,):
-  &#34;&#34;&#34;non-parametric significance test From Introduction to Bootstrap, 
-     Efron and Tibshirani, 1993, chapter 20. https://doi.org/10.1201/9780429246593&#34;&#34;&#34;
-  obs = lambda x,y: abs(x.mu-y.mu) / ((x.sd**2/x.n + y.ad**2/y.n)**.5 + 1E-30)
-  x, y, z = NUM(y0+z0), NUM(y0), NUM(z0)
-  d = obs(y,z)
-  yhat = [y1 - y.mu + x.mu for y1 in y0]
-  zhat = [z1 - z.mu + x.mu for z1 in z0]
-  n      = 0
-  for _ in range(Experiments):
-    ynum = NUM(random.choices(yhat,k=len(yhat)))
-    znum = NUM(random.choices(zhat,k=len(zhat)))
-    if obs(ynum, znum) &gt; d:
-      n += 1
-  return n / Experiments &lt; confidence # true if different</code></pre>
-</details>
-</dd>
-<dt id="gate.cliffsDelta"><code class="name flex">
-<span>def <span class="ident">cliffsDelta</span></span>(<span>x, y, effectSize=0.2)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>non-parametric effect size. threshold is border between small=.11 and medium=.28
-from Table1 of
-<a href="https://doi.org/10.3102/10769986025002101">https://doi.org/10.3102/10769986025002101</a></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def cliffsDelta(x,y,effectSize=.2):
-  &#34;&#34;&#34;non-parametric effect size. threshold is border between small=.11 and medium=.28 
-     from Table1 of  https://doi.org/10.3102/10769986025002101&#34;&#34;&#34;
-  if len(x) &gt; 10*len(y) : return cliffsDelta(random.choices(x,10*len(y)),y)
-  if len(y) &gt; 10*len(x) : return cliffsDelta(x, random.choices(y,10*len(x)))
-  n,lt,gt = 0,0,0
-  for x1 in x:
-    for y1 in y:
-      n = n + 1
-      if x1 &gt; y1: gt = gt + 1
-      if x1 &lt; y1: lt = lt + 1
-  return abs(lt - gt)/n &gt; effectSize # true if different</code></pre>
-</details>
-</dd>
 <dt id="gate.coerce"><code class="name flex">
 <span>def <span class="ident">coerce</span></span>(<span>s)</span>
 </code></dt>
@@ -429,20 +334,6 @@ from Table1 of
     for line in src:
       line = re.sub(r&#39;([\n\t\r&#34;\’ ]|#.*)&#39;, &#39;&#39;, line)
       if line: yield [coerce(s.strip()) for s in line.split(&#34;,&#34;)]</code></pre>
-</details>
-</dd>
-<dt id="gate.different"><code class="name flex">
-<span>def <span class="ident">different</span></span>(<span>x, y)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>non-parametric effect size and significance test</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def different(x,y):
-  &#34;non-parametric effect size and significance test&#34;
-  return cliffsDelta(x,y) and bootstrap(x,y)</code></pre>
 </details>
 </dd>
 <dt id="gate.entropy"><code class="name flex">
@@ -821,6 +712,7 @@ information to guess the next most informative example to evaluate</p></div>
     errors = [f() for s,f in Eg._all.items() if s[0] !=&#34;_&#34; and s !=&#34;all&#34;]
     sys.exit(sum(0 if x==None else x for x in errors))
     
+  def nothing(): pass
   def help(): 
     &#34;print help&#34;
     print(__doc__);  
@@ -930,6 +822,18 @@ information to guess the next most informative example to evaluate</p></div>
               rnds(d.like(row, 1000, 2, m=the.m, k=the.k)))</code></pre>
 </details>
 </dd>
+<dt id="gate.Eg.nothing"><code class="name flex">
+<span>def <span class="ident">nothing</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def nothing(): pass</code></pre>
+</details>
+</dd>
 <dt id="gate.Eg.nums"><code class="name flex">
 <span>def <span class="ident">nums</span></span>(<span>)</span>
 </code></dt>
@@ -990,32 +894,6 @@ information to guess the next most informative example to evaluate</p></div>
 </dd>
 </dl>
 </dd>
-<dt id="gate.NUM"><code class="flex name class">
-<span>class <span class="ident">NUM</span></span>
-<span>(</span><span>lst, txt='', rank=0)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>stores mean, standard deviation, low, high, of a list of numbers</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class NUM(struct):
-  &#34;stores mean, standard deviation, low, high, of a list of numbers&#34;
-  def __init__(self,lst,txt=&#34;&#34;,rank=0):
-    self.txt, self.rank = txt,0
-    self.n, self.sd, self.mu, self.lo, self.hi = len(lst),0,0, sys.maxsize, -sys.maxsize
-    if self.n != 0: 
-      tmp, self.mu  = 0, sum(lst) / self.n
-      for x in lst: 
-        tmp += (x-self.mu)**2; self.hi=max(x,self.hi); self.lo=min(x,self.lo)
-      self.sd = (tmp/(self.n - 1+1E-30))**.5 </code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="gate.struct" href="#gate.struct">struct</a></li>
-</ul>
-</dd>
 <dt id="gate.THE"><code class="flex name class">
 <span>class <span class="ident">THE</span></span>
 <span>(</span><span>txt)</span>
@@ -1029,7 +907,7 @@ information to guess the next most informative example to evaluate</p></div>
 <pre><code class="python">class THE(struct):
   &#34;Builds config from __doc__ string, maybe update it from command line&#34;
   def __init__(self,txt):
-    self.help = txt
+    self._help = txt
     d = {m[1]:coerce(m[2]) for m in re.finditer(r&#34;--(\w+)[^=]*=\s*(\S+)&#34;,txt)}
     self.__dict__.update(d)
     
@@ -1041,8 +919,8 @@ information to guess the next most informative example to evaluate</p></div>
         after = &#34;&#34; if c &gt;= len(sys.argv) - 1 else sys.argv[c+1]
         if arg in [&#34;-&#34;+k[0], &#34;--&#34;+k]: 
           v = &#34;false&#34; if v==&#34;true&#34; else (&#34;true&#34; if v==&#34;false&#34; else after)
-          self.__dict__[k] = coerce(v) 
-    if self.__dict__[&#34;help&#34;]:  sys.exit(self.help)</code></pre>
+          self.__dict__[k] = coerce(v)
+    if self.__dict__.get(&#34;help&#34;,False):  sys.exit(self._help)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -1067,8 +945,8 @@ information to guess the next most informative example to evaluate</p></div>
       after = &#34;&#34; if c &gt;= len(sys.argv) - 1 else sys.argv[c+1]
       if arg in [&#34;-&#34;+k[0], &#34;--&#34;+k]: 
         v = &#34;false&#34; if v==&#34;true&#34; else (&#34;true&#34; if v==&#34;false&#34; else after)
-        self.__dict__[k] = coerce(v) 
-  if self.__dict__[&#34;help&#34;]:  sys.exit(self.help)</code></pre>
+        self.__dict__[k] = coerce(v)
+  if self.__dict__.get(&#34;help&#34;,False):  sys.exit(self._help)</code></pre>
 </details>
 </dd>
 </dl>
@@ -1092,7 +970,6 @@ information to guess the next most informative example to evaluate</p></div>
 <ul class="hlist">
 <li><a title="gate.COLS" href="#gate.COLS">COLS</a></li>
 <li><a title="gate.DATA" href="#gate.DATA">DATA</a></li>
-<li><a title="gate.NUM" href="#gate.NUM">NUM</a></li>
 <li><a title="gate.THE" href="#gate.THE">THE</a></li>
 </ul>
 </dd>
@@ -1105,7 +982,7 @@ information to guess the next most informative example to evaluate</p></div>
 <p><img src="https://img.shields.io/badge/purpose-teaching-red">
 <img src="https://img.shields.io/badge/task-optimization-blue">
 <img src="https://img.shields.io/badge/language-python3-yellow">
-<a href="https://github.com/timm/lo/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/license-bsd2-green"></a><br>
+<a href="https://github.com/timm/lo/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/license-bsd2-green"></a>
 <a href="https://github.com/timm/lo/blob/main/src/gate.py"><img height=45 src="https://iconspng.com/uploads/download-button-black.png"></a></p>
 </center>
 <h1>Index</h1>
@@ -1115,11 +992,8 @@ information to guess the next most informative example to evaluate</p></div>
 <ul id="index">
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="two-column">
-<li><code><a title="gate.bootstrap" href="#gate.bootstrap">bootstrap</a></code></li>
-<li><code><a title="gate.cliffsDelta" href="#gate.cliffsDelta">cliffsDelta</a></code></li>
 <li><code><a title="gate.coerce" href="#gate.coerce">coerce</a></code></li>
 <li><code><a title="gate.csv" href="#gate.csv">csv</a></code></li>
-<li><code><a title="gate.different" href="#gate.different">different</a></code></li>
 <li><code><a title="gate.entropy" href="#gate.entropy">entropy</a></code></li>
 <li><code><a title="gate.isGoal" href="#gate.isGoal">isGoal</a></code></li>
 <li><code><a title="gate.isHeaven" href="#gate.isHeaven">isHeaven</a></code></li>
@@ -1154,13 +1028,11 @@ information to guess the next most informative example to evaluate</p></div>
 <li><code><a title="gate.Eg.data" href="#gate.Eg.data">data</a></code></li>
 <li><code><a title="gate.Eg.help" href="#gate.Eg.help">help</a></code></li>
 <li><code><a title="gate.Eg.likes" href="#gate.Eg.likes">likes</a></code></li>
+<li><code><a title="gate.Eg.nothing" href="#gate.Eg.nothing">nothing</a></code></li>
 <li><code><a title="gate.Eg.nums" href="#gate.Eg.nums">nums</a></code></li>
 <li><code><a title="gate.Eg.smos" href="#gate.Eg.smos">smos</a></code></li>
 <li><code><a title="gate.Eg.smos20" href="#gate.Eg.smos20">smos20</a></code></li>
 </ul>
-</li>
-<li>
-<h4><code><a title="gate.NUM" href="#gate.NUM">NUM</a></code></h4>
 </li>
 <li>
 <h4><code><a title="gate.THE" href="#gate.THE">THE</a></code></h4>
