@@ -28,10 +28,10 @@ from fileinput import FileInput as file_or_stdin
 from stats import NUM,sk
 
 #----------------------------------------------------------------------------------------
-def goalStr(s):   return s[-1] in "+-!"
-def heavenStr(s): return 0 if s[-1] == "-" else 1
-def numStr(s):    return s[0].isupper() 
-def symCol(x):    return isinstance(x,Counter)
+def strOfGoal(s):   return s[-1] in "+-!"
+def strOfHeaven(s): return 0 if s[-1] == "-" else 1
+def strOfNum(s):    return s[0].isupper() 
+def colOfSym(x):    return isinstance(x,Counter)
 
 #----------------------------------------------------------------------------------------
 class struct:
@@ -43,26 +43,29 @@ class NUM(struct):
    self.txt, self.rank, self.n, self.mu, self.m2, self.has = txt,rank,0,0,0,sorted(lst)
    for x in lst:
      self.n += 1
-     d = x - self.mu
-     self.mu += d / self.n
-     self.m2 += d * (x -  self.mu)
+     delta = x - self.mu
+     self.mu += delta / self.n
+     self.m2 += delta * (x -  self.mu)
    self.heaven = 0 if txt[-1] == "-" else 1
    if len(lst) > 1: self.sd = (self.m2 / (self.n - 1))**.5
 
-  def same(i,j):
-    psd = (((i.n-1)*i.sd**2 + (j.n-1)*j.sd**2)/(i.n + j.n - 2))**.5
-    return abs(i.n - j.n)/psd < the.cohen
+  def d(self,x):
+    if x=="?": return x
+    tmp = (self.heaven==0 and (self.mu-x) or (x-self.mu))/(self.sd*the.cohen)
+    return 0 if -1 <= tmp and tmp <= 1 else tmp 
 
   def norm(self,x):
-    return (x - self.has[0]) / (self.has[-1] - self.has[0])
-
+    return x=="?" and x or (x - self.has[0]) / (self.has[-1] - self.has[0])
+  
+  def d2h(self,x):
+     return abs(self.heaven - self.norm(x))
 #----------------------------------------------------------------------------------------
 class COLS(struct):
   def __init__(self,names,rows):
-    self.names = names
-    cols       = [[y for y in x if y !="?"] for x in zip(*rows)]
-    self.all   = [(NUM if numStr(name) else Counter)(lst) for name,lst in zip(names,cols)]
-    self.ys    = {n:c for n,(s,c) in enumerate(zip(self.names,self.all)) if goalStr(s)}
+    self.names= names
+    rotated  = [[y for y in x if y !="?"] for x in zip(*rows)]
+    self.all = [(NUM if strOfNum(s) else Counter)(lst) for s,lst in zip(names,rotated)]
+    self.ys  = {n:c for n,(s,c) in enumerate(zip(self.names,self.all)) if strOfGoal(s)}
 
 #----------------------------------------------------------------------------------------
 class DATA(struct):
@@ -72,7 +75,7 @@ class DATA(struct):
     self.rows = sorted(rows, key=lambda row:self.d2h(row)) if order else rows
 
   def mid(self): 
-    return [max(col,key=col.get) if symCol(col) else col.mu 
+    return [max(col,key=col.get) if colOfSym(col) else col.mu 
             for col in enumerate(self.cols.all)] 
   
   def clone(self, rows=[], order=False):
@@ -80,7 +83,7 @@ class DATA(struct):
 
   def d2h(self,lst):  
     ys = self.cols.ys
-    return (sum(abs(col.w - col.norm(lst[n]))**2 for n,col in ys.items())/len(ys))**.5 
+    return (sum(col.d2h(lst[n]))**2 for n,col in ys.items()) / len(ys))**.5 
 
   def like(self,row,nall,nh,m=1,k=2):
     def num(col,x):
@@ -96,7 +99,7 @@ class DATA(struct):
     for c,x in enumerate(row):
       if x != "?" and c not in self.cols.ys:
         col  = self.cols.all[c]
-        inc  = (sym if symCol(col) else num)(col, x) 
+        inc  = (sym if colOfSym(col) else num)(col, x) 
         out += math.log(inc)
     return out
 
