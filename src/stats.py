@@ -107,10 +107,17 @@ def eg0(nums):
     
 def eg1():
   x=1
-  while x<1.4:
+  print("inc","\tcd","\tboot","\tc+b", "\tsd/3")
+  while x<1.5:
     a1 = [random.gauss(10,3) for x in range(20)]
     a2 = [y*x for y in a1]
-    print(round(x,3),_cliffsDelta(a1,a2),_bootstrap(a1,a2),sep="\t")
+    n1=NUM(a1)
+    n2=NUM(a2)
+    n12=NUM(a1+a2)
+    t1=_cliffsDelta(a1,a2)
+    t2= _bootstrap(a1,a2)
+    t3= abs(n1.mu-n2.mu) > n12.sd/3
+    print(round(x,3),t1, t2,t1 and t2, t3, sep="\t")
     x *= 1.02
   
 def eg2(n=5):
@@ -134,5 +141,5 @@ def eg4(n=5):
 
 if __name__ == "__main__":
   random.seed(1)
-  egSlurp()
+  eg1()
   #[print("\n",f()) for f in [eg1,eg2,eg3,eg4]]
