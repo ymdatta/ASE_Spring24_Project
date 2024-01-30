@@ -28,9 +28,10 @@ from fileinput import FileInput as file_or_stdin
 from stats import NUM,sk
 
 #----------------------------------------------------------------------------------------
-def isGoal(s):  return s[-1] in "+-!"
+def isGoal(s):   return s[-1] in "+-!"
 def isHeaven(s): return 0 if s[-1] == "-" else 1
-def isNum(s):   return s[0].isupper() 
+def isNum(s):    return s[0].isupper() 
+def isSymCol(x): return isinstance(x,Counter)
 
 #----------------------------------------------------------------------------------------
 class struct:
@@ -44,9 +45,8 @@ class COLS(struct):
   def __init__(self,names,rows):
     self.names = names
     self.ys    = {c:isHeaven(s) for c,s in enumerate(self.names) if isGoal(s)}
-    self.nums  = [c           for c,s in enumerate(self.names) if isNum(s)]
-    tmp        = [[y for y in x if y !="?"] for x in zip(*rows)]
-    self.all   = [(NUM if c in self.nums else Counter)(a) for c,a in enumerate(tmp)]
+    cols       = [[y for y in x if y !="?"] for x in zip(*rows)]
+    self.all   = [(NUM if isNum(name) else Counter)(lst) for name,lst in zip(names,cols)]
 
 #----------------------------------------------------------------------------------------
 class DATA(struct):
@@ -58,13 +58,12 @@ class DATA(struct):
 
   def mid(self): 
     "returns centroid"
-    return [(col.mu if c in self.cols.nums else max(col,key=col.get)) 
-            for c,col in enumerate(self.cols.all)] 
+    return [max(col,key=col.get) if isSymCol(col) else col.mu 
+            for col in enumerate(self.cols.all)] 
   
   def small(self): 
     "returns small delta from centroid"
-    return [(col.sd*the.cohen if c in self.cols.nums else 0)
-            for c,col in enumerate(self.cols.all)]
+    return [0 if isSymCol(col) else col.sd*the.cohen for col in enumerate(self.cols.all)]
 
   def clone(self, rows=[], order=False):
     "return a new DATA with a similar structure to self"
@@ -94,7 +93,7 @@ class DATA(struct):
     for c,x in enumerate(row):
       if x != "?" and c not in self.cols.ys:
         col  = self.cols.all[c]
-        inc  = (sym if isinstance(col, Counter) else num)(col, x) 
+        inc  = (sym if isSymCol(col) else num)(col, x) 
         out += math.log(inc)
     return out
 
@@ -144,7 +143,6 @@ class THE(struct):
         if arg in ["-"+k[0], "--"+k]: 
           v = "false" if v=="true" else ("true" if v=="false" else after)
           self.__dict__[k] = coerce(v)
-    if self.__dict__.get("help",False):  sys.exit(self._help)
           
 #----------------------------------------------------------------------------------------
 def o(d,s=""): 
@@ -190,6 +188,7 @@ class Eg:
     sys.exit(sum(0 if x==None else x for x in errors))
     
   def nothing(): pass
+
   def help(): 
     "print help"
     print(__doc__);  
@@ -201,7 +200,7 @@ class Eg:
   def data():
     "read rows from csv, sorted by distance to heaven"
     for i,row in enumerate(DATA(csv(the.file),order=True).rows):
-       if i % 30 == 0 : print(i,row)
+       if i % 500 == 0 : print(i,row)
 
   def likes():
     "reports the likelihood of rows"
@@ -240,5 +239,4 @@ the = THE(__doc__)
 if __name__ == "__main__":
   the.cli()
   random.seed(the.seed)
-  print(the.todo)
-  getattr(Eg, the.todo, Eg.help)()
+  getattr(Eg, the.todo,Eg.help)()
