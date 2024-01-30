@@ -81,9 +81,10 @@ from fileinput import FileInput as file_or_stdin
 from stats import NUM,sk
 
 #----------------------------------------------------------------------------------------
-def isGoal(s):  return s[-1] in &#34;+-!&#34;
+def isGoal(s):   return s[-1] in &#34;+-!&#34;
 def isHeaven(s): return 0 if s[-1] == &#34;-&#34; else 1
-def isNum(s):   return s[0].isupper() 
+def isNum(s):    return s[0].isupper() 
+def isSymCol(x): return isinstance(x,Counter)
 
 #----------------------------------------------------------------------------------------
 class struct:
@@ -97,9 +98,8 @@ class COLS(struct):
   def __init__(self,names,rows):
     self.names = names
     self.ys    = {c:isHeaven(s) for c,s in enumerate(self.names) if isGoal(s)}
-    self.nums  = [c           for c,s in enumerate(self.names) if isNum(s)]
-    tmp        = [[y for y in x if y !=&#34;?&#34;] for x in zip(*rows)]
-    self.all   = [(NUM if c in self.nums else Counter)(a) for c,a in enumerate(tmp)]
+    cols       = [[y for y in x if y !=&#34;?&#34;] for x in zip(*rows)]
+    self.all   = [(NUM if isNum(name) else Counter)(lst) for name,lst in zip(names,cols)]
 
 #----------------------------------------------------------------------------------------
 class DATA(struct):
@@ -111,13 +111,12 @@ class DATA(struct):
 
   def mid(self): 
     &#34;returns centroid&#34;
-    return [(col.mu if c in self.cols.nums else max(col,key=col.get)) 
-            for c,col in enumerate(self.cols.all)] 
+    return [max(col,key=col.get) if isSymCol(col) else col.mu 
+            for col in enumerate(self.cols.all)] 
   
   def small(self): 
     &#34;returns small delta from centroid&#34;
-    return [(col.sd*the.cohen if c in self.cols.nums else 0)
-            for c,col in enumerate(self.cols.all)]
+    return [0 if isSymCol(col) else col.sd*the.cohen for col in enumerate(self.cols.all)]
 
   def clone(self, rows=[], order=False):
     &#34;return a new DATA with a similar structure to self&#34;
@@ -147,7 +146,7 @@ class DATA(struct):
     for c,x in enumerate(row):
       if x != &#34;?&#34; and c not in self.cols.ys:
         col  = self.cols.all[c]
-        inc  = (sym if isinstance(col, Counter) else num)(col, x) 
+        inc  = (sym if isSymCol(col) else num)(col, x) 
         out += math.log(inc)
     return out
 
@@ -197,7 +196,6 @@ class THE(struct):
         if arg in [&#34;-&#34;+k[0], &#34;--&#34;+k]: 
           v = &#34;false&#34; if v==&#34;true&#34; else (&#34;true&#34; if v==&#34;false&#34; else after)
           self.__dict__[k] = coerce(v)
-    if self.__dict__.get(&#34;help&#34;,False):  sys.exit(self._help)
           
 #----------------------------------------------------------------------------------------
 def o(d,s=&#34;&#34;): 
@@ -243,6 +241,7 @@ class Eg:
     sys.exit(sum(0 if x==None else x for x in errors))
     
   def nothing(): pass
+
   def help(): 
     &#34;print help&#34;
     print(__doc__);  
@@ -254,7 +253,7 @@ class Eg:
   def data():
     &#34;read rows from csv, sorted by distance to heaven&#34;
     for i,row in enumerate(DATA(csv(the.file),order=True).rows):
-       if i % 30 == 0 : print(i,row)
+       if i % 500 == 0 : print(i,row)
 
   def likes():
     &#34;reports the likelihood of rows&#34;
@@ -293,8 +292,7 @@ the = THE(__doc__)
 if __name__ == &#34;__main__&#34;:
   the.cli()
   random.seed(the.seed)
-  print(the.todo)
-  getattr(Eg, the.todo, Eg.help)()</code></pre>
+  getattr(Eg, the.todo,Eg.help)()</code></pre>
 </details>
 </section>
 <section>
@@ -360,7 +358,7 @@ if __name__ == &#34;__main__&#34;:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isGoal(s):  return s[-1] in &#34;+-!&#34;</code></pre>
+<pre><code class="python">def isGoal(s):   return s[-1] in &#34;+-!&#34;</code></pre>
 </details>
 </dd>
 <dt id="gate.isHeaven"><code class="name flex">
@@ -384,7 +382,19 @@ if __name__ == &#34;__main__&#34;:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isNum(s):   return s[0].isupper() </code></pre>
+<pre><code class="python">def isNum(s):    return s[0].isupper() </code></pre>
+</details>
+</dd>
+<dt id="gate.isSymCol"><code class="name flex">
+<span>def <span class="ident">isSymCol</span></span>(<span>x)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def isSymCol(x): return isinstance(x,Counter)</code></pre>
 </details>
 </dd>
 <dt id="gate.norm"><code class="name flex">
@@ -476,9 +486,8 @@ Return the row nearest the border of best,rest</p></div>
   def __init__(self,names,rows):
     self.names = names
     self.ys    = {c:isHeaven(s) for c,s in enumerate(self.names) if isGoal(s)}
-    self.nums  = [c           for c,s in enumerate(self.names) if isNum(s)]
-    tmp        = [[y for y in x if y !=&#34;?&#34;] for x in zip(*rows)]
-    self.all   = [(NUM if c in self.nums else Counter)(a) for c,a in enumerate(tmp)]</code></pre>
+    cols       = [[y for y in x if y !=&#34;?&#34;] for x in zip(*rows)]
+    self.all   = [(NUM if isNum(name) else Counter)(lst) for name,lst in zip(names,cols)]</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -504,13 +513,12 @@ Return the row nearest the border of best,rest</p></div>
 
   def mid(self): 
     &#34;returns centroid&#34;
-    return [(col.mu if c in self.cols.nums else max(col,key=col.get)) 
-            for c,col in enumerate(self.cols.all)] 
+    return [max(col,key=col.get) if isSymCol(col) else col.mu 
+            for col in enumerate(self.cols.all)] 
   
   def small(self): 
     &#34;returns small delta from centroid&#34;
-    return [(col.sd*the.cohen if c in self.cols.nums else 0)
-            for c,col in enumerate(self.cols.all)]
+    return [0 if isSymCol(col) else col.sd*the.cohen for col in enumerate(self.cols.all)]
 
   def clone(self, rows=[], order=False):
     &#34;return a new DATA with a similar structure to self&#34;
@@ -540,7 +548,7 @@ Return the row nearest the border of best,rest</p></div>
     for c,x in enumerate(row):
       if x != &#34;?&#34; and c not in self.cols.ys:
         col  = self.cols.all[c]
-        inc  = (sym if isinstance(col, Counter) else num)(col, x) 
+        inc  = (sym if isSymCol(col) else num)(col, x) 
         out += math.log(inc)
     return out
 
@@ -618,7 +626,7 @@ Return the row nearest the border of best,rest</p></div>
   for c,x in enumerate(row):
     if x != &#34;?&#34; and c not in self.cols.ys:
       col  = self.cols.all[c]
-      inc  = (sym if isinstance(col, Counter) else num)(col, x) 
+      inc  = (sym if isSymCol(col) else num)(col, x) 
       out += math.log(inc)
   return out</code></pre>
 </details>
@@ -634,8 +642,8 @@ Return the row nearest the border of best,rest</p></div>
 </summary>
 <pre><code class="python">def mid(self): 
   &#34;returns centroid&#34;
-  return [(col.mu if c in self.cols.nums else max(col,key=col.get)) 
-          for c,col in enumerate(self.cols.all)] </code></pre>
+  return [max(col,key=col.get) if isSymCol(col) else col.mu 
+          for col in enumerate(self.cols.all)] </code></pre>
 </details>
 </dd>
 <dt id="gate.DATA.small"><code class="name flex">
@@ -649,8 +657,7 @@ Return the row nearest the border of best,rest</p></div>
 </summary>
 <pre><code class="python">def small(self): 
   &#34;returns small delta from centroid&#34;
-  return [(col.sd*the.cohen if c in self.cols.nums else 0)
-          for c,col in enumerate(self.cols.all)]</code></pre>
+  return [0 if isSymCol(col) else col.sd*the.cohen for col in enumerate(self.cols.all)]</code></pre>
 </details>
 </dd>
 <dt id="gate.DATA.smo"><code class="name flex">
@@ -713,6 +720,7 @@ information to guess the next most informative example to evaluate</p></div>
     sys.exit(sum(0 if x==None else x for x in errors))
     
   def nothing(): pass
+
   def help(): 
     &#34;print help&#34;
     print(__doc__);  
@@ -724,7 +732,7 @@ information to guess the next most informative example to evaluate</p></div>
   def data():
     &#34;read rows from csv, sorted by distance to heaven&#34;
     for i,row in enumerate(DATA(csv(the.file),order=True).rows):
-       if i % 30 == 0 : print(i,row)
+       if i % 500 == 0 : print(i,row)
 
   def likes():
     &#34;reports the likelihood of rows&#34;
@@ -787,7 +795,7 @@ information to guess the next most informative example to evaluate</p></div>
 <pre><code class="python">def data():
   &#34;read rows from csv, sorted by distance to heaven&#34;
   for i,row in enumerate(DATA(csv(the.file),order=True).rows):
-     if i % 30 == 0 : print(i,row)</code></pre>
+     if i % 500 == 0 : print(i,row)</code></pre>
 </details>
 </dd>
 <dt id="gate.Eg.help"><code class="name flex">
@@ -919,8 +927,7 @@ information to guess the next most informative example to evaluate</p></div>
         after = &#34;&#34; if c &gt;= len(sys.argv) - 1 else sys.argv[c+1]
         if arg in [&#34;-&#34;+k[0], &#34;--&#34;+k]: 
           v = &#34;false&#34; if v==&#34;true&#34; else (&#34;true&#34; if v==&#34;false&#34; else after)
-          self.__dict__[k] = coerce(v)
-    if self.__dict__.get(&#34;help&#34;,False):  sys.exit(self._help)</code></pre>
+          self.__dict__[k] = coerce(v)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -945,8 +952,7 @@ information to guess the next most informative example to evaluate</p></div>
       after = &#34;&#34; if c &gt;= len(sys.argv) - 1 else sys.argv[c+1]
       if arg in [&#34;-&#34;+k[0], &#34;--&#34;+k]: 
         v = &#34;false&#34; if v==&#34;true&#34; else (&#34;true&#34; if v==&#34;false&#34; else after)
-        self.__dict__[k] = coerce(v)
-  if self.__dict__.get(&#34;help&#34;,False):  sys.exit(self._help)</code></pre>
+        self.__dict__[k] = coerce(v)</code></pre>
 </details>
 </dd>
 </dl>
@@ -998,6 +1004,7 @@ information to guess the next most informative example to evaluate</p></div>
 <li><code><a title="gate.isGoal" href="#gate.isGoal">isGoal</a></code></li>
 <li><code><a title="gate.isHeaven" href="#gate.isHeaven">isHeaven</a></code></li>
 <li><code><a title="gate.isNum" href="#gate.isNum">isNum</a></code></li>
+<li><code><a title="gate.isSymCol" href="#gate.isSymCol">isSymCol</a></code></li>
 <li><code><a title="gate.norm" href="#gate.norm">norm</a></code></li>
 <li><code><a title="gate.o" href="#gate.o">o</a></code></li>
 <li><code><a title="gate.rnds" href="#gate.rnds">rnds</a></code></li>
