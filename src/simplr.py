@@ -96,7 +96,7 @@ class DATA(struct):
     #------------------------------------------
     prior = (len(self.rows) + k) / (nall + k*nh)
     out   = math.log(prior)
-    for c,x in enumerate(row):
+    for c,x in slots(row):
       if x != "?" and c not in self.cols.ys:
         col  = self.cols.all[c]
         inc  = (sym if colOfSym(col) else num)(col, x) 
@@ -144,6 +144,12 @@ class THE(struct):
           self.__dict__[k] = coerce(v)
           
 #----------------------------------------------------------------------------------------
+def slots(x)
+  if isa(x,dict):
+    for k,v in x.items(): yield k,v
+  else:
+    for k,v in enumerate(x): yield k,v
+  
 def o(d,s=""): 
   return s+"{"+(", ".join([f":{k} {v}" for k,v in d.items() if k[0]!="_"]))+"}" 
 
