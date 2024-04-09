@@ -242,6 +242,56 @@ function DATA:farapart(rows,  sortp,a,    b,far,evals)
   if sortp and b:d2h(self) < a:d2h(self) then a,b=b,a end
   return a, b, a:dist(b,self),evals end
 
+
+function DATA:half_new(rows,sortp,before,evals)
+  local some,a,b,d,C,project,as,bs
+  local nws, nes, sws, ses
+
+  some  = l.many(rows, math.min(the.Half,#rows))
+  a,b,C,evals = self:farapart(some, sortp, before)
+  function d(row1,row2) return row1:dist(row2,self)  end
+  function projectx(r)   return (d(r,a)^2 + C^2 -d(r,b)^2)/(2*C) end
+  function projecty(r)  return (math.sqrt(d(r, a)^2 - projectx(r)^2)) end 
+  nws, nes, sws, ses = {}, {}, {}, {}
+
+  x_sort = l.keysort(rows, projectx)
+  mid_ind = math.floor(#x_sort / 2) + 1
+  med_x = projectx(x_sort[mid_ind])
+
+  y_sort = l.keysort(rows, projecty)
+  med_y = projecty(y_sort[mid_ind]) 
+
+  print("med_x: ", med_x, "  med_y: ", med_y)
+
+  for _, row in pairs(rows) do
+    row_x = projectx(row) 
+    row_y = projecty(row)
+
+    print("\trow_x: ", row_x, "  row_y: ", row_y)
+
+    if (row_x <= med_x) then
+      if (row_y <= med_y) then
+        sws[1 + #sws] = row
+        print("\t\t To SouthWest")
+      else
+        nws[1 + #nws] = row
+        print("\t\t To NorthWest")
+      end
+    else
+      if (row_y <= med_y) then
+        ses[1 + #ses] = row
+        print("\t\t To SouthEast")
+      else
+        nes[1 + #nes] = row
+        print("\t\t To NorthEast")
+      end
+    end
+  end
+
+  print("#rows: ", #rows, "  #sws: ", #sws, "  #ses:  ", #ses, "  #nws: ", #nws, "  #nes: ", #nes) 
+
+  return d(a, b) end
+
 -- Divide `rows` into two halves, based on distance to two far points.
 function DATA:half(rows,sortp,before,evals)
   local some,a,b,d,C,project,as,bs
@@ -262,6 +312,7 @@ function DATA:tree(sortp, _tree,      evals,evals1)
     if   #data.rows > 2*(#self.rows)^.5
     then lefts, rights, node.left, node.right, node.C, node.cut, evals1 =
                 self:half(data.rows, sortp, above)
+          self.half_new(data.rows, sortp, above)
           evals = evals + evals1
           node.lefts  = _tree(self:clone(lefts),  node.left)
           node.rights = _tree(self:clone(rights), node.right) end
@@ -717,6 +768,11 @@ function eg.half(      d,o)
   local lefts, rights, left, right, C,cut = d:half(d.rows)
   o = l.o
   print(o(#lefts),o(#rights),o(left.cells),o(right.cells),o(C),o(cut)) end
+
+
+function eg.half_new(      d,o)
+  d     = DATA.new("../data/auto93.csv")
+  d:half_new(d.rows) end
 
 function eg.tree(t, evals)
     t, evals = DATA.new("../data/auto93.csv"):tree(true)
