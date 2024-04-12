@@ -215,9 +215,11 @@ function NODE.new(data) return isa(NODE, { here = data }) end
 -- Walk over a tree, call `fun` on each node.
 function NODE:walk(fun, depth)
   depth = depth or 0
-  fun(self, depth, not (self.lefts or self.rights))
+  fun(self, depth, not (self.lefts or self.rights or self.tops or self.bottoms))
   if self.lefts  then self.lefts:walk(fun, depth+1) end
-  if self.rights then self.rights:walk(fun,depth+1) end end
+  if self.rights then self.rights:walk(fun,depth+1) end
+  if self.tops then self.tops:walk(fun, depth+1) end
+  if self.bottoms then self.bottoms:walk(fun, depth+1) end end
 
 -- Print a tree by printing each node.
 function NODE:show(_show, maxDepth)
@@ -243,7 +245,7 @@ function DATA:farapart(rows,  sortp,a,    b,far,evals)
   return a, b, a:dist(b,self),evals end
 
 
-function DATA:half_new(rows,sortp,before,evals)
+function DATA:half_new(rows,sortp,depth, before, debug, evals)
   local some,a,b,d,C,project,as,bs
   local nws, nes, sws, ses
 
@@ -255,42 +257,44 @@ function DATA:half_new(rows,sortp,before,evals)
   nws, nes, sws, ses = {}, {}, {}, {}
 
   x_sort = l.keysort(rows, projectx)
+
+  -- x_sort is an array, not a table. So, #x_sort makes sense, as all keys are ints.
   mid_ind = math.floor(#x_sort / 2) + 1
   med_x = projectx(x_sort[mid_ind])
 
   y_sort = l.keysort(rows, projecty)
   med_y = projecty(y_sort[mid_ind]) 
 
-  print("med_x: ", med_x, "  med_y: ", med_y)
+  if debug then print("med_x: ", med_x, "  med_y: ", med_y) end
 
   for _, row in pairs(rows) do
     row_x = projectx(row) 
     row_y = projecty(row)
 
-    print("\trow_x: ", row_x, "  row_y: ", row_y)
+  if debug then print("\trow_x: ", row_x, "  row_y: ", row_y) end
 
     if (row_x <= med_x) then
       if (row_y <= med_y) then
         sws[1 + #sws] = row
-        print("\t\t To SouthWest")
+        if debug then print("\t\t To SouthWest") end
       else
         nws[1 + #nws] = row
-        print("\t\t To NorthWest")
+        if debug then print("\t\t To NorthWest") end
       end
     else
       if (row_y <= med_y) then
         ses[1 + #ses] = row
-        print("\t\t To SouthEast")
+        if debug then print("\t\t To SouthEast") end
       else
         nes[1 + #nes] = row
-        print("\t\t To NorthEast")
+        if debug then print("\t\t To NorthEast") end
       end
     end
   end
 
-  print("#rows: ", #rows, "  #sws: ", #sws, "  #ses:  ", #ses, "  #nws: ", #nws, "  #nes: ", #nes) 
+  if debug then print("\n", ("||"):rep(depth), "#rows: ", #rows, "  #sws: ", #sws, "  #ses:  ", #ses, "  #nws: ", #nws, "  #nes: ", #nes, "\n") end
 
-  return d(a, b) end
+  return sws, ses, nws, nes, a, b, evals end
 
 -- Divide `rows` into two halves, based on distance to two far points.
 function DATA:half(rows,sortp,before,evals)
@@ -312,12 +316,33 @@ function DATA:tree(sortp, _tree,      evals,evals1)
     if   #data.rows > 2*(#self.rows)^.5
     then lefts, rights, node.left, node.right, node.C, node.cut, evals1 =
                 self:half(data.rows, sortp, above)
-          self.half_new(data.rows, sortp, above)
           evals = evals + evals1
           node.lefts  = _tree(self:clone(lefts),  node.left)
           node.rights = _tree(self:clone(rights), node.right) end
     return node end
   return _tree(self),evals end
+
+function DATA:tree_new(sortp, debug, _tree,      evals,evals1)
+  evals = 0
+  function _tree_new(data,depth,above,     lefts,rights,node)
+    if debug then print(("||"):rep(depth), "Number of data rows is: ", #data.rows, "  self.rows is: ", #self.rows, "LHS: ", #data.rows, "   RHS: ", 2*(#self.rows)^.5) end
+    node = NODE.new(data)
+    local lefts, rights, tops, bottoms, evals1
+    if   #data.rows > 2*(#self.rows)^.5
+    then lefts, rights, tops, bottoms, node.left, node.right, evals1 =
+                self:half_new(data.rows, sortp, depth, above, debug)
+          evals = evals + evals1
+          -- No node.left/node.right for now.
+          if debug then print ((" "):rep(depth), "Going to lefts one") end
+          node.lefts  = _tree_new(self:clone(lefts), depth + 1)
+          if debug then print ((" "):rep(depth), "Going to rights one") end
+          node.rights = _tree_new(self:clone(rights), depth + 1)
+          if debug then print ((" "):rep(depth), "Going to tops one") end
+          node.tops = _tree_new(self:clone(tops), depth + 1)
+          if debug then print ((" "):rep(depth), "Going to bottoms one") end
+          node.bottoms = _tree_new(self:clone(bottoms), depth + 1) end
+    return node end
+  return _tree_new(self, 1),evals end
 
 -- Optimization via tecursive random projects. 
 -- `Half` then data, then recurse on the best half. 
@@ -776,6 +801,11 @@ function eg.half_new(      d,o)
 
 function eg.tree(t, evals)
     t, evals = DATA.new("../data/auto93.csv"):tree(true)
+    t:show()
+    print(evals) end
+
+function eg.tree_new(t, evals)
+    t, evals = DATA.new("../data/auto93.csv"):tree_new(true, false)
     t:show()
     print(evals) end
  
