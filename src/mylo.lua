@@ -210,7 +210,7 @@ function DATA:clone(  rows,     new)
 -- Recursive binary clustering returns a tree. That tree is build from `NODE`s.
 -- See also, some extensions to DATA (below).
 NODE=is"NODE"
-function NODE.new(data) return isa(NODE, { here = data }) end
+function NODE.new(data) return isa(NODE, { here = data , clusters = {}}) end
 
 -- Walk over a tree, call `fun` on each node.
 function NODE:walk(fun, depth)
@@ -220,6 +220,43 @@ function NODE:walk(fun, depth)
   if self.rights then self.rights:walk(fun,depth+1) end
   if self.tops then self.tops:walk(fun, depth+1) end
   if self.bottoms then self.bottoms:walk(fun, depth+1) end end
+
+function NODE:walk2(fun, baseNode, depth)
+  depth = depth or 0
+  fun(self, baseNode, depth, not (self.lefts or self.rights or self.tops or self.bottoms))
+  if self.lefts  then self.lefts:walk2(fun, baseNode, depth+1) end
+  if self.rights then self.rights:walk2(fun,baseNode, depth+1) end
+  if self.tops then self.tops:walk2(fun, baseNode, depth+1) end
+  if self.bottoms then self.bottoms:walk2(fun, baseNode, depth+1) end end
+
+-- Clone a node.
+function NODE:clone(data)
+  new=data.clone(data.rows)
+  return new end
+
+-- Prune clusters
+function NODE:prune(_show, maxDepth)
+  function _show(node, baseNode, depth, leafp, post)
+    -- Only for leaf nodes, we check for similar density.
+    if leafp then
+      if not baseNode.clusters[#node.here.rows] then
+        baseNode.clusters[#node.here.rows] = node.here:clone(node.here.rows)
+      else
+        rows = node.here.rows
+        for _,row in pairs(rows or {}) do baseNode.clusters[#node.here.rows]:add(row) end
+      end
+    end
+  end
+
+  self:walk2(_show, self)
+
+  print ("\n")
+  for den, data in pairs(self.clusters or {}) do
+    print("Density: ", den, "  ", l.o(data:mid().cells))
+  end
+  print ("\n")
+
+  return self.clusters end 
 
 -- Print a tree by printing each node.
 function NODE:show(_show, maxDepth)
@@ -805,8 +842,9 @@ function eg.tree(t, evals)
     print(evals) end
 
 function eg.tree_new(t, evals)
-    t, evals = DATA.new("../data/auto93.csv"):tree_new(true, false)
+    t, evals = DATA.new("../data/coc10000.csv"):tree_new(true, false)
     t:show()
+    t:prune()
     print(evals) end
  
 function eg.branch(t, d, best, rest, evals)
