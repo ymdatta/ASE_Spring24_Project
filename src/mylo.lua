@@ -68,7 +68,7 @@ function NUM.new(s, n)
 
 -- Update
 function NUM:add(x,     d)
-  if x ~="?" then
+  if x ~="?" and x ~= nil then
     self.n  = self.n+1
     d       = x - self.mu
     self.mu = self.mu + d/self.n
@@ -249,12 +249,16 @@ function NODE:prune(_show, maxDepth)
   end
 
   self:walk2(_show, self)
+  local count = 0
 
   print ("\n")
   for den, data in pairs(self.clusters or {}) do
-    print("Density: ", den, "  ", l.o(data:mid().cells))
+    count = count + 1
+    print("Density: ", den, "  ", l.o(data:mid().cells), "  d2h:  ", l.rnd(data:mid():d2h(data), 2))
   end
   print ("\n")
+
+  print ("Number of pruned clusters: ", count, "\n")
 
   return self.clusters end 
 
@@ -842,7 +846,7 @@ function eg.tree(t, evals)
     print(evals) end
 
 function eg.tree_new(t, evals)
-    t, evals = DATA.new("../data/coc10000.csv"):tree_new(true, false)
+    t, evals = DATA.new(the.file):tree_new(true, false)
     t:show()
     t:prune()
     print(evals) end
