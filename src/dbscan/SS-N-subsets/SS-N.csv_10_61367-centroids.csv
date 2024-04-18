@@ -1,0 +1,2 @@
+Cluster,No_mbtree,No_asm,No_cabac,No_scenecut,Aq_strength,Bframes,Qcomp,Qp,Ref,Rc_lookahead,B_bias,Threads,Keyint,Crf,Scenecut,Seek,Ipratio,PSNR-,Energy-,d2h
+0,0.0,0.0,0.0,1.0,0.84,10.6,0.4,30.6,5.4,84.0,34.0,77.4,600.4,36.6,60.4,418.0,0.84,37.48,1138.48,
