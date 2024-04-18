@@ -235,7 +235,7 @@ function NODE:clone(data)
   return new end
 
 -- Prune clusters
-function NODE:prune(_show, maxDepth)
+function NODE:prune(fullData, _show, maxDepth)
   function _show(node, baseNode, depth, leafp, post)
     -- Only for leaf nodes, we check for similar density.
     if leafp then
@@ -251,14 +251,21 @@ function NODE:prune(_show, maxDepth)
   self:walk2(_show, self)
   local count = 0
 
-  print ("\n")
+  -- max d2h is 1
+  local min_d2h = 1 
+
+  --print ("\n")
   for den, data in pairs(self.clusters or {}) do
     count = count + 1
-    print("Density: ", den, "  ", l.o(data:mid().cells), "  d2h:  ", l.rnd(data:mid():d2h(data), 2))
+    -- We want d2h w.r.t full data, not just that of the cluster.
+    min_d2h = math.min(min_d2h, l.rnd(data:mid():d2h(fullData), 2))
+    --print("Density: ", den, "  ", l.o(data:mid().cells), "  d2h:  ", l.rnd(data:mid():d2h(fullData), 2))
   end
-  print ("\n")
+  --print ("\n")
 
-  print ("Number of pruned clusters: ", count, "\n")
+  print (min_d2h)
+
+  --print ("Number of pruned clusters: ", count, "\n")
 
   return self.clusters end 
 
@@ -742,7 +749,7 @@ local function run(k, oops, b4)
   b4 = l.copy(the) -- set up
   math.randomseed(the.seed) -- set up
   oops = eg[k]()==false
-  io.stderr:write(l.fmt("# %s %s\n",oops and "❌ FAIL" or "✅ PASS",k))
+  --io.stderr:write(l.fmt("# %s %s\n",oops and "❌ FAIL" or "✅ PASS",k))
   for k,v in pairs(b4) do the[k]=v end -- tear down
   return oops end
 
@@ -846,10 +853,13 @@ function eg.tree(t, evals)
     print(evals) end
 
 function eg.tree_new(t, evals)
-    t, evals = DATA.new(the.file):tree_new(true, false)
-    t:show()
-    t:prune()
-    print(evals) end
+    d = DATA.new(the.file)
+    t, evals = d:tree_new(true, false)
+    --t, evals = DATA.new(the.file):tree_new(true, false)
+    -- t:show()
+    t:prune(d)
+    --print(evals)
+    end
  
 function eg.branch(t, d, best, rest, evals)
     d = DATA.new("../data/auto93.csv")
@@ -966,6 +976,6 @@ function eg.rules2(     d,rowss,  best, rest,LIKE,HATE,best0,result,evals1,evals
 the = l.settings(help)
 if   not pcall(debug.getlocal, 4, 1) -- if __name__ == "__main__":
 then run(l.cli(the).todo) end
-l.rogues()
+--l.rogues()
 return {the=the, COLS=COLS, DATA=DATA, NODE=NODE, NUM=NUM, 
                  RANGE=RANGE, ROW=ROW, RULE=RULE, RULES=RULES, SYM=SYM}
