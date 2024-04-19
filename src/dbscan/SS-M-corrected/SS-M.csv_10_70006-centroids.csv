@@ -1,0 +1,3 @@
+Cluster,F,Smoother,ColorGS,RelaxParameter,V,Jacobi,Line,ZebraLine,Cycle,Alpha,Beta,PreSmoothing,PostSmoothing, TimeToSolution- ,NumberIterations-,d2h
+0,0.0,1.0,0.0,1.0,1.0,0.0,1.0,0.0,1.0,56.0,73.0,4.8,2.4,181.6,13.6,0.02
+1,1.0,1.0,0.0,1.0,0.0,1.0,0.0,0.0,1.0,37.0,74.0,7.2,1.6,241.54,13.6,0.02
