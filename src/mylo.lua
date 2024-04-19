@@ -824,6 +824,11 @@ function eg.sorted(   d)
   for i, row in pairs(d.rows) do
     if i < 5  or i> #d.rows - 5 then print(i, l.o(row)) end end end 
 
+function eg.d2h_d(   d)
+  d = DATA.new(the.file)
+  for i, row in pairs(d.rows) do
+    print (l.rnd(row:d2h(d), 2)) end end
+
 function eg.dist(   d,rows,r1)
   d  = DATA.new("../data/auto93.csv")
   r1   = d.rows[1]
@@ -860,6 +865,14 @@ function eg.tree_new(t, evals)
     t:prune(d)
     --print(evals)
     end
+
+function eg.data_small(t, evals)
+    d = DATA.new(the.file)
+    function say( row,txt)  print(l.o(row.cells), txt) end
+    function sayd(row, txt) print(l.o(row.cells), txt, l.rnd(row:d2h(d))) end
+    sayd(d:mid(), "mid")
+    say(d:div() , "div")
+    say(d:small(),"small=div*"..the.cohen) end
  
 function eg.branch(t, d, best, rest, evals)
     d = DATA.new("../data/auto93.csv")
