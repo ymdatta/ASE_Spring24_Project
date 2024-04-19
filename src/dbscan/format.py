@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-df = pd.read_csv('SS-N-corrected-100.csv')
+df = pd.read_csv('SS-H-corrected-10.csv')
 
 vals = df.iloc[:, 0].tolist()
 values = []
