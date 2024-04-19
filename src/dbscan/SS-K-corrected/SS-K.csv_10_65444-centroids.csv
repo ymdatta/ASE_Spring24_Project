@@ -1,0 +1,4 @@
+Cluster,Spouts,Max_spout,Spout_wait,Spliters,Counters,Netty_min_wait,Throughput+,Latency-,d2h
+0,1.0,3.5,2.0,2.0,12.0,55.0,4788.32,6.18,0.6
+1,3.0,337.0,7.0,3.0,1.0,100.0,5031.17,4227.54,0.6
+2,1.0,67.0,2.0,1.0,12.0,10.0,10566.73,49.49,0.46
